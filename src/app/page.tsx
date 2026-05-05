@@ -150,21 +150,18 @@ export default function LandingPage() {
  >
  <div className="mx-auto flex h-[84px] max-w-(--breakpoint-content) items-center justify-between gap-6 px-6 lg:px-12 xl:px-16">
  <Link href="/" className="inline-flex items-center gap-2">
- {/* The logo is white-text-on-transparent — fine over the navy
-     hero (header bg transparent) but invisible once the user
-     scrolls and the header bg fades to white. So we wrap the
-     logo in a navy pill ONLY when scrolled. */}
- <span
- className={cn("inline-flex items-center transition-colors duration-300",
- scrolled
- ?"rounded-md bg-fellowship-navy px-3 py-2 shadow-theme-xs":"")}
- >
+ {/* Two logo variants for two header states:
+     - over the navy hero (transparent header) → `logo.png`,
+       white-text-on-transparent
+     - over the scrolled white header → `white-logo.png`,
+       designed for light backgrounds
+     Swapping src is cheaper than wrapping in a contrast pill,
+     and keeps the logo at its native colour in both states. */}
  <Image
- src="/images/logo.png" alt="Africa Hub for Innovation & Development" width={160}
+ src={scrolled ?"/images/white-logo.png":"/images/logo.png"} alt="Africa Hub for Innovation & Development" width={160}
  height={48}
  className="h-10 w-auto" priority
  />
- </span>
  </Link>
  {/* Single navbar CTA — `/signin` is the unified auth surface
      (sign-in form + Register section). The previous "Apply / Join"
