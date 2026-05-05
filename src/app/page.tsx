@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -132,7 +132,6 @@ const weeks = [
 
 export default function LandingPage() {
  const [scrolled, setScrolled] = useState(false);
- const cohortIsFull = useCohortIsFull();
 
  useEffect(() => {
  const onScroll = () => setScrolled(window.scrollY > 20);
@@ -358,36 +357,14 @@ export default function LandingPage() {
  {/* REGISTER FOR NEXT COHORT — minimal, centered, single CTA.
      Cohort-open vs cohort-full just swaps copy + button label;
      destination stays `/signin#register` (the register section
-     handles the waitlist form when `?cohort=full` carries through). */}
- <section
- id="register"
- className="bg-white"
- aria-labelledby="register-section-heading"
- >
- <div className="mx-auto max-w-(--breakpoint-content) px-6 lg:px-12 xl:px-16 py-24 md:py-32">
- <div className="mx-auto max-w-2xl text-center">
- <h2
- id="register-section-heading"
- className="text-3xl font-bold leading-tight text-fellowship-navy md:text-5xl"
- >
- {cohortIsFull ? "Join the Waitlist" : "Join the Next Cohort"}
- </h2>
- <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-gray-600">
- {cohortIsFull
- ? "Cohort 2026 is full. Add your name to the waitlist and we'll let you know when the next cohort opens."
- : "Ready to make a tangible impact on the future of AI governance? Applications are now open."}
- </p>
- <div className="mt-10 flex justify-center">
- <Link
- href="/signin#register"
- className="inline-flex items-center justify-center rounded-md bg-error-600 px-10 py-3.5 text-base font-semibold text-white shadow-theme-sm transition hover:bg-error-700 focus:outline-none focus:ring-3 focus:ring-error-600/20"
- >
- {cohortIsFull ? "Join the waitlist" : "Enter"}
- </Link>
- </div>
- </div>
- </div>
- </section>
+     handles the waitlist form when `?cohort=full` carries through).
+     Wrapped in <Suspense> because `useCohortIsFull()` reads
+     `useSearchParams()`, which Next 16 won't statically prerender
+     without a Suspense boundary. The fallback shows the open-cohort
+     copy — the common case — so SEO snapshots get sensible content. */}
+ <Suspense fallback={<RegisterSection cohortIsFull={false} />}>
+ <RegisterSectionWithSearchParams />
+ </Suspense>
 
  {/* PARTNERS / CTA */}
  <section id="partners" className="bg-fellowship-navy text-white">
@@ -420,5 +397,49 @@ export default function LandingPage() {
  </div>
  </footer>
  </div>
+ );
+}
+
+/**
+ * Inner component that calls `useCohortIsFull()` (which uses
+ * `useSearchParams()`). Must live behind a <Suspense> boundary so
+ * Next 16 can prerender the page without query params resolved.
+ */
+function RegisterSectionWithSearchParams() {
+ const cohortIsFull = useCohortIsFull();
+ return <RegisterSection cohortIsFull={cohortIsFull} />;
+}
+
+function RegisterSection({ cohortIsFull }: { cohortIsFull: boolean }) {
+ return (
+ <section
+ id="register"
+ className="bg-white"
+ aria-labelledby="register-section-heading"
+ >
+ <div className="mx-auto max-w-(--breakpoint-content) px-6 lg:px-12 xl:px-16 py-24 md:py-32">
+ <div className="mx-auto max-w-2xl text-center">
+ <h2
+ id="register-section-heading"
+ className="text-3xl font-bold leading-tight text-fellowship-navy md:text-5xl"
+ >
+ {cohortIsFull ? "Join the Waitlist" : "Join the Next Cohort"}
+ </h2>
+ <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-gray-600">
+ {cohortIsFull
+ ? "Cohort 2026 is full. Add your name to the waitlist and we'll let you know when the next cohort opens."
+ : "Ready to make a tangible impact on the future of AI governance? Applications are now open."}
+ </p>
+ <div className="mt-10 flex justify-center">
+ <Link
+ href="/signin#register"
+ className="inline-flex items-center justify-center rounded-md bg-error-600 px-10 py-3.5 text-base font-semibold text-white shadow-theme-sm transition hover:bg-error-700 focus:outline-none focus:ring-3 focus:ring-error-600/20"
+ >
+ {cohortIsFull ? "Join the waitlist" : "Enter"}
+ </Link>
+ </div>
+ </div>
+ </div>
+ </section>
  );
 }
