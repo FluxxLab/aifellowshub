@@ -200,7 +200,7 @@ export default function LandingPage() {
  </p>
  <div className="mt-8 flex flex-wrap gap-3">
  <Link
- href="/signin#register" className="inline-flex items-center gap-2 rounded-lg bg-warning-400 px-6 py-3 text-base font-semibold text-gray-900 shadow-theme-sm transition hover:bg-warning-500">
+ href="/signin#register" className="inline-flex items-center gap-2 rounded-lg bg-pic-yellow px-6 py-3 text-base font-semibold text-fellowship-navy shadow-theme-sm transition hover:bg-pic-yellow-hover">
  Become a Fellow
  <ArrowRightIcon className="h-4 w-4"/>
  </Link>
@@ -270,7 +270,7 @@ export default function LandingPage() {
  key={title}
  className="group rounded-2xl border border-gray-200 bg-white p-7 transition hover:shadow-theme-lg">
  <div className="flex items-center justify-between">
- <div className="flex h-11 w-11 items-center justify-center rounded-md bg-warning-400 text-fellowship-navy transition group-hover:bg-fellowship-navy group-hover:text-warning-400">
+ <div className="flex h-11 w-11 items-center justify-center rounded-md bg-pic-yellow text-fellowship-navy transition group-hover:bg-fellowship-navy group-hover:text-pic-yellow">
  <Icon className="h-5 w-5"/>
  </div>
  <span className="font-mono text-xs text-gray-400">
@@ -376,7 +376,7 @@ export default function LandingPage() {
  </p>
  <div className="mt-8 flex flex-wrap gap-3">
  <Link
- href="/signin#register" className="inline-flex items-center gap-2 rounded-lg bg-warning-400 px-6 py-3 text-base font-semibold text-gray-900 shadow-theme-sm transition hover:bg-warning-500">
+ href="/signin#register" className="inline-flex items-center gap-2 rounded-lg bg-pic-yellow px-6 py-3 text-base font-semibold text-fellowship-navy shadow-theme-sm transition hover:bg-pic-yellow-hover">
  Start your application
  </Link>
  </div>

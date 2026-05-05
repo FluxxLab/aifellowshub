@@ -4,6 +4,9 @@ import {
   BoxCubeIcon,
   ChatIcon,
   CheckCircleIcon,
+  CheckLineIcon,
+  FileIcon,
+  FolderIcon,
   GridIcon,
   ListIcon,
   PieChartIcon,
@@ -29,25 +32,43 @@ export type NavItem = {
   icon: ReactNode;
   path?: string;
   subItems?: SubItem[];
+  /** Optional group label. Renderer draws a divider (and a label in
+   *  the expanded sidebar) before the first item of each new group. */
+  section?: string;
 };
 
 export const ADMIN_NAV: NavItem[] = [
-  { icon: <GridIcon />, name: "Dashboard", path: "/dashboard" },
+  // Three groups, two dividers — fewer cuts read calmer in the
+  // 64px collapsed rail and still give a clear top/middle/bottom
+  // shape: daily overview surfaces, programme content surfaces,
+  // operator surfaces.
+  //
+  // Main — highest-frequency surfaces opened daily.
+  { section: "Main", icon: <GridIcon />, name: "Dashboard", path: "/dashboard" },
   { icon: <UsersRoundIcon />, name: "Participants", path: "/participants" },
+
+  // Programme — everything content-related, including capstone &
+  // certificates which used to live in a separate "Outputs" group
+  // (they're still programme content, just at the end of the journey).
   {
+    section: "Programme",
     icon: <BoxCubeIcon />,
     name: "Programme",
     subItems: [
       { name: "Courses", path: "/courses" },
       { name: "Sessions", path: "/sessions" },
-      { name: "Assessments", path: "/assessments" },
-      { name: "Resources", path: "/resources" },
-      { name: "Capstone", path: "/capstone" },
-      { name: "Module reviews", path: "/module-reviews" },
     ],
   },
+  { icon: <FileIcon />, name: "Assessments", path: "/assessments" },
+  { icon: <FolderIcon />, name: "Library", path: "/resources" },
+  { icon: <CheckLineIcon />, name: "Module reviews", path: "/module-reviews" },
+  { icon: <ShootingStarIcon />, name: "Capstone", path: "/capstone" },
   { icon: <CheckCircleIcon />, name: "Certificates", path: "/certificates" },
-  { icon: <PieChartIcon />, name: "Analytics", path: "/analytics" },
+
+  // System — operator / less-frequent surfaces. Analytics belongs
+  // here because admins consult it weekly, not daily, like the
+  // settings + audit log pages it neighbours.
+  { section: "System", icon: <PieChartIcon />, name: "Analytics", path: "/analytics" },
   { icon: <PlugInIcon />, name: "Settings", path: "/settings" },
   { icon: <ListIcon />, name: "Audit log", path: "/audit-log" },
 ];

@@ -10,7 +10,7 @@ import {
  CalenderIcon,
  CheckCircleIcon,
  GroupIcon,
- UsersRoundIcon,
+ ShootingStarIcon,
 } from "@/icons";
 import type { DashboardSummary } from "@/lib/api/dashboard";
 
@@ -43,7 +43,7 @@ export default function HeroMetrics({ metrics }: HeroMetricsProps) {
    animate={reduce ? false : "show"}
  >
  <MetricCard
- icon={<GroupIcon className="text-fellowship-navy size-6"/>}
+ icon={<GroupIcon className="text-fellowship-navy size-5"/>}
  label="Active fellows"
  valueNode={
    <>
@@ -54,25 +54,25 @@ export default function HeroMetrics({ metrics }: HeroMetricsProps) {
  delta={metrics.activeFellows.deltaPercent}
  deltaIntent="goodIfUp"/>
  <MetricCard
- icon={<UsersRoundIcon className="text-fellowship-navy"/>}
+ icon={<ShootingStarIcon className="text-fellowship-navy size-5"/>}
  label="Mentors"
  valueNode={<CountUp value={metrics.mentorsTotal.value} />}
  delta={metrics.mentorsTotal.deltaPercent}
  deltaIntent="neutral"/>
  <MetricCard
- icon={<BoxIconLine className="text-fellowship-navy"/>}
+ icon={<BoxIconLine className="text-fellowship-navy size-5"/>}
  label="Avg cohort progress"
  valueNode={<CountUp value={metrics.avgProgressPercent.value} suffix="%" />}
  delta={metrics.avgProgressPercent.deltaPercent}
  deltaIntent="goodIfUp"/>
  <MetricCard
- icon={<CalenderIcon className="text-fellowship-navy"/>}
+ icon={<CalenderIcon className="text-fellowship-navy size-5"/>}
  label="Attendance rate (7d)"
  valueNode={<CountUp value={metrics.attendanceRatePercent.value} suffix="%" />}
  delta={metrics.attendanceRatePercent.deltaPercent}
  deltaIntent="goodIfUp"/>
  <MetricCard
- icon={<CheckCircleIcon className="text-fellowship-navy"/>}
+ icon={<CheckCircleIcon className="text-fellowship-navy size-5"/>}
  label="Capstones in review"
  valueNode={<CountUp value={metrics.capstonesAwaitingReview.value} />}
  delta={metrics.capstonesAwaitingReview.deltaPercent}
@@ -113,22 +113,22 @@ function MetricCard({ icon, label, valueNode, delta, deltaIntent }: MetricCardPr
    variants={cardVariants}
    whileHover={reduce ? undefined : { y: -2 }}
    transition={{ type: "spring", stiffness: 300, damping: 22 }}
-   className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6"
+   className="rounded-2xl border border-gray-200 bg-white p-4 md:p-5"
  >
- <div className="flex items-center justify-center w-12 h-12 bg-warning-100 rounded-xl">
+ <div className="flex items-center justify-center w-9 h-9 bg-warning-100 rounded-xl">
  {icon}
  </div>
- <div className="flex items-end justify-between mt-5">
- <div>
- <span className="text-sm text-gray-500">{label}</span>
- <h4 className="mt-2 font-bold text-gray-800 text-title-sm">
+ <div className="mt-4">
+ <span className="block text-xs text-gray-500">{label}</span>
+ <h4 className="mt-1.5 font-bold text-gray-800 text-2xl">
  {valueNode}
  </h4>
- </div>
+ <div className="mt-2">
  <Badge color={color}>
  {isUp ? <ArrowUpIcon /> : <ArrowDownIcon />}
  {formatted}
  </Badge>
+ </div>
  </div>
  </motion.div>
  );

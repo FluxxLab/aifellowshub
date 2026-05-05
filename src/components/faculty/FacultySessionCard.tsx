@@ -43,8 +43,10 @@ export default function FacultySessionCard({
     }
     setBusy(true);
     try {
-      const meetingId =
-        draft.zoomMeetingId.trim() || extractZoomMeetingId(draft.joinUrl) || undefined;
+      // No joinUrl / zoomMeetingId in the payload — the backend's
+      // ZoomService creates (or updates) the meeting via Server-to-
+      // Server OAuth and persists the resulting id + URL itself.
+      // Faculty don't see, type, or copy any Zoom URL.
       const saved = await upsertModuleSession(moduleId, {
         title: draft.title.trim(),
         startsAt: new Date(draft.startsAt).toISOString(),
@@ -52,8 +54,6 @@ export default function FacultySessionCard({
         attendanceThresholdMinutes: draft.attendanceThresholdMinutes
           ? Number(draft.attendanceThresholdMinutes)
           : undefined,
-        joinUrl: draft.joinUrl.trim() || undefined,
-        zoomMeetingId: meetingId,
       });
       onChange(saved);
       setDraft(initialDraft(saved));
@@ -101,9 +101,11 @@ export default function FacultySessionCard({
         )}
       </div>
       <p className="mt-1 text-sm text-gray-500">
-        One live session per module. Hosted on Zoom and embedded inside the
-        LMS for fellows. Attendance is auto-credited via webhook when a
-        fellow stays at least the threshold below.
+        One live session per module. The Zoom meeting is created
+        automatically when you save — no URL to copy. Fellows join
+        in-app via the embedded Meeting SDK. Attendance is
+        auto-credited via webhook when a fellow stays at least the
+        threshold below.
       </p>
 
       <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -156,31 +158,6 @@ export default function FacultySessionCard({
             className={input}
           />
         </Field>
-        <Field label="Zoom join URL" className="md:col-span-2">
-          <input
-            type="url"
-            value={draft.joinUrl}
-            disabled={busy}
-            onChange={(e) => setDraft({ ...draft, joinUrl: e.target.value })}
-            placeholder="https://zoom.us/j/123456789"
-            className={input}
-          />
-        </Field>
-        <Field label="Zoom meeting ID" className="md:col-span-2">
-          <input
-            type="text"
-            value={draft.zoomMeetingId}
-            disabled={busy}
-            onChange={(e) =>
-              setDraft({ ...draft, zoomMeetingId: e.target.value })
-            }
-            placeholder={
-              extractZoomMeetingId(draft.joinUrl) ??
-              "auto-extracted from join URL when blank"
-            }
-            className={input}
-          />
-        </Field>
       </div>
 
       <div className="mt-4 flex items-center justify-end gap-2">
@@ -224,8 +201,6 @@ type Draft = {
   startsAt: string;
   durationMinutes: string;
   attendanceThresholdMinutes: string;
-  joinUrl: string;
-  zoomMeetingId: string;
 };
 
 function initialDraft(s: FacultySession | null): Draft {
@@ -236,8 +211,6 @@ function initialDraft(s: FacultySession | null): Draft {
     attendanceThresholdMinutes: s?.attendanceThresholdMinutes
       ? String(s.attendanceThresholdMinutes)
       : "",
-    joinUrl: s?.joinUrl ?? "",
-    zoomMeetingId: s?.zoomMeetingId ?? "",
   };
 }
 
@@ -247,9 +220,7 @@ function isDirty(draft: Draft, server: FacultySession | null): boolean {
     draft.title !== server_.title ||
     draft.startsAt !== server_.startsAt ||
     draft.durationMinutes !== server_.durationMinutes ||
-    draft.attendanceThresholdMinutes !== server_.attendanceThresholdMinutes ||
-    draft.joinUrl !== server_.joinUrl ||
-    draft.zoomMeetingId !== server_.zoomMeetingId
+    draft.attendanceThresholdMinutes !== server_.attendanceThresholdMinutes
   );
 }
 
@@ -266,12 +237,6 @@ function validate(d: Draft): string | null {
     if (th > dur) return "Threshold can't exceed the session duration.";
   }
   return null;
-}
-
-/** Pull the numeric meeting id out of a Zoom join URL like `https://zoom.us/j/123456789?pwd=…`. */
-export function extractZoomMeetingId(joinUrl: string): string | null {
-  const m = joinUrl.match(/zoom\.us\/[jw]\/(\d+)/);
-  return m?.[1] ?? null;
 }
 
 /** ISO timestamp → `YYYY-MM-DDTHH:mm` for `<input type="datetime-local">`. */

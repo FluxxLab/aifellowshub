@@ -26,6 +26,7 @@
     "@zoom/meetingsdk": "^6.0.0",
     "apexcharts": "^4.7.0",
     "autoprefixer": "^10.4.22",
+    "class-variance-authority": "^0.7.1",
     "driver.js": "^1.4.0",
     "flatpickr": "^4.6.13",
     "motion": "^12.38.0",

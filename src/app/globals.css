@@ -122,7 +122,7 @@
 
   --color-warning-25: #fffcf5;
   --color-warning-50: #fffaeb;
-  --color-warning-100: #fef0c7;
+  --color-warning-100: #fef2c5;
   --color-warning-200: #fedf89;
   --color-warning-300: #fec84b;
   --color-warning-400: #fdb022;
@@ -137,10 +137,17 @@
 
   --color-theme-purple-500: #7a5af8;
 
-  /* Fellowship brand — navy + gold (gold reuses warning-* scale) */
+  /* Fellowship brand — navy + PIC yellow. Yellow has its own dedicated
+     scale so we can swap brand tones without touching the semantic
+     warning-* ramp (yellow alerts, expired badges, etc). The "default"
+     PIC yellow is the surface tone; -hover and -disabled give the
+     button states matching the existing ramp behaviour. */
   --color-fellowship-navy: #002d74;
   --color-fellowship-navy-dark: #001f4f;
   --color-fellowship-navy-light: #e0eaff;
+  --color-pic-yellow: #fef2c5;
+  --color-pic-yellow-hover: #fce8a3;
+  --color-pic-yellow-disabled: #fefae3;
 
   --shadow-theme-md:
     0px 4px 8px -2px rgba(16, 24, 40, 0.1),
