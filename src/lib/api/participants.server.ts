@@ -1,0 +1,278 @@
+/**
+ * Server-only admin participants fetcher (BRD §6.2). Maps backend
+ * `GET /admin/participants` to the existing `Participants` shape the
+ * page renders. Returns empty groups when the backend is unreachable.
+ */
+import "server-only";
+import { backendFetch } from "./backend";
+import type {
+  Faculty,
+  Fellow,
+  Mentor,
+  Participants,
+  Sector,
+  AdminUser,
+  FellowProfile,
+  ModuleProgressEntry,
+  SessionAttendance,
+  CapstoneSnapshot,
+  ActivityEntry,
+} from "./participants";
+
+type BackendFellow = {
+  id: string;
+  fullName: string;
+  email: string;
+  country: string;
+  organisation: string;
+  jobTitle: string;
+  sector: string | null;
+  mentorName: string | null;
+  status: "active" | "at_risk" | "inactive" | null;
+  joinedAt: string;
+};
+
+type BackendMentor = {
+  id: string;
+  fullName: string;
+  email: string;
+  sector: string | null;
+  assignedFellowsCount: number;
+  pendingReviewsCount: number;
+  isActive: boolean;
+  joinedAt: string;
+};
+
+type BackendFaculty = {
+  id: string;
+  fullName: string;
+  email: string;
+  sector: string | null;
+  ownedModulesCount: number;
+  draftModulesCount: number;
+  isActive: boolean;
+  joinedAt: string;
+};
+
+type BackendAdmin = {
+  id: string;
+  fullName: string;
+  email: string;
+  role: "admin" | "super_admin";
+  lastActiveAt: string;
+  isActive: boolean;
+  joinedAt: string;
+};
+
+type BackendResponse = {
+  fellows: BackendFellow[];
+  mentors: BackendMentor[];
+  faculty: BackendFaculty[];
+  admins: BackendAdmin[];
+};
+
+const EMPTY: Participants = {
+  fellows: [],
+  faculty: [],
+  mentors: [],
+  admins: [],
+  waitlist: [],
+};
+
+export async function getParticipantsServer(): Promise<Participants> {
+  try {
+    const res = await backendFetch("/admin/participants", { method: "GET" });
+    if (!res.ok) return EMPTY;
+    const data = (await res.json()) as BackendResponse;
+    return mapResponse(data);
+  } catch {
+    return EMPTY;
+  }
+}
+
+function mapResponse(data: BackendResponse): Participants {
+  return {
+    fellows: data.fellows.map(mapFellow),
+    mentors: data.mentors.map(mapMentor),
+    faculty: data.faculty.map(mapFaculty),
+    admins: data.admins.map(mapAdmin),
+    waitlist: [],
+  };
+}
+
+function mapFellow(f: BackendFellow): Fellow {
+  return {
+    id: f.id,
+    fullName: f.fullName,
+    email: f.email,
+    country: f.country,
+    organisation: f.organisation,
+    jobTitle: f.jobTitle,
+    sector: prettySector(f.sector),
+    mentor: f.mentorName,
+    // Progress + attendance need session/assessment aggregation per fellow —
+    // not derived yet, surface 0 so the row renders cleanly.
+    progressPercent: 0,
+    attendanceRate: 0,
+    status: f.status === "at_risk" ? "at-risk" : (f.status ?? "active"),
+    joinedAt: f.joinedAt,
+  };
+}
+
+function mapMentor(m: BackendMentor): Mentor {
+  const sec = prettySector(m.sector);
+  return {
+    id: m.id,
+    fullName: m.fullName,
+    email: m.email,
+    expertise: sec === "Other" ? [] : [sec],
+    assignedFellowsCount: m.assignedFellowsCount,
+    pendingReviewsCount: m.pendingReviewsCount,
+    isActive: m.isActive,
+    joinedAt: m.joinedAt,
+  };
+}
+
+function mapFaculty(f: BackendFaculty): Faculty {
+  const sec = prettySector(f.sector);
+  return {
+    id: f.id,
+    fullName: f.fullName,
+    email: f.email,
+    expertise: sec === "Other" ? [] : [sec],
+    ownedModulesCount: f.ownedModulesCount,
+    draftModulesCount: f.draftModulesCount,
+    isActive: f.isActive,
+    joinedAt: f.joinedAt,
+  };
+}
+
+function mapAdmin(a: BackendAdmin): AdminUser {
+  return {
+    id: a.id,
+    fullName: a.fullName,
+    email: a.email,
+    role: a.role,
+    lastActiveAt: a.lastActiveAt,
+    isActive: a.isActive,
+    joinedAt: a.joinedAt,
+  };
+}
+
+type BackendFellowProfile = {
+  id: string;
+  fullName: string;
+  email: string;
+  country: string | null;
+  organisation: string | null;
+  jobTitle: string | null;
+  sector: string | null;
+  bio: string | null;
+  linkedinUrl: string | null;
+  status: "active" | "at_risk" | "inactive" | null;
+  joinedAt: string;
+  progressPercent: number;
+  attendanceRate: number;
+  mentorName: string | null;
+  modules: { weekNumber: number; title: string; status: ModuleProgressEntry["status"] }[];
+  recentSessions: {
+    id: string;
+    weekNumber: number;
+    moduleTitle: string;
+    date: string;
+    status: SessionAttendance["status"];
+  }[];
+  assessments: {
+    id: string;
+    weekNumber: number;
+    title: string;
+    score: number;
+    passed: boolean;
+    attemptedAt: string;
+  }[];
+  capstone: {
+    status: "draft" | "under_review" | "needs_revision" | "approved";
+    title: string | null;
+    submittedAt: string | null;
+    lastFeedback: string | null;
+  };
+  activity: { id: string; type: ActivityEntry["type"]; message: string; at: string }[];
+};
+
+export async function getFellowProfileServer(
+  id: string,
+): Promise<FellowProfile | null> {
+  try {
+    const res = await backendFetch(
+      `/admin/fellows/${encodeURIComponent(id)}`,
+      { method: "GET" },
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as { fellow: BackendFellowProfile };
+    return mapFellowProfile(data.fellow);
+  } catch {
+    return null;
+  }
+}
+
+function mapFellowProfile(f: BackendFellowProfile): FellowProfile {
+  const capstoneStatus: CapstoneSnapshot["status"] =
+    f.capstone.status === "draft"
+      ? "draft"
+      : f.capstone.status === "under_review"
+      ? "under-review"
+      : f.capstone.status === "approved"
+      ? "approved"
+      : "submitted";
+
+  return {
+    id: f.id,
+    fullName: f.fullName,
+    email: f.email,
+    country: f.country ?? "",
+    organisation: f.organisation ?? "",
+    jobTitle: f.jobTitle ?? "",
+    sector: prettySector(f.sector),
+    mentor: f.mentorName,
+    progressPercent: f.progressPercent,
+    attendanceRate: f.attendanceRate,
+    status: f.status === "at_risk" ? "at-risk" : f.status ?? "active",
+    joinedAt: f.joinedAt,
+    bio: f.bio,
+    linkedinUrl: f.linkedinUrl,
+    modules: f.modules.map(
+      (m): ModuleProgressEntry => ({
+        weekNumber: m.weekNumber,
+        title: m.title,
+        status: m.status,
+      }),
+    ),
+    recentSessions: f.recentSessions,
+    assessments: f.assessments,
+    capstone: {
+      status: capstoneStatus,
+      title: f.capstone.title,
+      submittedAt: f.capstone.submittedAt,
+      lastFeedback: f.capstone.lastFeedback,
+    },
+    activity: f.activity,
+  };
+}
+
+function prettySector(s: string | null): Sector {
+  if (!s) return "Other";
+  switch (s) {
+    case "health_ai":
+      return "Health AI";
+    case "edtech":
+      return "EdTech";
+    case "agriculture":
+      return "Agriculture";
+    case "fintech":
+      return "Fintech";
+    case "governance":
+      return "Governance";
+    default:
+      return "Other";
+  }
+}

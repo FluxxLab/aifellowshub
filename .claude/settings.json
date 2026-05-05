@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git rm *)",
+      "Bash(grep \"\\\\.md$\")",
+      "Bash(grep -E \"\\\\.env$|cookies\")",
+      "Bash(git commit -m ' *)",
+      "Bash(git remote *)",
+      "Bash(git branch *)",
+      "Bash(git check-ignore *)",
+      "Bash(xargs -I{} ls -la \"{}\")",
+      "Bash(xxd)",
+      "Bash(grep -E \"^\\\\.env$|cookies\")",
+      "Bash(grep -v \"^README\\\\.md$\")"
+    ]
+  }
+}

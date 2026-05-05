@@ -1,0 +1,86 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/.idea
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+Thumbs.db
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# environment / secrets — never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*-credentials.json
+*-service-account.json
+secrets/
+.secrets/
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# IDE / editor
+.vscode/
+!.vscode/settings.shared.json
+*.swp
+*.swo
+
+# Claude Code — per-developer permission grants and machine paths.
+# `settings.local.json` is per-machine state (Anthropic recommends
+# gitignoring it). Keep `.claude/settings.json` if you want to ship
+# shared project rules.
+.claude/settings.local.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# internal markdown — only top-level README.md ships. Leading slash on
+# the negation anchors it to repo root, so e2e/README.md and other
+# nested READMEs stay ignored.
+*.md
+!/README.md
+
+# saved auth cookies, debug dumps — anything with a real session
+cookies*.txt
+*.cookies
+*.har
+
+# build artifacts left around by tooling
+playwright-report/
+test-results/
+
+# internal documents (BRDs, specs, planning attachments)
+*.pdf
+*.docx
+*.xlsx
+*.pptx

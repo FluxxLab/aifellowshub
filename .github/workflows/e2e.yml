@@ -1,0 +1,222 @@
+# Frontend Playwright e2e — boots the local Docker stack (Postgres +
+# backend + frontend) via the backend repo's `docker-compose.yml`, then
+# runs the critical-journey suite against it.
+#
+# Scope: this is INTEGRATION TESTING of the dev compose stack. It is
+# NOT how production is deployed. Production deploy lives in a separate
+# workflow (`deploy.yml`) that pushes images to a registry and lets the
+# hosting platform (Fly / ECS / K8s) take over health-checking and
+# routing. Hard-coding `localhost:4000` here is correct because the
+# compose file binds the backend to that host port; in prod nothing
+# uses localhost.
+#
+# Configuration knobs are all in the `env:` block at the top of the
+# job — change the compose port mapping in one place and update the
+# matching env here, the rest of the workflow follows.
+
+name: frontend-e2e
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: frontend-e2e-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: Critical journeys (Docker stack)
+    runs-on: ubuntu-latest
+
+    # Single source of truth.
+    #
+    # NON-SECRET CONFIG goes here as `env:` — paths, URLs, port numbers,
+    # retry counts. These describe the topology of the local Docker
+    # stack and aren't sensitive (they only address the ephemeral
+    # runner-localhost).
+    #
+    # CREDENTIALS (JWT secret, Zoom secret, DB password, admin password)
+    # come from GitHub Actions secrets — see the `Verify secrets` step
+    # below for the required list and how to set them.
+    env:
+      # Repo layout
+      FRONTEND_PATH: PIC-LMS/PIC-LMS
+      BACKEND_PATH: pic-lms-backend
+      BACKEND_REPO: ${{ github.repository_owner }}/pic-lms-backend
+
+      # Service URLs (host-side on the runner — see comment block above)
+      BACKEND_URL: http://localhost:4000
+      FRONTEND_URL: http://localhost:3000
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: "5433"
+      POSTGRES_DB: pic_lms
+
+      # Healthcheck loop — `WAIT_RETRIES * WAIT_INTERVAL_SEC` is the
+      # max wait. 60 × 2s = 120s total ceiling.
+      WAIT_RETRIES: "60"
+      WAIT_INTERVAL_SEC: "2"
+
+      # Identifier (not a credential — just the email the seeded admin
+      # is created under). Safe to keep in source.
+      E2E_ADMIN_EMAIL: e2e-admin@example.test
+
+    steps:
+      # Fail fast and clearly if required secrets aren't set on the
+      # repo. Without this, the workflow gets to "docker compose up"
+      # before erroring with a much more confusing message.
+      - name: Verify required secrets
+        env:
+          E2E_JWT_SECRET: ${{ secrets.E2E_JWT_SECRET }}
+          E2E_ZOOM_WEBHOOK_SECRET: ${{ secrets.E2E_ZOOM_WEBHOOK_SECRET }}
+          E2E_POSTGRES_USER: ${{ secrets.E2E_POSTGRES_USER }}
+          E2E_POSTGRES_PASSWORD: ${{ secrets.E2E_POSTGRES_PASSWORD }}
+          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+        run: |
+          missing=()
+          for v in E2E_JWT_SECRET E2E_ZOOM_WEBHOOK_SECRET E2E_POSTGRES_USER E2E_POSTGRES_PASSWORD E2E_ADMIN_PASSWORD; do
+            if [ -z "${!v}" ]; then
+              missing+=("$v")
+            fi
+          done
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "::error::Missing required secrets: ${missing[*]}"
+            echo "Set them at: Settings → Secrets and variables → Actions → New repository secret"
+            echo "Required:"
+            echo "  E2E_JWT_SECRET           — any 32+ char random string"
+            echo "  E2E_ZOOM_WEBHOOK_SECRET  — any string (used to sign mock Zoom webhooks)"
+            echo "  E2E_POSTGRES_USER        — any string (e.g. 'lms_ci')"
+            echo "  E2E_POSTGRES_PASSWORD    — any string"
+            echo "  E2E_ADMIN_PASSWORD       — must satisfy the prod policy: 12+ chars, letter + digit"
+            exit 1
+          fi
+          echo "All required secrets are set."
+
+      - name: Check out frontend
+        uses: actions/checkout@v4
+        with:
+          path: ${{ env.FRONTEND_PATH }}
+
+      # The backend repo lives next to this one. If the backend is
+      # private, set `ACTIONS_BACKEND_TOKEN` to a PAT or GitHub App
+      # token with read access.
+      - name: Check out backend
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.BACKEND_REPO }}
+          path: ${{ env.BACKEND_PATH }}
+          token: ${{ secrets.ACTIONS_BACKEND_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ${{ env.FRONTEND_PATH }}/package-lock.json
+
+      - name: Install frontend deps
+        working-directory: ${{ env.FRONTEND_PATH }}
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: ${{ env.FRONTEND_PATH }}
+        run: npx playwright install --with-deps chromium webkit
+
+      # Boot the Docker stack. Compose reads these via the
+      # `${VAR:-default}` syntax in `docker-compose.yml`, so any value
+      # we set here overrides the local-dev default. None of these
+      # values touch the repo.
+      - name: docker compose up
+        working-directory: ${{ env.BACKEND_PATH }}
+        env:
+          FRONTEND_PATH: ../${{ env.FRONTEND_PATH }}
+          JWT_SECRET: ${{ secrets.E2E_JWT_SECRET }}
+          ZOOM_WEBHOOK_SECRET: ${{ secrets.E2E_ZOOM_WEBHOOK_SECRET }}
+          POSTGRES_USER: ${{ secrets.E2E_POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.E2E_POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+        run: docker compose up -d --build
+
+      - name: Wait for backend healthy
+        run: |
+          for i in $(seq 1 "$WAIT_RETRIES"); do
+            if curl -sf "$BACKEND_URL/api/health" >/dev/null 2>&1; then
+              echo "Backend healthy at $BACKEND_URL"
+              exit 0
+            fi
+            echo "Waiting for backend ($i/$WAIT_RETRIES)…"
+            sleep "$WAIT_INTERVAL_SEC"
+          done
+          echo "Backend never became healthy — dumping logs"
+          cd "$BACKEND_PATH" && docker compose logs
+          exit 1
+
+      # The backend image strips dev deps (no `tsx`), so the seed runs
+      # from the host against the exposed Postgres port.
+      - name: Install backend deps for seeding
+        working-directory: ${{ env.BACKEND_PATH }}
+        run: npm ci
+
+      - name: Seed e2e admin
+        working-directory: ${{ env.BACKEND_PATH }}
+        env:
+          # Compose the URL from the secret credentials + the public
+          # host/port/db config. Same DSN the backend container uses
+          # internally, just pointed at the host-side bound port.
+          DATABASE_URL: postgresql://${{ secrets.E2E_POSTGRES_USER }}:${{ secrets.E2E_POSTGRES_PASSWORD }}@${{ env.POSTGRES_HOST }}:${{ env.POSTGRES_PORT }}/${{ env.POSTGRES_DB }}?schema=public
+          E2E_ADMIN_EMAIL: ${{ env.E2E_ADMIN_EMAIL }}
+          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+        run: |
+          npx prisma generate
+          npx tsx prisma/e2e-seed.ts
+
+      - name: Wait for frontend ready
+        run: |
+          for i in $(seq 1 "$WAIT_RETRIES"); do
+            if curl -sf "$FRONTEND_URL/signin" >/dev/null 2>&1; then
+              echo "Frontend ready at $FRONTEND_URL"
+              exit 0
+            fi
+            echo "Waiting for frontend ($i/$WAIT_RETRIES)…"
+            sleep "$WAIT_INTERVAL_SEC"
+          done
+          echo "Frontend never came up — dumping logs"
+          cd "$BACKEND_PATH" && docker compose logs
+          exit 1
+
+      - name: Run Playwright
+        working-directory: ${{ env.FRONTEND_PATH }}
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ env.FRONTEND_URL }}
+          E2E_ADMIN_EMAIL: ${{ env.E2E_ADMIN_EMAIL }}
+          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+          CI: "true"
+        run: npm run test:e2e
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: ${{ env.FRONTEND_PATH }}/playwright-report/
+          retention-days: 14
+
+      - name: Dump Docker logs on failure
+        if: failure()
+        working-directory: ${{ env.BACKEND_PATH }}
+        run: docker compose logs --no-color > ../docker-logs.txt || true
+
+      - name: Upload Docker logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-logs
+          path: docker-logs.txt
+          retention-days: 14
+
+      - name: Tear down
+        if: always()
+        working-directory: ${{ env.BACKEND_PATH }}
+        run: docker compose down -v
