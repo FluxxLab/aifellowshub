@@ -101,11 +101,11 @@ const nextConfig: NextConfig = {
 
     const csp = [
       `default-src 'self'`,
-      `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com`,
-      `style-src 'self' 'unsafe-inline'`,
+      `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://source.zoom.us`,
+      `style-src 'self' 'unsafe-inline' https://source.zoom.us`,
       `img-src 'self' data: blob: https:`,
       `font-src 'self' data:`,
-      `connect-src 'self' ${backendOrigin} https://challenges.cloudflare.com`,
+      `connect-src 'self' ${backendOrigin} https://challenges.cloudflare.com https://*.zoom.us wss://*.zoom.us`,
       `frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://challenges.cloudflare.com https://*.zoom.us`,
       `worker-src 'self' blob:`,
       `media-src 'self' blob:`,
