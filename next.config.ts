@@ -11,6 +11,16 @@ const nextConfig: NextConfig = {
   output: "standalone",
 
   /**
+   * Force Next to transpile the Zoom Meeting SDK in the same compilation
+   * pass as application code. Without this, the pre-bundled SDK chunk
+   * carries its own React reference and crashes with
+   *   "Cannot read properties of undefined (reading 'ReactCurrentOwner')"
+   * because its baked React doesn't match the React singleton Next ships
+   * to client components. Transpiling forces SDK + app to share one React.
+   */
+  transpilePackages: ["@zoom/meetingsdk"],
+
+  /**
    * Don't gate production builds on ESLint. We rely on TypeScript +
    * runtime tests for correctness; Next 15.5 ships some experimental
    * React Compiler rules (e.g. `react-hooks/set-state-in-effect`)
