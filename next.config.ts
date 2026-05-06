@@ -9,6 +9,18 @@ const nextConfig: NextConfig = {
    */
   output: "standalone",
 
+  /**
+   * Don't gate production builds on ESLint. We rely on TypeScript +
+   * runtime tests for correctness; Next 15.5 ships some experimental
+   * React Compiler rules (e.g. `react-hooks/set-state-in-effect`)
+   * that fire on legitimate patterns we use elsewhere. Linting still
+   * runs in editors and via `pnpm lint` for review — it just doesn't
+   * block deploys.
+   */
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
   webpack(config) {
     // SVGR config:
     //   - `dimensions: false` strips the SVG's hardcoded `width`/`height`

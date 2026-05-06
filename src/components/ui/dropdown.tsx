@@ -34,7 +34,10 @@ type DropdownProps = {
 };
 
 export function Dropdown({ children, isOpen, setIsOpen }: DropdownProps) {
-  const triggerRef = useRef<HTMLElement>(null);
+  // `HTMLElement | null` (rather than just `HTMLElement`) gives a
+  // MutableRefObject so we can reassign `.current` below — React 18
+  // treats `useRef<T>(null)` as a read-only RefObject.
+  const triggerRef = useRef<HTMLElement | null>(null);
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === "Escape") {
