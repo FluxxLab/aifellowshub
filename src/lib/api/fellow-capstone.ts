@@ -16,12 +16,10 @@ export type CapstoneStatus =
   | "returned";
 
 export type CapstoneSector =
-  | "Health AI"
+  | "Healthcare"
   | "EdTech"
   | "Agriculture"
-  | "Fintech"
-  | "Governance"
-  | "Other";
+  | "Economic Inclusion Development";
 
 export type CapstoneMentor = {
   id: string;

@@ -11,15 +11,13 @@ import { toast } from "@/lib/toast";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
-type Sector = "Health AI" | "EdTech" | "Agriculture" | "Fintech" | "Governance" | "Other";
+type Sector = "Healthcare" | "EdTech" | "Agriculture" | "Economic Inclusion Development";
 
 const SECTORS: { value: Sector; description: string }[] = [
-  { value: "Health AI", description: "Diagnostics, hospital ops, public health" },
+  { value: "Healthcare", description: "Diagnostics, hospital ops, public health" },
   { value: "EdTech", description: "Learning tools, accessibility, assessment" },
   { value: "Agriculture", description: "Yield, supply chains, climate adaptation" },
-  { value: "Fintech", description: "Credit, fraud, financial inclusion" },
-  { value: "Governance", description: "Public policy, civic tech, regulation" },
-  { value: "Other", description: "Different sector — tell us in your bio" },
+  { value: "Economic Inclusion Development", description: "Fintech, credit, financial inclusion, governance, public policy" },
 ];
 
 const COUNTRIES = [
@@ -90,7 +88,7 @@ export default function OnboardingWizard() {
         country: data.country,
         organisation: data.organisation,
         jobTitle: data.jobTitle,
-        sector: data.sector || "Other",
+        sector: data.sector || "Economic Inclusion Development",
         bio: composedBio,
         linkedinUrl: data.linkedinUrl ? data.linkedinUrl : null,
       });

@@ -5,12 +5,10 @@
  */
 
 export type Sector =
-  | "Health AI"
+  | "Healthcare"
   | "EdTech"
   | "Agriculture"
-  | "Fintech"
-  | "Governance"
-  | "Other";
+  | "Economic Inclusion Development";
 
 export type FellowStatus = "active"| "at-risk"| "inactive";
 

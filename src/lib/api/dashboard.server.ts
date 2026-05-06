@@ -215,17 +215,15 @@ function mapDashboard(
 
 function prettySector(s: string): string {
   switch (s) {
-    case "health_ai":
-      return "Health AI";
+    case "healthcare":
+      return "Healthcare";
     case "edtech":
       return "EdTech";
     case "agriculture":
       return "Agriculture";
-    case "fintech":
-      return "Fintech";
-    case "governance":
-      return "Governance";
+    case "economic_inclusion_development":
+      return "Economic Inclusion Development";
     default:
-      return "Other";
+      return "Unassigned";
   }
 }

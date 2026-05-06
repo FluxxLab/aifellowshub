@@ -122,12 +122,10 @@ function mapToQueueEntry(c: BackendCapstone): MentorQueueEntry {
 }
 
 function mapSector(s: string | null | undefined): CapstoneSector {
-  if (!s) return "Other";
+  if (!s) return "Economic Inclusion Development";
   const norm = s.toLowerCase();
-  if (norm.includes("health")) return "Health AI";
+  if (norm.includes("health")) return "Healthcare";
   if (norm.includes("ed")) return "EdTech";
   if (norm.includes("agric")) return "Agriculture";
-  if (norm.includes("fin")) return "Fintech";
-  if (norm.includes("gov")) return "Governance";
-  return "Other";
+  return "Economic Inclusion Development";
 }

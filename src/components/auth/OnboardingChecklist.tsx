@@ -146,16 +146,26 @@ export default function OnboardingChecklist() {
     if (!allRequiredDone) return;
     setSubmitting(true);
     try {
-      // Phase 2: post the per-item completion state to the backend so
-      // it persists across devices and admins can see who's finished
-      // onboarding. For now the fellow lands on /home; the home page
-      // server-side sees their session and treats them as onboarded.
+      // Tell the backend the fellow finished onboarding. Backend
+      // runs forum membership hooks (cohort group, sector group if
+      // one exists). We fire-and-treat-failure-as-non-fatal because
+      // the navigation experience matters more than the bookkeeping;
+      // an admin can fix membership later if this call fails.
+      try {
+        await fetch("/api/users/me/onboarding/complete", {
+          method: "POST",
+          credentials: "include",
+        });
+      } catch {
+        // network/transport failure — admin will reconcile later
+      }
+
       // Clear the checklist storage so it doesn't linger on a
       // second-account login from the same browser.
       try {
         localStorage.removeItem(STORAGE_KEY);
       } catch {
-        // ignore
+        // ignore — see auth/local-storage notes elsewhere
       }
       toast.success(
         "Onboarding complete",

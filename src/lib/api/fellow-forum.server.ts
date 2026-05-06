@@ -1,17 +1,21 @@
 /**
- * Server-only forum fetcher (BRD §6.8). Maps backend thread/reply payloads
- * into the existing `ForumThreadSummary` / `ForumThread` shapes.
+ * Server-only forum fetcher (BRD §6.8). Maps backend thread/reply
+ * payloads into the existing `ForumThreadSummary` / `ForumThread`
+ * shapes. Group-aware: every thread carries its group ref so the UI
+ * can render channel labels and filter by group.
  */
 import "server-only";
 import { backendFetch } from "./backend";
 import type {
   ForumAuthor,
   ForumAuthorRole,
-  ForumCategory,
+  ForumGroup,
   ForumReply,
   ForumThread,
+  ForumThreadGroupRef,
   ForumThreadSummary,
 } from "./fellow-forum";
+
 type BackendAuthor = {
   id: string;
   fullName: string;
@@ -25,10 +29,16 @@ type BackendReply = {
   author: BackendAuthor | null;
 };
 
+type BackendGroupRef = {
+  id: string;
+  slug: string;
+  name: string;
+} | null;
+
 type BackendThreadSummary = {
   id: string;
   title: string;
-  category: "general" | "curriculum" | "capstone" | "cohort" | "off_topic";
+  group: BackendGroupRef;
   preview: string;
   pinned: boolean;
   locked: boolean;
@@ -45,12 +55,33 @@ type BackendThread = BackendThreadSummary & {
   replies: BackendReply[];
 };
 
-export async function getForumThreadsServer(): Promise<ForumThreadSummary[]> {
+/** GET /forum/threads — optionally scoped to a single group. Empty
+ *  array on backend failure so the page doesn't 500 just because the
+ *  forum is misconfigured. */
+export async function getForumThreadsServer(
+  options: { groupId?: string } = {},
+): Promise<ForumThreadSummary[]> {
   try {
-    const res = await backendFetch("/forum/threads", { method: "GET" });
+    const path = options.groupId
+      ? `/forum/threads?groupId=${encodeURIComponent(options.groupId)}`
+      : "/forum/threads";
+    const res = await backendFetch(path, { method: "GET" });
     if (!res.ok) return [];
     const data = (await res.json()) as { threads: BackendThreadSummary[] };
     return (data.threads ?? []).map(mapSummary);
+  } catch {
+    return [];
+  }
+}
+
+/** GET /forum/groups — directory of groups visible to the current
+ *  user (member groups + non-private groups). */
+export async function getForumGroupsServer(): Promise<ForumGroup[]> {
+  try {
+    const res = await backendFetch("/forum/groups", { method: "GET" });
+    if (!res.ok) return [];
+    const data = (await res.json()) as { groups: ForumGroup[] };
+    return data.groups ?? [];
   } catch {
     return [];
   }
@@ -85,8 +116,9 @@ function mapRole(role: string): ForumAuthorRole {
   return "fellow";
 }
 
-function mapCategory(c: BackendThreadSummary["category"]): ForumCategory {
-  return c === "off_topic" ? "off-topic" : c;
+function mapGroupRef(g: BackendGroupRef): ForumThreadGroupRef | null {
+  if (!g) return null;
+  return { id: g.id, slug: g.slug, name: g.name };
 }
 
 function mapReply(r: BackendReply): ForumReply {
@@ -103,7 +135,7 @@ function mapSummary(t: BackendThreadSummary): ForumThreadSummary {
   return {
     id: t.id,
     title: t.title,
-    category: mapCategory(t.category),
+    group: mapGroupRef(t.group),
     preview: t.preview,
     author: mapAuthor(t.author),
     createdAt: t.createdAt,

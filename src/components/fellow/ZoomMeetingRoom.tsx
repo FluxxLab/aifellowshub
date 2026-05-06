@@ -12,6 +12,32 @@ type SignatureResponse = {
 };
 
 /**
+ * React 18 → 19 compatibility shim for @zoom/meetingsdk.
+ *
+ * The Zoom Meeting SDK 6.0.0 reaches for the old React 18 internal
+ * `__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner`
+ * which no longer exists in React 19 (Next.js 16 requires React 19).
+ * Without the shim the SDK throws `Cannot read properties of undefined`
+ * during init and the embed is unusable.
+ *
+ * The SDK only reads ReactCurrentOwner for dev-mode warnings; a
+ * stubbed shape with `current: null` is enough to keep it happy.
+ * Safe to leave in place — when Zoom ships React 19 support and we
+ * upgrade the SDK, the shim becomes a no-op (the property already
+ * exists on the SDK's side, our assignment is conditional).
+ */
+const reactInternals = (React as unknown as Record<string, unknown>)
+  .__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+if (!reactInternals) {
+  (React as unknown as Record<string, unknown>).__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED = {
+    ReactCurrentOwner: { current: null },
+    ReactCurrentDispatcher: { current: null },
+    ReactCurrentBatchConfig: { transition: null },
+    ReactDebugCurrentFrame: { setExtraStackFrame: () => undefined },
+  };
+}
+
+/**
  * Embeds a Zoom meeting inside the LMS via the Meeting SDK Component View
  * (BRD §6.4). Loads the SDK lazily so the heavy WASM bundle never ships
  * to non-meeting pages, then mounts the Zoom UI into a `<div>` rendered

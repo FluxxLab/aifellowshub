@@ -13,7 +13,9 @@ import type { SessionDetail, SessionStatus } from "@/lib/api/sessions";
 // Lazy-loaded so the ~3MB Zoom Meeting SDK bundle stays out of the admin
 // list view. SSR off because the SDK reaches for `window` on import.
 // Reused from the fellow tree — the backend's `issueZoomSignature` mints
-// a host-role token (role=1) for admins/faculty automatically.
+// a host-role token (role=1) for admins/faculty automatically. The
+// component itself contains a React 19 compatibility shim so the SDK's
+// React-18-era internal access works on Next.js 16.
 const ZoomMeetingRoom = dynamic(
   () => import("@/components/fellow/ZoomMeetingRoom"),
   {
@@ -128,24 +130,26 @@ export default function SessionDetailHeader({
  </div>
  </div>
 
+ {/* Inline meeting card — drops into the page flow below the header
+     instead of overlaying the whole viewport. The attendance roster
+     stays visible underneath, so admins can monitor RSVPs while the
+     meeting runs without window-switching. */}
  {meetingOpen && (
- <div className="fixed inset-0 z-99999 flex flex-col bg-gray-900/95 p-4 sm:p-6">
- <div className="mx-auto flex w-full max-w-6xl flex-col gap-3">
- <div className="flex items-center justify-between text-white">
- <h2 className="text-base font-semibold">{session.title} — Live</h2>
+ <div className="rounded-2xl border border-gray-200 bg-gray-900 p-4 sm:p-5">
+ <div className="mb-3 flex items-center justify-between text-white">
+ <h2 className="text-sm font-semibold">{session.title} — Live</h2>
  <Button
  size="sm"
  variant="outline"
  onClick={() => setMeetingOpen(false)}
  >
- Close
+ Close meeting
  </Button>
  </div>
  <ZoomMeetingRoom
  sessionId={session.id}
  onLeave={() => setMeetingOpen(false)}
  />
- </div>
  </div>
  )}
  </div>

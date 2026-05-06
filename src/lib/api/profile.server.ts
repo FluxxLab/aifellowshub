@@ -31,7 +31,7 @@ export async function getMyProfile(): Promise<MyProfile> {
     country: "",
     organisation: "",
     jobTitle: "",
-    sector: "Other",
+    sector: "Economic Inclusion Development",
     linkedinUrl: "",
     bio: "",
     notifications: {

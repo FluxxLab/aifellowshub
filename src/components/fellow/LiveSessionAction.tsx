@@ -6,9 +6,16 @@ import { CheckLineIcon } from "@/icons";
 import { toast } from "@/lib/toast";
 import type { ModuleSession } from "@/lib/api/fellow-learning";
 
+// Lazy-loaded so the ~3MB Zoom Meeting SDK bundle stays out of every
+// other fellow page. SSR off because the SDK reaches for `window` on
+// import. The component itself contains a React 19 internals shim so
+// the SDK (built for React 18) works on Next.js 16's React 19.
 const ZoomMeetingRoom = dynamic(
   () => import("@/components/fellow/ZoomMeetingRoom"),
-  { ssr: false, loading: () => <p className="text-sm text-gray-500">Loading meeting…</p> },
+  {
+    ssr: false,
+    loading: () => <p className="text-sm text-gray-500">Loading meeting…</p>,
+  },
 );
 
 /**
@@ -54,37 +61,40 @@ export default function LiveSessionAction({
   }
 
   // Live: prefer in-app embed when we have a real session id (real backend
-  // path); fall back to the external join URL for mock data.
+  // path); fall back to the external join URL for mock data without an id.
+  // The embed is rendered inline below the action button instead of in a
+  // fullscreen overlay — keeps the session card / module context visible
+  // while the meeting runs.
   if (s.status === "live") {
     if (s.id) {
       return (
         <>
-          <Button
-            size="sm"
-            variant="fellowship"
-            className="w-full"
-            onClick={() => setOpen(true)}
-          >
-            Join in app
-          </Button>
+          {!open && (
+            <Button
+              size="sm"
+              variant="fellowship"
+              className="w-full"
+              onClick={() => setOpen(true)}
+            >
+              Join in app
+            </Button>
+          )}
           {open && (
-            <div className="fixed inset-0 z-99999 flex flex-col bg-gray-900/95 p-4 sm:p-6">
-              <div className="mx-auto flex w-full max-w-6xl flex-col gap-3">
-                <div className="flex items-center justify-between text-white">
-                  <h2 className="text-base font-semibold">Live session</h2>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setOpen(false)}
-                  >
-                    Close
-                  </Button>
-                </div>
-                <ZoomMeetingRoom
-                  sessionId={s.id}
-                  onLeave={() => setOpen(false)}
-                />
+            <div className="mt-3 rounded-2xl border border-gray-200 bg-gray-900 p-3">
+              <div className="mb-2 flex items-center justify-between text-white">
+                <h3 className="text-xs font-semibold">Live session</h3>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setOpen(false)}
+                >
+                  Close meeting
+                </Button>
               </div>
+              <ZoomMeetingRoom
+                sessionId={s.id}
+                onLeave={() => setOpen(false)}
+              />
             </div>
           )}
         </>

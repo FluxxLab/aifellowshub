@@ -8,12 +8,11 @@ import { PaperPlaneIcon, ShootingStarIcon } from "@/icons";
 import { toast } from "@/lib/toast";
 import { useCurrentUser } from "@/lib/auth/useCurrentUser";
 import {
-  FORUM_CATEGORIES,
   postForumReply,
   type ForumAuthorRole,
-  type ForumCategory,
   type ForumReply,
   type ForumThread,
+  type ForumThreadGroupRef,
 } from "@/lib/api/fellow-forum";
 
 export default function ForumThreadView({
@@ -91,7 +90,7 @@ export default function ForumThreadView({
 
       <article className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
         <div className="flex flex-wrap items-center gap-2">
-          <CategoryBadge category={thread.category} />
+          <GroupBadge group={thread.group} />
           {thread.pinned && (
             <Badge color="warning" variant="light">
               <ShootingStarIcon className="h-3 w-3" />
@@ -286,22 +285,11 @@ function RoleBadge({ role }: { role: ForumAuthorRole }) {
   );
 }
 
-function CategoryBadge({ category }: { category: ForumCategory }) {
-  const colour: Record<
-    ForumCategory,
-    "info" | "warning" | "success" | "light"
-  > = {
-    general: "info",
-    curriculum: "warning",
-    capstone: "success",
-    cohort: "info",
-    "off-topic": "light",
-  };
-  const label =
-    FORUM_CATEGORIES.find((x) => x.value === category)?.label ?? category;
+function GroupBadge({ group }: { group: ForumThreadGroupRef | null }) {
+  if (!group) return null;
   return (
-    <Badge color={colour[category]} variant="light">
-      {label}
+    <Badge color="info" variant="light">
+      {group.name}
     </Badge>
   );
 }

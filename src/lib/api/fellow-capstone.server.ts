@@ -75,7 +75,7 @@ const EMPTY_CAPSTONE: FellowCapstone = {
   status: "not-started",
   title: "Untitled capstone",
   oneliner: "Start by defining your problem statement.",
-  sector: "Other",
+  sector: "Economic Inclusion Development",
   mentor: EMPTY_MENTOR,
   draft: EMPTY_DRAFT,
   milestones: [],
@@ -102,7 +102,7 @@ function mapBackendCapstone(b: BackendCapstone): FellowCapstone {
     status: mapStatus(b.status),
     title: b.title,
     oneliner: firstLine(b.problemStatement) || "No problem statement yet.",
-    sector: mapSector(b.sector) ?? "Other",
+    sector: mapSector(b.sector) ?? "Economic Inclusion Development",
     mentor: b.mentor
       ? {
           id: b.mentor.id,
@@ -144,12 +144,13 @@ function mapStatus(s: BackendCapstone["status"]): CapstoneStatus {
 function mapSector(s: string | null): CapstoneSector | null {
   if (!s) return null;
   const norm = s.toLowerCase();
-  if (norm.includes("health")) return "Health AI";
+  if (norm.includes("health")) return "Healthcare";
   if (norm.includes("ed")) return "EdTech";
   if (norm.includes("agric")) return "Agriculture";
-  if (norm.includes("fin")) return "Fintech";
-  if (norm.includes("gov")) return "Governance";
-  return "Other";
+  // Fintech, governance, public-policy, financial-inclusion all
+  // collapse into "Economic Inclusion Development" — the LMS now
+  // uses a single sector for these adjacent areas.
+  return "Economic Inclusion Development";
 }
 
 function mapFeedback(f: BackendCapstoneFeedback): CapstoneFeedbackEntry {

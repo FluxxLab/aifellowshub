@@ -4,15 +4,13 @@
  * Reads run through the server fetcher (`fellow-forum.server.ts`); this
  * file holds public types + client-safe mutators that pages call from
  * the browser. Server-only helpers must NOT be imported here.
+ *
+ * Group-aware shape: every thread belongs to a ForumGroup. Groups
+ * replace the old hard-coded category enum so admins can create new
+ * channels (cohort, sector, mentor 1:1) on the fly. See backend
+ * ForumService for visibility rules.
  */
 import { apiFetch } from "./client";
-
-export type ForumCategory =
-  | "general"
-  | "curriculum"
-  | "capstone"
-  | "cohort"
-  | "off-topic";
 
 export type ForumAuthorRole = "fellow" | "mentor" | "faculty" | "admin";
 
@@ -20,6 +18,33 @@ export type ForumAuthor = {
   id: string;
   fullName: string;
   role: ForumAuthorRole;
+};
+
+export type ForumGroupRole = "member" | "moderator";
+
+/** Group summary as the directory list returns it. Includes the
+ *  viewer's own membership so the UI can render "joined" / "locked"
+ *  / "private" cards without a second round-trip. */
+export type ForumGroup = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  isDefault: boolean;
+  isPrivate: boolean;
+  memberCount: number;
+  threadCount: number;
+  /** True when the requesting user is a member of this group. */
+  isMember: boolean;
+  /** Their role in the group, if any. */
+  myRole: ForumGroupRole | null;
+};
+
+/** Embedded group reference inside thread payloads. */
+export type ForumThreadGroupRef = {
+  id: string;
+  slug: string;
+  name: string;
 };
 
 export type ForumReply = {
@@ -33,7 +58,7 @@ export type ForumReply = {
 export type ForumThreadSummary = {
   id: string;
   title: string;
-  category: ForumCategory;
+  group: ForumThreadGroupRef | null;
   /** First ~150 chars of the body, used in the list. */
   preview: string;
   author: ForumAuthor;
@@ -53,24 +78,15 @@ export type ForumThread = ForumThreadSummary & {
   replies: ForumReply[];
 };
 
-export const FORUM_CATEGORIES: { value: ForumCategory; label: string; description: string }[] = [
-  { value: "general", label: "General", description: "Anything Fellowship-wide" },
-  { value: "curriculum", label: "Curriculum", description: "Module questions and reading discussion" },
-  { value: "capstone", label: "Capstone", description: "Scoping, feedback, collaboration" },
-  { value: "cohort", label: "Cohort", description: "Meetups, intros, your cohort" },
-  { value: "off-topic", label: "Off-topic", description: "Everything else" },
-];
-
-
 /* ---------- Client-side mutators (BRD §6.8) ---------- */
 
 export type CreateThreadPayload = {
   title: string;
   body: string;
-  category?: ForumCategory;
+  groupId: string;
 };
 
-/** POST /forum/threads. Backend uses `off_topic` underscore — translate. */
+/** POST /forum/threads. Server enforces group membership for fellows. */
 export async function createForumThread(
   payload: CreateThreadPayload,
 ): Promise<ForumThread> {
@@ -79,10 +95,7 @@ export async function createForumThread(
     body: {
       title: payload.title,
       body: payload.body,
-      category:
-        payload.category === "off-topic"
-          ? "off_topic"
-          : payload.category ?? "general",
+      groupId: payload.groupId,
     },
   });
   return data.thread;
@@ -97,4 +110,73 @@ export async function postForumReply(
     { method: "POST", body: { body } },
   );
   return data.reply;
+}
+
+/** GET /forum/groups — list groups visible to the current user. */
+export async function listForumGroups(): Promise<ForumGroup[]> {
+  const data = await apiFetch<{ groups: ForumGroup[] }>("/forum/groups");
+  return data.groups;
+}
+
+/* ---------- Admin-only mutators ---------- */
+
+export type CreateGroupPayload = {
+  name: string;
+  slug?: string;
+  description?: string;
+  isPrivate?: boolean;
+};
+
+export async function createForumGroup(
+  payload: CreateGroupPayload,
+): Promise<ForumGroup> {
+  const data = await apiFetch<{ group: ForumGroup }>("/forum/groups", {
+    method: "POST",
+    body: payload,
+  });
+  return data.group;
+}
+
+export type UpdateGroupPayload = {
+  name?: string;
+  description?: string;
+  isPrivate?: boolean;
+};
+
+export async function updateForumGroup(
+  id: string,
+  payload: UpdateGroupPayload,
+): Promise<ForumGroup> {
+  const data = await apiFetch<{ group: ForumGroup }>(
+    `/forum/groups/${encodeURIComponent(id)}`,
+    { method: "PATCH", body: payload },
+  );
+  return data.group;
+}
+
+export async function deleteForumGroup(id: string): Promise<void> {
+  await apiFetch(`/forum/groups/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+}
+
+export async function addForumGroupMember(
+  groupId: string,
+  userId: string,
+  role: ForumGroupRole = "member",
+): Promise<void> {
+  await apiFetch(
+    `/forum/groups/${encodeURIComponent(groupId)}/members`,
+    { method: "POST", body: { userId, role } },
+  );
+}
+
+export async function removeForumGroupMember(
+  groupId: string,
+  userId: string,
+): Promise<void> {
+  await apiFetch(
+    `/forum/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(userId)}`,
+    { method: "DELETE" },
+  );
 }

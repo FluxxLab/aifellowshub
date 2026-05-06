@@ -125,7 +125,7 @@ function mapMentor(m: BackendMentor): Mentor {
     id: m.id,
     fullName: m.fullName,
     email: m.email,
-    expertise: sec === "Other" ? [] : [sec],
+    expertise: [sec],
     assignedFellowsCount: m.assignedFellowsCount,
     pendingReviewsCount: m.pendingReviewsCount,
     isActive: m.isActive,
@@ -139,7 +139,7 @@ function mapFaculty(f: BackendFaculty): Faculty {
     id: f.id,
     fullName: f.fullName,
     email: f.email,
-    expertise: sec === "Other" ? [] : [sec],
+    expertise: [sec],
     ownedModulesCount: f.ownedModulesCount,
     draftModulesCount: f.draftModulesCount,
     isActive: f.isActive,
@@ -260,19 +260,16 @@ function mapFellowProfile(f: BackendFellowProfile): FellowProfile {
 }
 
 function prettySector(s: string | null): Sector {
-  if (!s) return "Other";
+  if (!s) return "Economic Inclusion Development";
   switch (s) {
-    case "health_ai":
-      return "Health AI";
+    case "healthcare":
+      return "Healthcare";
     case "edtech":
       return "EdTech";
     case "agriculture":
       return "Agriculture";
-    case "fintech":
-      return "Fintech";
-    case "governance":
-      return "Governance";
+    case "economic_inclusion_development":
     default:
-      return "Other";
+      return "Economic Inclusion Development";
   }
 }

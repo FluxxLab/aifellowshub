@@ -41,7 +41,7 @@ function mapToSubmission(c: BackendCapstone): CapstoneSubmission {
     fellowName: c.fellow?.fullName ?? "Unknown fellow",
     mentorId: c.mentor?.id ?? null,
     mentorName: c.mentor?.fullName ?? null,
-    sector: c.sector ?? c.fellow?.sector ?? "Other",
+    sector: c.sector ?? c.fellow?.sector ?? "Economic Inclusion Development",
     title: c.title === "Untitled capstone" ? null : c.title,
     description: c.problemStatement,
     submissionUrl: c.draftUrl,

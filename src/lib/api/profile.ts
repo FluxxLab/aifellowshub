@@ -57,35 +57,29 @@ export type MyProfile = {
 /** SECTOR enum mapping — backend stores snake_case, frontend uses Title Case. */
 export function sectorFromBackend(s: string | null | undefined): Sector {
   switch (s) {
-    case "health_ai":
-      return "Health AI";
+    case "healthcare":
+      return "Healthcare";
     case "edtech":
       return "EdTech";
     case "agriculture":
       return "Agriculture";
-    case "fintech":
-      return "Fintech";
-    case "governance":
-      return "Governance";
+    case "economic_inclusion_development":
     default:
-      return "Other";
+      return "Economic Inclusion Development";
   }
 }
 
 function sectorToBackend(s: Sector): string {
   switch (s) {
-    case "Health AI":
-      return "health_ai";
+    case "Healthcare":
+      return "healthcare";
     case "EdTech":
       return "edtech";
     case "Agriculture":
       return "agriculture";
-    case "Fintech":
-      return "fintech";
-    case "Governance":
-      return "governance";
+    case "Economic Inclusion Development":
     default:
-      return "other";
+      return "economic_inclusion_development";
   }
 }
 

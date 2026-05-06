@@ -13,17 +13,19 @@ import type { Sector } from "@/lib/api/participants";
 import { useRouter } from "next/navigation";
 
 const SECTOR_TO_BACKEND: Record<Sector, string> = {
-  "Health AI": "health_ai",
+  Healthcare: "healthcare",
   EdTech: "edtech",
   Agriculture: "agriculture",
-  Fintech: "fintech",
-  Governance: "governance",
-  Other: "other",
+  "Economic Inclusion Development": "economic_inclusion_development",
 };
 
 type InviteRole ="admin"|"faculty"|"mentor";
 
-const ALL_SECTORS: Sector[] = ["Health AI","EdTech","Agriculture","Fintech","Governance","Other",
+const ALL_SECTORS: Sector[] = [
+  "Healthcare",
+  "EdTech",
+  "Agriculture",
+  "Economic Inclusion Development",
 ];
 
 type InviteModalProps = {

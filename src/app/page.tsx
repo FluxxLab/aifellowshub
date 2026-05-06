@@ -191,7 +191,7 @@ export default function LandingPage() {
  <div className="max-w-4xl">
  <h1 className="text-4xl font-bold leading-[1.05] tracking-tight md:text-6xl lg:text-7xl">
  Shaping the future of{" "}
- <span className="text-warning-400">responsible AI</span> in Africa.
+ <span className="text-pic-yellow">responsible AI</span> in Africa.
  </h1>
  <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/80 md:text-xl">
  The AI Ethics &amp; Governance Fellowship equips a new generation
@@ -265,17 +265,12 @@ export default function LandingPage() {
  </h2>
  </div>
  <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
- {features.map(({ Icon, title, body }, i) => (
+ {features.map(({ Icon, title, body }) => (
  <article
  key={title}
  className="group rounded-2xl border border-gray-200 bg-white p-7 transition hover:shadow-theme-lg">
- <div className="flex items-center justify-between">
  <div className="flex h-11 w-11 items-center justify-center rounded-md bg-pic-yellow text-fellowship-navy transition group-hover:bg-fellowship-navy group-hover:text-pic-yellow">
  <Icon className="h-5 w-5"/>
- </div>
- <span className="font-mono text-xs text-gray-400">
- 0{i + 1}
- </span>
  </div>
  <h3 className="mt-5 text-lg font-bold leading-snug text-gray-900">
  {title}
