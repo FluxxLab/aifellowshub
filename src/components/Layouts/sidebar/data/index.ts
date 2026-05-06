@@ -87,6 +87,7 @@ const FELLOW_NAV: NavSection[] = [
         items: [
           { title: "Modules", url: "/learning" },
           { title: "Sessions", url: "/my-sessions" },
+          { title: "Assessments", url: "/my-assessments" },
           { title: "Library", url: "/library" },
         ],
       },

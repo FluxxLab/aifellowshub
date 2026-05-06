@@ -163,16 +163,9 @@ export async function getFellowCurriculumServer(): Promise<FellowModuleSummary[]
   });
 }
 
-/** Detail view for `/learning/[week]`. Returns null when backend unreachable or week not found. */
-export async function getFellowModuleServer(
-  week: number,
-): Promise<FellowModuleDetail | null> {
-  const real = await fetchCurriculum();
-  if (!real) return null;
-
-  const m = real.find((x) => x.weekNumber === week);
-  if (!m) return null;
-
+function mapBackendCurriculumModule(
+  m: BackendCurriculumModule,
+): FellowModuleDetail {
   const my = m.myAttempts;
   const passed = my.bestStatus === "passed";
   const failed = my.bestStatus === "failed";
@@ -217,12 +210,6 @@ export async function getFellowModuleServer(
         joinUrl: "#",
       };
 
-  // Pull attempt status from the backend ("not-started" | "passed" | "failed";
-  // "in-progress" lives in mock for now since attempts can't be partially
-  // submitted yet).
-  const assessmentStatus: "not-started" | "passed" | "failed" =
-    passed ? "passed" : failed ? "failed" : "not-started";
-
   return {
     id: m.id,
     weekNumber: m.weekNumber,
@@ -242,6 +229,30 @@ export async function getFellowModuleServer(
     preAssessment: m.preAssessment ? mapBackendAssessment(m.preAssessment, my) : null,
     postAssessment: m.postAssessment ? mapBackendAssessment(m.postAssessment, my) : null,
   };
+}
+
+/** Detail view for `/learning/[week]`. Returns null when backend unreachable or week not found. */
+export async function getFellowModuleServer(
+  week: number,
+): Promise<FellowModuleDetail | null> {
+  const real = await fetchCurriculum();
+  if (!real) return null;
+  const m = real.find((x) => x.weekNumber === week);
+  if (!m) return null;
+  return mapBackendCurriculumModule(m);
+}
+
+/**
+ * Full curriculum as `FellowModuleDetail[]` — used by `/assessments` to
+ * flatten every quiz across the cohort into one list. Returns `[]` when
+ * the backend is unreachable so callers can render an empty state.
+ */
+export async function getFellowCurriculumDetailServer(): Promise<
+  FellowModuleDetail[]
+> {
+  const real = await fetchCurriculum();
+  if (!real) return [];
+  return real.map(mapBackendCurriculumModule);
 }
 
 /** Full cohort sessions list for `/my-sessions`. Empty when backend unreachable. */
