@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Badge from "@/components/ui/badge/Badge";
 import Breadcrumbs from "@/components/common/Breadcrumbs";
-import Button from "@/components/ui/button/Button";
+import LiveSessionAction from "@/components/fellow/LiveSessionAction";
 import {
   CalenderIcon,
   CheckLineIcon,
@@ -245,30 +245,19 @@ function SessionCard({
           </div>
         </div>
 
-        <div className="flex shrink-0 flex-col gap-2 md:items-end">
-          {isLive ? (
-            <a
-              href={s.joinUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button size="sm" variant="fellowship">
-                Join on Zoom
-              </Button>
-            </a>
-          ) : s.rsvpd ? (
-            <Button size="sm" variant="outline">
-              <CheckLineIcon className="h-3.5 w-3.5" />
-              RSVP&apos;d
-            </Button>
-          ) : (
-            <Button size="sm" variant="fellowship">
-              RSVP
-            </Button>
-          )}
+        <div className="flex shrink-0 flex-col gap-2 md:w-48 md:items-stretch">
+          {/*
+            LiveSessionAction owns both states: when the session is live
+            it renders "Join in app" + the inline Zoom embed on click;
+            when it's upcoming it renders RSVP. Reusing it here keeps
+            the in-app embed flow consistent with /learning/:week and
+            stops the old "Join on Zoom" external link from yanking
+            fellows out of the LMS.
+          */}
+          <LiveSessionAction session={s} />
           <Link
             href={`/learning/${s.weekNumber}`}
-            className="inline-flex items-center gap-1 text-xs font-medium text-fellowship-navy hover:text-fellowship-navy-dark"
+            className="inline-flex items-center justify-center gap-1 text-xs font-medium text-fellowship-navy hover:text-fellowship-navy-dark"
           >
             Open module
             <ChevronRightIcon className="h-3.5 w-3.5" />
