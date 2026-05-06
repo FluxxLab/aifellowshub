@@ -15,6 +15,19 @@ import type {
   ModuleSession,
 } from "./fellow-learning";
 
+type BackendAssessment = {
+  id: string;
+  moduleId: string;
+  lessonId: string | null;
+  kind: "pre" | "lesson" | "post";
+  title: string;
+  passingScore: number;
+  timeLimitMinutes: number;
+  attemptsAllowed: number;
+  questionCount: number;
+  hideScore: boolean;
+};
+
 type BackendCurriculumModule = {
   id: string;
   weekNumber: number;
@@ -30,17 +43,11 @@ type BackendCurriculumModule = {
     contentUrl: string | null;
     contentMimeType: string | null;
     contentBytes: number | null;
+    assessment: BackendAssessment | null;
   }[];
   resources: { id: string; title: string; url: string; kind: "pdf" | "link" | "video" }[];
-  assessment: {
-    id: string;
-    moduleId: string;
-    title: string;
-    passingScore: number;
-    timeLimitMinutes: number;
-    attemptsAllowed: number;
-    questionCount: number;
-  } | null;
+  preAssessment: BackendAssessment | null;
+  postAssessment: BackendAssessment | null;
   session: BackendSession | null;
   myAttempts: {
     attemptsUsed: number;
@@ -84,6 +91,46 @@ async function fetchCurriculum(): Promise<BackendCurriculumModule[] | null> {
   } catch {
     return null;
   }
+}
+
+/**
+ * Map a backend assessment row to the `ModuleAssessment` shape the fellow
+ * UI expects. Status is best-effort: per-tier attempts aren't yet
+ * surfaced separately by the backend, so we use the module-level
+ * `myAttempts` summary as a stand-in. Pre/post quizzes ignore
+ * passingScore + bestScore in the UI (`hideScore=true`).
+ */
+function mapBackendAssessment(
+  a: BackendAssessment,
+  my: BackendCurriculumModule["myAttempts"],
+): import("./fellow-learning").ModuleAssessment {
+  // Pre/post are diagnostic — we only know whether the fellow has
+  // submitted. Lesson quizzes use the same "passed/failed/not-started"
+  // shape as the legacy module assessment until per-tier attempt
+  // counts arrive on the backend response.
+  const passed = my.bestStatus === "passed";
+  const failed = my.bestStatus === "failed";
+  let status: import("./fellow-learning").ModuleAssessment["status"];
+  if (a.hideScore) {
+    status = my.attemptsUsed > 0 ? "submitted" : "not-started";
+  } else {
+    status = passed ? "passed" : failed ? "failed" : "not-started";
+  }
+  return {
+    id: a.id,
+    moduleId: a.moduleId,
+    lessonId: a.lessonId,
+    kind: a.kind,
+    title: a.title,
+    timeLimitMinutes: a.timeLimitMinutes,
+    attemptsAllowed: a.attemptsAllowed,
+    attemptsUsed: my.attemptsUsed,
+    passingScore: a.passingScore,
+    status,
+    bestScore: a.hideScore ? null : my.bestScore,
+    attemptedAt: null,
+    hideScore: a.hideScore,
+  };
 }
 
 /** List view for `/learning`. Returns `[]` if the backend is unreachable. */
@@ -145,6 +192,7 @@ export async function getFellowModuleServer(
     status: status === "completed" ? "completed" : "not-started",
     contentUrl: l.contentUrl ?? null,
     contentMimeType: l.contentMimeType ?? null,
+    assessment: l.assessment ? mapBackendAssessment(l.assessment, my) : null,
   }));
 
   const resources: ModuleResource[] = m.resources.map((r) => ({
@@ -191,34 +239,8 @@ export async function getFellowModuleServer(
     session,
     resources,
     feedbackSubmitted: m.feedbackSubmitted ?? false,
-    assessment: m.assessment
-      ? {
-          id: m.assessment.id,
-          moduleId: m.assessment.moduleId,
-          title: m.assessment.title,
-          timeLimitMinutes: m.assessment.timeLimitMinutes,
-          attemptsAllowed: m.assessment.attemptsAllowed,
-          attemptsUsed: my.attemptsUsed,
-          passingScore: m.assessment.passingScore,
-          status: assessmentStatus,
-          bestScore: my.bestScore,
-          attemptedAt: null,
-        }
-      : {
-          // Module has no assessment configured. Render a stub that the UI
-          // can disable cleanly (questionCount via attemptsAllowed=0 makes
-          // the "Start assessment" button render as "No assessment yet").
-          id: `no-assess-${m.id}`,
-          moduleId: m.id,
-          title: `Week ${m.weekNumber} assessment`,
-          timeLimitMinutes: 30,
-          attemptsAllowed: 0,
-          attemptsUsed: 0,
-          passingScore: 70,
-          status: "not-started",
-          bestScore: null,
-          attemptedAt: null,
-        },
+    preAssessment: m.preAssessment ? mapBackendAssessment(m.preAssessment, my) : null,
+    postAssessment: m.postAssessment ? mapBackendAssessment(m.postAssessment, my) : null,
   };
 }
 

@@ -34,6 +34,12 @@ export type Lesson = {
       attached anything yet — viewer falls back to an empty state. */
   contentUrl: string | null;
   contentMimeType: string | null;
+  /**
+   * Optional mentor-authored quiz attached to this lesson. Fellow takes
+   * it inline. Score is visible (kind=lesson). Submitting/passing it
+   * counts toward the next-module unlock cascade.
+   */
+  assessment: ModuleAssessment | null;
 };
 
 export type ModuleSession = {
@@ -58,18 +64,31 @@ export type ModuleSession = {
   joinUrl: string;
 };
 
+/** Tiered assessment kinds (BRD §6.5 + tiered extension). */
+export type AssessmentKind = "pre" | "lesson" | "post";
+
 export type ModuleAssessment = {
   id: string;
   /** Real backend module id — used to navigate to /assessments/:moduleId/take. */
   moduleId: string;
+  /** Set only when kind === "lesson" — the lesson this quiz is attached to. */
+  lessonId: string | null;
+  /** Which tier this assessment is. Drives UI grouping and score visibility. */
+  kind: AssessmentKind;
   title: string;
   timeLimitMinutes: number;
   attemptsAllowed: number;
   attemptsUsed: number;
   passingScore: number;
-  status: "not-started" | "in-progress" | "passed" | "failed";
+  status: "not-started" | "in-progress" | "passed" | "failed" | "submitted";
   bestScore: number | null;
   attemptedAt: string | null;
+  /**
+   * True for pre/post — UI must hide score, pass/fail indicators, and the
+   * passingScore threshold. The fellow only sees "Submitted ✓" or "Not yet".
+   * Diagnostic by design (BRD §6.5 extension).
+   */
+  hideScore: boolean;
 };
 
 export type ModuleResource = {
@@ -85,7 +104,13 @@ export type FellowModuleDetail = FellowModuleSummary & {
   id: string | null;
   lessons: Lesson[];
   session: ModuleSession;
-  assessment: ModuleAssessment;
+  /**
+   * Tiered assessments. The legacy `assessment` field is removed —
+   * consumers should render `preAssessment`, lesson-level quizzes
+   * (embedded on each `Lesson.assessment`), and `postAssessment`.
+   */
+  preAssessment: ModuleAssessment | null;
+  postAssessment: ModuleAssessment | null;
   resources: ModuleResource[];
   /**
    * Whether the fellow has submitted end-of-module feedback. When false

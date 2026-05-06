@@ -83,7 +83,30 @@ export default async function ModuleDetailPage({
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 md:gap-6">
         <div className="lg:col-span-2 flex flex-col gap-4 md:gap-6">
+          {/*
+            Tiered assessments (BRD §6.5 + extension):
+              1. Pre-quiz (faculty) — entry baseline, score hidden
+              2. Lessons with optional inline mentor-authored quizzes
+              3. Post-quiz (faculty) — exit measurement, score hidden
+            Module unlocks the next week when all three are submitted +
+            feedback. The fellow sees only "Submitted ✓" / "Not yet" for
+            pre and post; lesson-level scores are visible.
+          */}
+          {m.preAssessment && (
+            <AssessmentCard
+              assessment={m.preAssessment}
+              weekNumber={m.weekNumber}
+              variant="pre"
+            />
+          )}
           <LessonsList lessons={m.lessons} />
+          {m.postAssessment && (
+            <AssessmentCard
+              assessment={m.postAssessment}
+              weekNumber={m.weekNumber}
+              variant="post"
+            />
+          )}
           <ResourcesSection resources={m.resources} />
           {completionMet && m.id && (
             <ModuleFeedbackForm
@@ -94,7 +117,6 @@ export default async function ModuleDetailPage({
         </div>
         <div className="flex flex-col gap-4 md:gap-6">
           <SessionCard session={m.session} weekNumber={m.weekNumber} />
-          <AssessmentCard assessment={m.assessment} weekNumber={m.weekNumber} />
         </div>
       </div>
     </div>
@@ -312,16 +334,45 @@ function SessionAction({ session: s }: { session: ModuleSession }) {
   return <LiveSessionAction session={s} />;
 }
 
+/**
+ * Renders one tier of a module's assessment. `variant` drives the heading
+ * label and tone:
+ *   - "pre"    → "Pre-assessment" (entry baseline, score hidden)
+ *   - "post"   → "Post-assessment" (exit measurement, score hidden)
+ *   - "lesson" → currently unused at the module level (lessons render their
+ *                own embedded quiz), kept for future flexibility
+ *   - omitted  → legacy "module assessment" copy
+ *
+ * When `a.hideScore` is true, we suppress the pass mark, best score, and
+ * pass/fail badge — the fellow only sees "Submitted ✓" or "Not yet". This
+ * preserves the diagnostic intent (BRD §6.5 extension) so fellows can't
+ * game the post-quiz to look like they learned more.
+ */
 function AssessmentCard({
   assessment: a,
   weekNumber,
+  variant,
 }: {
   assessment: ModuleAssessment;
   weekNumber: number;
+  variant?: "pre" | "post" | "lesson";
 }) {
   const passed = a.status === "passed";
   const failed = a.status === "failed";
+  const submitted = a.status === "submitted" || a.attemptsUsed > 0;
   const attemptsLeft = a.attemptsAllowed - a.attemptsUsed;
+  const heading =
+    variant === "pre"
+      ? "Pre-assessment"
+      : variant === "post"
+      ? "Post-assessment"
+      : "Assessment";
+  const subhead =
+    variant === "pre"
+      ? `Entry quiz · Week ${weekNumber}`
+      : variant === "post"
+      ? `Exit quiz · Week ${weekNumber}`
+      : `Week ${weekNumber}`;
 
   return (
     <section className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
@@ -330,27 +381,37 @@ function AssessmentCard({
           <CheckCircleIcon className="h-5 w-5 text-fellowship-navy" />
         </div>
         <div>
-          <h2 className="text-base font-semibold text-gray-800">Assessment</h2>
-          <p className="text-xs text-gray-500">Week {weekNumber}</p>
+          <h2 className="text-base font-semibold text-gray-800">{heading}</h2>
+          <p className="text-xs text-gray-500">{subhead}</p>
         </div>
       </div>
+
+      {a.hideScore && (
+        <p className="mt-3 rounded-md bg-gray-50 p-3 text-xs text-gray-600">
+          Diagnostic only. Your responses are recorded so faculty and
+          mentors can measure cohort progress, but you won&apos;t see your
+          score on this one.
+        </p>
+      )}
 
       <dl className="mt-4 space-y-2 text-sm">
         <div className="flex justify-between gap-3">
           <dt className="text-gray-500">Time limit</dt>
           <dd className="text-gray-800">{a.timeLimitMinutes} min</dd>
         </div>
-        <div className="flex justify-between gap-3">
-          <dt className="text-gray-500">Pass mark</dt>
-          <dd className="text-gray-800">{a.passingScore}%</dd>
-        </div>
+        {!a.hideScore && (
+          <div className="flex justify-between gap-3">
+            <dt className="text-gray-500">Pass mark</dt>
+            <dd className="text-gray-800">{a.passingScore}%</dd>
+          </div>
+        )}
         <div className="flex justify-between gap-3">
           <dt className="text-gray-500">Attempts</dt>
           <dd className="text-gray-800">
             {a.attemptsUsed} / {a.attemptsAllowed} used
           </dd>
         </div>
-        {a.bestScore !== null && (
+        {!a.hideScore && a.bestScore !== null && (
           <div className="flex justify-between gap-3">
             <dt className="text-gray-500">Your best</dt>
             <dd
@@ -362,10 +423,26 @@ function AssessmentCard({
             </dd>
           </div>
         )}
+        {a.hideScore && (
+          <div className="flex justify-between gap-3">
+            <dt className="text-gray-500">Status</dt>
+            <dd
+              className={`font-semibold ${
+                submitted ? "text-success-600" : "text-gray-700"
+              }`}
+            >
+              {submitted ? "Submitted ✓" : "Not yet"}
+            </dd>
+          </div>
+        )}
       </dl>
 
       <div className="mt-5">
-        {passed ? (
+        {a.hideScore && submitted ? (
+          <Button size="sm" variant="outline" className="w-full" disabled>
+            Already submitted
+          </Button>
+        ) : passed ? (
           <Link href={`/learning/take/${encodeURIComponent(a.moduleId)}`} className="block">
             <Button size="sm" variant="outline" className="w-full">
               Review your attempt
@@ -386,7 +463,11 @@ function AssessmentCard({
         ) : a.status === "not-started" ? (
           <Link href={`/learning/take/${encodeURIComponent(a.moduleId)}`} className="block">
             <Button size="sm" variant="fellowship" className="w-full">
-              Start assessment
+              {variant === "pre"
+                ? "Start pre-assessment"
+                : variant === "post"
+                ? "Start post-assessment"
+                : "Start assessment"}
             </Button>
           </Link>
         ) : (
