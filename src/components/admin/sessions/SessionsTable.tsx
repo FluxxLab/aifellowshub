@@ -252,9 +252,15 @@ function RowActions({
  className="dropdown-toggle inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800">
  <MoreDotIcon className="h-5 w-5"/>
  </button>
+ {/*
+   Portal-rendered: this row sits inside an overflow-hidden +
+   overflow-x-auto wrapper. Without the portal, the menu would clip
+   against those boundaries (see /sessions list page screenshot).
+ */}
  <Dropdown
  isOpen={open}
  onClose={() => setOpen(false)}
+ portal
  className="w-48 p-1">
  <ul role="menu" className="flex flex-col gap-0.5">
  {actions.map((a, i) => (
