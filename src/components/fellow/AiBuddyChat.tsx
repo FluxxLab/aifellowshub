@@ -1,5 +1,7 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import AvatarText from "@/components/ui/avatar/AvatarText";
 import Badge from "@/components/ui/badge/Badge";
 import Breadcrumbs from "@/components/common/Breadcrumbs";
@@ -20,13 +22,13 @@ import {
 /**
  * AI Buddy chat (BRD §6.7).
  *
- * Backed by `POST /me/ai/buddy/messages` with a 50/day quota enforced
+ * Backed by `POST /me/ai/buddy/messages` with a 20/day quota enforced
  * server-side. When `ANTHROPIC_API_KEY` isn't set, the backend returns a
  * clearly-marked stub response — the UI still flows end-to-end so the
  * demo is testable without an API key.
  */
 
-const DAILY_LIMIT = 50;
+const DAILY_LIMIT = 20;
 
 const SUGGESTED_PROMPTS = [
   "Explain the EU AI Act risk tiers in plain language.",
@@ -262,7 +264,7 @@ export default function AiBuddyChat() {
             </Button>
           </form>
           <p className="mt-2 text-xs text-gray-400">
-            Enter to send · Shift+Enter for a new line · 50 messages/day per
+            Enter to send · Shift+Enter for a new line · 20 messages/day per
             fellow (BRD §6.7)
           </p>
         </div>
@@ -295,11 +297,6 @@ function MessageBubble({
         </div>
       )}
       <div className="flex max-w-[80%] flex-col gap-1">
-        {!isUser && message.stubbed && (
-          <Badge color="warning" variant="light">
-            Demo response (no LLM key set)
-          </Badge>
-        )}
         <div
           className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
             isUser
@@ -307,7 +304,92 @@ function MessageBubble({
               : "bg-gray-50 text-gray-800"
           }`}
         >
-          <p className="whitespace-pre-wrap">{message.content}</p>
+          {isUser ? (
+            // User messages are plain text — preserve newlines, no
+            // markdown rendering (would let users inject HTML/links
+            // they didn't intend).
+            <p className="whitespace-pre-wrap">{message.content}</p>
+          ) : (
+            // Assistant replies often use markdown (bold, lists,
+            // headings). Render via react-markdown + GFM. Custom
+            // components keep typography aligned with the rest of
+            // the chat bubble — small text, tight spacing, no
+            // gigantic h1 size jumps inside a chat row.
+            <div className="prose-chat">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  p: ({ children }) => (
+                    <p className="mb-2 last:mb-0 whitespace-pre-wrap">
+                      {children}
+                    </p>
+                  ),
+                  strong: ({ children }) => (
+                    <strong className="font-semibold text-gray-900">
+                      {children}
+                    </strong>
+                  ),
+                  em: ({ children }) => (
+                    <em className="italic">{children}</em>
+                  ),
+                  h1: ({ children }) => (
+                    <h3 className="mt-3 mb-1 text-sm font-bold text-gray-900 first:mt-0">
+                      {children}
+                    </h3>
+                  ),
+                  h2: ({ children }) => (
+                    <h3 className="mt-3 mb-1 text-sm font-bold text-gray-900 first:mt-0">
+                      {children}
+                    </h3>
+                  ),
+                  h3: ({ children }) => (
+                    <h4 className="mt-2 mb-1 text-sm font-semibold text-gray-900 first:mt-0">
+                      {children}
+                    </h4>
+                  ),
+                  ul: ({ children }) => (
+                    <ul className="ml-4 mb-2 list-disc space-y-0.5">
+                      {children}
+                    </ul>
+                  ),
+                  ol: ({ children }) => (
+                    <ol className="ml-4 mb-2 list-decimal space-y-0.5">
+                      {children}
+                    </ol>
+                  ),
+                  li: ({ children }) => <li>{children}</li>,
+                  code: ({ children }) => (
+                    <code className="rounded bg-gray-200 px-1 py-0.5 text-[0.85em] font-mono text-gray-800">
+                      {children}
+                    </code>
+                  ),
+                  pre: ({ children }) => (
+                    <pre className="my-2 overflow-x-auto rounded-md bg-gray-200 p-3 text-xs">
+                      {children}
+                    </pre>
+                  ),
+                  a: ({ href, children }) => (
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-fellowship-navy underline hover:text-fellowship-navy-dark"
+                    >
+                      {children}
+                    </a>
+                  ),
+                  hr: () => <hr className="my-3 border-gray-200" />,
+                  blockquote: ({ children }) => (
+                    <blockquote className="my-2 border-l-2 border-gray-300 pl-3 italic text-gray-600">
+                      {children}
+                    </blockquote>
+                  ),
+                }}
+              >
+                {message.content}
+              </ReactMarkdown>
+            </div>
+          )}
         </div>
       </div>
     </div>

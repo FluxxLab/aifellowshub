@@ -1,5 +1,7 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
+import * as ReactDOM from "react-dom";
+import * as ReactDOMClient from "react-dom/client";
 import Button from "@/components/ui/button/Button";
 import { useCurrentUser } from "@/lib/auth/useCurrentUser";
 
@@ -14,27 +16,39 @@ type SignatureResponse = {
 /**
  * React 18 → 19 compatibility shim for @zoom/meetingsdk.
  *
- * The Zoom Meeting SDK 6.0.0 reaches for the old React 18 internal
- * `__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner`
- * which no longer exists in React 19 (Next.js 16 requires React 19).
- * Without the shim the SDK throws `Cannot read properties of undefined`
- * during init and the embed is unusable.
+ * The Zoom Meeting SDK 6.0.0 was built against React 18 and reaches
+ * for two APIs that React 19 (Next.js 16) reorganised:
  *
- * The SDK only reads ReactCurrentOwner for dev-mode warnings; a
- * stubbed shape with `current: null` is enough to keep it happy.
- * Safe to leave in place — when Zoom ships React 19 support and we
- * upgrade the SDK, the shim becomes a no-op (the property already
- * exists on the SDK's side, our assignment is conditional).
+ *   1. `__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner`
+ *      — used for dev-mode warnings. A stub with `current: null` is
+ *      enough to keep it happy.
+ *
+ *   2. `react-dom`'s top-level `createRoot` / `hydrateRoot` exports.
+ *      In React 18 these were available via `import * as ReactDOM
+ *      from "react-dom"`; in React 19 they live in `react-dom/client`
+ *      only. The SDK destructures them from `ReactDOM` and crashes
+ *      with "createRoot is not a function". We re-attach them from
+ *      `react-dom/client` so the SDK's old import path still works.
+ *
+ * Both shims are conditional and idempotent — when Zoom ships React
+ * 19 support and we upgrade the SDK, the assignments become no-ops.
  */
-const reactInternals = (React as unknown as Record<string, unknown>)
-  .__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
-if (!reactInternals) {
-  (React as unknown as Record<string, unknown>).__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED = {
+const reactRecord = React as unknown as Record<string, unknown>;
+if (!reactRecord.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED) {
+  reactRecord.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED = {
     ReactCurrentOwner: { current: null },
     ReactCurrentDispatcher: { current: null },
     ReactCurrentBatchConfig: { transition: null },
     ReactDebugCurrentFrame: { setExtraStackFrame: () => undefined },
   };
+}
+
+const reactDomRecord = ReactDOM as unknown as Record<string, unknown>;
+if (!reactDomRecord.createRoot && ReactDOMClient.createRoot) {
+  reactDomRecord.createRoot = ReactDOMClient.createRoot as unknown;
+}
+if (!reactDomRecord.hydrateRoot && ReactDOMClient.hydrateRoot) {
+  reactDomRecord.hydrateRoot = ReactDOMClient.hydrateRoot as unknown;
 }
 
 /**

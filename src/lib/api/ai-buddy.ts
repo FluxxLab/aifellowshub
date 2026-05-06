@@ -1,7 +1,7 @@
 /**
  * AI Learning Buddy — client interface (BRD §6.7).
  *
- * The chat is a single persistent conversation per fellow with a 50/day
+ * The chat is a single persistent conversation per fellow with a 20/day
  * quota. The backend handles persistence + LLM call + rate limiting; this
  * file is the typed wrapper over the BFF proxy.
  */

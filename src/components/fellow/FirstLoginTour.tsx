@@ -48,7 +48,7 @@ export default function FirstLoginTour({ firstName }: Props) {
       popover: {
         title: "AI Buddy — your study companion",
         description:
-          "Stuck on a concept or scoping your capstone? Ask AI Buddy. You get 50 messages a day, resets at midnight UTC.",
+          "Stuck on a concept or scoping your capstone? Ask AI Buddy. You get 20 messages a day, resets at midnight UTC.",
         side: "bottom",
         align: "center",
       },

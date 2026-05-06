@@ -77,23 +77,23 @@ export default async function MentorHomePage() {
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
         <StatCard
-          icon={<UsersRoundIcon className="text-fellowship-navy" />}
+          icon={<UsersRoundIcon className="text-fellowship-navy size-5" />}
           label="Fellows assigned"
           value={String(home.fellowsAssigned)}
         />
         <StatCard
-          icon={<PaperPlaneIcon className="text-fellowship-navy" />}
+          icon={<PaperPlaneIcon className="text-fellowship-navy size-5" />}
           label="Awaiting your reply"
           value={String(home.awaitingReply)}
           intent={home.awaitingReply > 0 ? "warning" : "neutral"}
         />
         <StatCard
-          icon={<CheckCircleIcon className="text-fellowship-navy" />}
+          icon={<CheckCircleIcon className="text-fellowship-navy size-5" />}
           label="Submitted / under review"
           value={String(home.submittedOrUnderReview)}
         />
         <StatCard
-          icon={<TimeIcon className="text-fellowship-navy" />}
+          icon={<TimeIcon className="text-fellowship-navy size-5" />}
           label="Hours this week"
           value={`${home.hoursMentoredThisWeek}h`}
         />
@@ -248,11 +248,11 @@ function StatCard({
     intent === "warning" ? "text-warning-700" : "text-gray-800";
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
-      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-warning-100">
+      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-warning-100">
         {icon}
       </div>
-      <p className="mt-5 text-sm text-gray-500">{label}</p>
-      <p className={`mt-1 text-3xl font-bold ${valueColour}`}>{value}</p>
+      <p className="mt-4 text-xs text-gray-500">{label}</p>
+      <p className={`mt-1.5 text-2xl font-bold ${valueColour}`}>{value}</p>
     </div>
   );
 }

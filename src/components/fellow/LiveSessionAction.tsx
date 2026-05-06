@@ -73,7 +73,7 @@ export default function LiveSessionAction({
             <Button
               size="sm"
               variant="fellowship"
-              className="w-full"
+              className="w-full bg-fellowship-navy! text-white! hover:bg-fellowship-navy-dark!"
               onClick={() => setOpen(true)}
             >
               Join in app
@@ -107,7 +107,11 @@ export default function LiveSessionAction({
         rel="noopener noreferrer"
         className="block"
       >
-        <Button size="sm" variant="fellowship" className="w-full">
+        <Button
+          size="sm"
+          variant="fellowship"
+          className="w-full bg-fellowship-navy! text-white! hover:bg-fellowship-navy-dark!"
+        >
           Join on Zoom
         </Button>
       </a>
@@ -125,7 +129,7 @@ export default function LiveSessionAction({
         <Button
           size="sm"
           variant="primary"
-          className="w-full"
+          className="w-full bg-fellowship-navy! text-white! hover:bg-fellowship-navy-dark!"
           onClick={rsvp}
           disabled={busy}
         >
