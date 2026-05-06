@@ -120,9 +120,9 @@ export default function ChangePasswordForm() {
                 className="absolute right-4 top-1/2 z-30 -translate-y-1/2"
               >
                 {showCurrent ? (
-                  <EyeIcon className="fill-gray-500" />
+                  <EyeIcon className="h-5 w-5 text-gray-500" />
                 ) : (
-                  <EyeCloseIcon className="fill-gray-500" />
+                  <EyeCloseIcon className="h-5 w-5 text-gray-500" />
                 )}
               </button>
             </div>
@@ -146,9 +146,9 @@ export default function ChangePasswordForm() {
                 className="absolute right-4 top-1/2 z-30 -translate-y-1/2"
               >
                 {showNext ? (
-                  <EyeIcon className="fill-gray-500" />
+                  <EyeIcon className="h-5 w-5 text-gray-500" />
                 ) : (
-                  <EyeCloseIcon className="fill-gray-500" />
+                  <EyeCloseIcon className="h-5 w-5 text-gray-500" />
                 )}
               </button>
             </div>
