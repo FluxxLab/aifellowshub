@@ -1,0 +1,225 @@
+"use client";
+import React, { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import Badge from "@/components/ui/badge/Badge";
+import Button from "@/components/ui/button/Button";
+import { CalenderIcon, TimeIcon } from "@/icons";
+import { apiFetch } from "@/lib/api/client";
+import { cn } from "@/lib/utils";
+import { toast } from "@/lib/toast";
+import { useConfirm } from "@/components/ui/ConfirmDialog";
+import type { AdminBooking, BookingStatus } from "@/lib/api/mentorship";
+
+const STATUS_FILTERS: { id: "all" | BookingStatus; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "pending", label: "Pending" },
+  { id: "confirmed", label: "Confirmed" },
+  { id: "declined", label: "Declined" },
+  { id: "cancelled", label: "Cancelled" },
+];
+
+const STATUS_COPY: Record<BookingStatus, { label: string; color: "info" | "success" | "warning" | "error" | "primary" }> = {
+  pending: { label: "Pending", color: "warning" },
+  confirmed: { label: "Confirmed", color: "success" },
+  declined: { label: "Declined", color: "error" },
+  cancelled: { label: "Cancelled", color: "info" },
+  completed: { label: "Completed", color: "primary" },
+};
+
+export default function AdminBookingsView({
+  initialBookings,
+}: {
+  initialBookings: AdminBooking[];
+}) {
+  const router = useRouter();
+  const { confirm, dialog } = useConfirm();
+  const [bookings, setBookings] = useState(initialBookings);
+  const [filter, setFilter] = useState<(typeof STATUS_FILTERS)[number]["id"]>(
+    "all",
+  );
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const filtered = useMemo(() => {
+    if (filter === "all") return bookings;
+    return bookings.filter((b) => b.status === filter);
+  }, [bookings, filter]);
+
+  async function approve(b: AdminBooking) {
+    const ok = await confirm({
+      title: "Approve this booking?",
+      message:
+        "A Zoom meeting will be created under your email. You'll host the call.",
+      confirmLabel: "Approve & host",
+    });
+    if (!ok) return;
+    setBusyId(b.id);
+    try {
+      const res = await apiFetch<{ booking: AdminBooking }>(
+        `/admin/mentorship-bookings/${encodeURIComponent(b.id)}/approve`,
+        { method: "POST" },
+      );
+      setBookings((prev) => prev.map((x) => (x.id === b.id ? res.booking : x)));
+      toast.success(
+        "Booking confirmed",
+        "Fellow and mentor will see the Zoom link on their pages.",
+      );
+      router.refresh();
+    } catch (err) {
+      toast.errorFromException("Couldn't approve booking", err);
+    }
+    setBusyId(null);
+  }
+
+  async function decline(b: AdminBooking) {
+    const reason = window.prompt("Reason for declining? (optional)") ?? "";
+    setBusyId(b.id);
+    try {
+      await apiFetch(
+        `/admin/mentorship-bookings/${encodeURIComponent(b.id)}/decline`,
+        { method: "POST", body: { reason } },
+      );
+      setBookings((prev) =>
+        prev.map((x) =>
+          x.id === b.id
+            ? { ...x, status: "declined", declineReason: reason || null }
+            : x,
+        ),
+      );
+      toast.success("Booking declined");
+      router.refresh();
+    } catch (err) {
+      toast.errorFromException("Couldn't decline", err);
+    }
+    setBusyId(null);
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      {dialog}
+      <div className="flex flex-wrap gap-2">
+        {STATUS_FILTERS.map((f) => (
+          <button
+            key={f.id}
+            onClick={() => setFilter(f.id)}
+            className={cn(
+              "rounded-full px-3 py-1.5 text-xs font-semibold transition-colors",
+              filter === f.id
+                ? "bg-fellowship-navy text-white"
+                : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50",
+            )}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center">
+          <p className="text-sm text-gray-500">No bookings in this view.</p>
+        </div>
+      ) : (
+        <ul className="flex flex-col gap-3">
+          {filtered.map((b) => {
+            const start = new Date(b.slot.startsAt);
+            const s = STATUS_COPY[b.status];
+            const isBusy = busyId === b.id;
+            return (
+              <li
+                key={b.id}
+                className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+                      <CalenderIcon className="h-4 w-4" />
+                      {start.toLocaleString(undefined, {
+                        weekday: "short",
+                        day: "numeric",
+                        month: "short",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </div>
+                    <p className="mt-1 inline-flex items-center gap-1 text-xs text-gray-500">
+                      <TimeIcon className="h-3.5 w-3.5" />
+                      {b.slot.durationMinutes} min
+                    </p>
+                    <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
+                      <div className="flex gap-2">
+                        <dt className="text-gray-500">Fellow</dt>
+                        <dd className="font-medium text-gray-800">
+                          {b.fellow?.fullName ?? "—"}
+                        </dd>
+                      </div>
+                      <div className="flex gap-2">
+                        <dt className="text-gray-500">Mentor</dt>
+                        <dd className="font-medium text-gray-800">
+                          {b.mentor?.fullName ?? "—"}
+                        </dd>
+                      </div>
+                    </dl>
+                    {b.topic && (
+                      <div className="mt-3 rounded-md bg-gray-50 p-3 text-sm text-gray-700">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                          Agenda
+                        </p>
+                        <p className="mt-1">{b.topic}</p>
+                      </div>
+                    )}
+                    {b.status === "confirmed" && b.zoomJoinUrl && (
+                      <p className="mt-3 text-xs">
+                        <a
+                          href={b.zoomJoinUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-semibold text-fellowship-navy hover:underline"
+                        >
+                          Open Zoom meeting →
+                        </a>
+                        {b.approvedBy && (
+                          <span className="ml-2 text-gray-500">
+                            (host: {b.approvedBy.fullName})
+                          </span>
+                        )}
+                      </p>
+                    )}
+                    {b.status === "declined" && b.declineReason && (
+                      <p className="mt-3 text-xs text-error-700">
+                        Declined: {b.declineReason}
+                      </p>
+                    )}
+                  </div>
+                  <Badge color={s.color} variant="light">
+                    {s.label}
+                  </Badge>
+                </div>
+
+                {b.status === "pending" && (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant="fellowship"
+                      onClick={() => approve(b)}
+                      disabled={isBusy}
+                      className="bg-fellowship-navy! text-white! hover:bg-fellowship-navy-dark!"
+                    >
+                      {isBusy ? "Working…" : "Approve & host"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => decline(b)}
+                      disabled={isBusy}
+                    >
+                      Decline
+                    </Button>
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
