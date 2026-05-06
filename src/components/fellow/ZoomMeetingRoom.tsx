@@ -76,7 +76,11 @@ export default function ZoomMeetingRoom({
           (mod as unknown as { default: typeof import("@zoom/meetingsdk").ZoomMtg })
             .default;
 
-        ZoomMtg.setZoomJSLib("https://source.zoom.us/3.13.2/lib", "/av");
+        // Lib version MUST match the npm @zoom/meetingsdk version exactly,
+        // otherwise the CDN bundle's runtime contracts (React internals
+        // access, redux store shape, etc.) drift from the npm wrapper and
+        // joining throws `ReactCurrentOwner` or similar internal errors.
+        ZoomMtg.setZoomJSLib("https://source.zoom.us/6.0.0/lib", "/av");
         ZoomMtg.preLoadWasm();
         ZoomMtg.prepareWebSDK();
 
