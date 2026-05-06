@@ -9,6 +9,7 @@ type SignatureResponse = {
   meetingNumber: string;
   role: number;
   sessionTitle: string;
+  meetingPassword?: string;
 };
 
 /**
@@ -93,7 +94,7 @@ export default function ZoomMeetingRoom({
           meetingNumber: sig.meetingNumber,
           userName: user?.fullName ?? "PIC LMS Fellow",
           userEmail: user?.email ?? "",
-          password: "",
+          password: sig.meetingPassword ?? "",
         });
         if (cancelled) return;
         setPhase("in-meeting");
