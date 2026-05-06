@@ -176,8 +176,15 @@ export default function AttendanceRoster({ sessionId, session }: AttendanceRoste
  </div>
  </div>
 
- <div className="max-w-full overflow-x-auto">
- <Table>
+ {/*
+   We don't use `overflow-x-auto` on this wrapper any more — that
+   implicitly clips vertical overflow in most browsers, which chopped
+   the row-level dropdown menu in half. Page-level horizontal scrolling
+   handles narrow viewports instead. The min-w on the table keeps the
+   columns from collapsing into illegible widths.
+ */}
+ <div className="w-full">
+ <Table className="min-w-[640px]">
  <TableHeader className="border-y border-gray-100 bg-gray-50">
  <TableRow>
  <Th>Fellow</Th>
