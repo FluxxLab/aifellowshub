@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "node:path";
 
 const nextConfig: NextConfig = {
   /**
@@ -43,6 +44,21 @@ const nextConfig: NextConfig = {
         },
       ],
     });
+
+    // Force every `import 'react'` / `import 'react-dom'` — including
+    // the ones inside the bundled Zoom Meeting SDK chunk — to resolve
+    // to this repo's installed copy. Without this alias, Next.js can
+    // surface its own compiled React (which is React 19) to dependent
+    // chunks, and the Zoom SDK's `React.__SECRET_INTERNALS_DO_NOT_USE_
+    // OR_YOU_WILL_BE_FIRED.ReactCurrentOwner` access blows up because
+    // React 19 renamed those internals. Pinning the singleton fixes it.
+    config.resolve = config.resolve ?? {};
+    config.resolve.alias = {
+      ...(config.resolve.alias ?? {}),
+      react: path.resolve(process.cwd(), "node_modules/react"),
+      "react-dom": path.resolve(process.cwd(), "node_modules/react-dom"),
+    };
+
     return config;
   },
 
