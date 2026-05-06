@@ -6,7 +6,7 @@ import { getSession } from "@/lib/api/sessions";
 import { getSessionAdminServer } from "@/lib/api/sessions.server";
 
 type PageProps = {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 };
 
 /** Fetch real backend roster first; fall back to mock if unreachable. */
@@ -19,7 +19,7 @@ async function loadSession(id: string) {
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const { id } = await params;
+  const { id } = params;
   const session = await loadSession(id);
   return {
     title: session
@@ -29,7 +29,7 @@ export async function generateMetadata({
 }
 
 export default async function SessionDetailPage({ params }: PageProps) {
-  const { id } = await params;
+  const { id } = params;
   const session = await loadSession(id);
   if (!session) notFound();
 

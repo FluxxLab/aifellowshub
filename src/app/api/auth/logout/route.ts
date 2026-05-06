@@ -19,7 +19,7 @@ export async function POST() {
   // browser than fail closed and leave them signed in.
   await backendFetch("/auth/logout", { method: "POST" }).catch(() => null);
 
-  const cookieStore = await cookies();
+  const cookieStore = cookies();
   cookieStore.set(SESSION_COOKIE, "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

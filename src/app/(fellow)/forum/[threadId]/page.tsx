@@ -6,9 +6,9 @@ import { getForumThreadServer } from "@/lib/api/fellow-forum.server";
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ threadId: string }>;
+  params: { threadId: string };
 }): Promise<Metadata> {
-  const { threadId } = await params;
+  const { threadId } = params;
   const thread = await getForumThreadServer(threadId);
   if (!thread) return { title: "Thread not found · AI Fellows LMS" };
   return {
@@ -20,9 +20,9 @@ export async function generateMetadata({
 export default async function ForumThreadPage({
   params,
 }: {
-  params: Promise<{ threadId: string }>;
+  params: { threadId: string };
 }) {
-  const { threadId } = await params;
+  const { threadId } = params;
   const thread = await getForumThreadServer(threadId);
   if (!thread) notFound();
   return <ForumThreadView thread={thread} />;

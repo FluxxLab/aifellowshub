@@ -26,9 +26,9 @@ export const metadata: Metadata = {
 export default async function AttemptResultPage({
   params,
 }: {
-  params: Promise<{ attemptId: string }>;
+  params: { attemptId: string };
 }) {
-  const { attemptId } = await params;
+  const { attemptId } = params;
   const attempt = await getMyAttempt(attemptId);
   if (!attempt) return notFound();
 

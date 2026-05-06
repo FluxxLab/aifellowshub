@@ -14,11 +14,11 @@ import type {
 } from "@/lib/api/participants";
 
 type PageProps = {
- params: Promise<{ id: string }>;
+ params: { id: string };
 };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
- const { id } = await params;
+ const { id } = params;
  const fellow = await getFellowProfileServer(id);
  return {
  title: fellow ?`${fellow.fullName} · Participants`:"Participant · AI Fellows LMS",
@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function FellowProfilePage({ params }: PageProps) {
- const { id } = await params;
+ const { id } = params;
  const fellow = await getFellowProfileServer(id);
  if (!fellow) notFound();
 

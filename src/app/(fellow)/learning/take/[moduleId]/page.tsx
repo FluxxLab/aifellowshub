@@ -21,9 +21,9 @@ import { getModuleAttemptSummaryServer } from "@/lib/api/fellow-assessment.serve
 export default async function TakeAssessmentPage({
   params,
 }: {
-  params: Promise<{ moduleId: string }>;
+  params: { moduleId: string };
 }) {
-  const { moduleId } = await params;
+  const { moduleId } = params;
 
   let assessment: FellowAssessment;
   let loadError: string | null = null;

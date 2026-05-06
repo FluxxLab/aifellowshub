@@ -9,16 +9,16 @@ export const metadata: Metadata = {
 };
 
 type PageProps = {
-  searchParams: Promise<{
+  searchParams: {
     action?: string;
     actorId?: string;
     targetUserId?: string;
     cursor?: string;
-  }>;
+  };
 };
 
 export default async function AuditLogPage({ searchParams }: PageProps) {
-  const params = await searchParams;
+  const params = searchParams;
   const data = await getAuditLogServer({
     action: params.action,
     actorId: params.actorId,

@@ -28,9 +28,9 @@ import type {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ week: string }>;
+  params: { week: string };
 }): Promise<Metadata> {
-  const { week } = await params;
+  const { week } = params;
   const m = await getFellowModuleServer(Number(week));
   if (!m) return { title: "Module not found · AI Fellows LMS" };
   return {
@@ -42,9 +42,9 @@ export async function generateMetadata({
 export default async function ModuleDetailPage({
   params,
 }: {
-  params: Promise<{ week: string }>;
+  params: { week: string };
 }) {
-  const { week } = await params;
+  const { week } = params;
   const weekNumber = Number(week);
   if (!Number.isInteger(weekNumber)) notFound();
 

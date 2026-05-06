@@ -11,7 +11,32 @@
       "Bash(xargs -I{} ls -la \"{}\")",
       "Bash(xxd)",
       "Bash(grep -E \"^\\\\.env$|cookies\")",
-      "Bash(grep -v \"^README\\\\.md$\")"
+      "Bash(grep -v \"^README\\\\.md$\")",
+      "Bash(gh repo *)",
+      "Bash(npx next *)",
+      "Bash(pnpm install *)",
+      "Bash(npm view *)",
+      "Bash(pnpm add *)",
+      "Bash(git -C \"c:/Users/User/Downloads/PIC-LMS/PIC-LMS\" log --oneline -20)",
+      "Bash(git -C \"c:/Users/User/Downloads/PIC-LMS/PIC-LMS\" log --stat -3)",
+      "Bash(git -C \"c:/Users/User/Downloads/PIC-LMS/PIC-LMS\" status)",
+      "Bash(git -C \"c:/Users/User/Downloads/PIC-LMS/PIC-LMS\" diff next.config.ts)",
+      "Bash(git -C \"c:/Users/User/Downloads/PIC-LMS/PIC-LMS\" add next.config.ts)",
+      "Bash(git -C c:/Users/User/Downloads/PIC-LMS/PIC-LMS commit -m ' *)",
+      "Bash(git -C \"c:/Users/User/Downloads/PIC-LMS/PIC-LMS\" push origin main)",
+      "Bash(curl -sS -o /dev/null -w \"HTTP %{http_code} | %{time_total}s\\\\n\" \"https://www.aiegfellowship.org/api/health\")",
+      "Bash(curl -k -sS -o /dev/null -w \"HTTP %{http_code} | %{time_total}s\\\\n\" \"https://www.aiegfellowship.org/api/health\")",
+      "Bash(git commit *)",
+      "Bash(grep -rn \"session.findUnique\\\\|where:.*moduleId.*}\\\\s*$\\\\|where: { moduleId }\" c:/Users/User/Downloads/pic-lms-backend/src/sessions/)",
+      "WebFetch(domain:devforum.zoom.us)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:nextjs-forum.com)",
+      "Bash(pnpm build *)",
+      "Bash(pnpm list *)",
+      "WebFetch(domain:www.npmjs.com)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\User\\Downloads\\PIC-LMS\\PIC-LMS\\src\\app\\api\\forum\\groups"
     ]
   }
 }

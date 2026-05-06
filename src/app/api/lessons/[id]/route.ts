@@ -3,16 +3,16 @@ import { proxy } from "@/lib/api/proxy";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: { id: string } },
 ) {
-  const { id } = await params;
+  const { id } = params;
   return proxy(req, `/lessons/${encodeURIComponent(id)}`);
 }
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: { id: string } },
 ) {
-  const { id } = await params;
+  const { id } = params;
   return proxy(req, `/lessons/${encodeURIComponent(id)}`);
 }

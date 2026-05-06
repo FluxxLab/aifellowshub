@@ -9,9 +9,9 @@ import { getPublicCertificateServer } from "@/lib/api/fellow-certificates.server
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }): Promise<Metadata> {
-  const { id } = await params;
+  const { id } = params;
   const result = await getPublicCertificateServer(id);
   if (!result) return { title: "Certificate not found · AI Fellows" };
   return {
@@ -23,9 +23,9 @@ export async function generateMetadata({
 export default async function VerifyCertificatePage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }) {
-  const { id } = await params;
+  const { id } = params;
   const result = await getPublicCertificateServer(id);
 
   return (

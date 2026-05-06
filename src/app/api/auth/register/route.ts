@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const cookieStore = await cookies();
+  const cookieStore = cookies();
   cookieStore.set(SESSION_COOKIE, accessToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

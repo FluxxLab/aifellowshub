@@ -11,6 +11,10 @@ import { ImageResponse } from "next/og";
  */
 export const size = { width: 32, height: 32 };
 export const contentType = "image/png";
+// Opt out of static prerendering — Next 14's @vercel/og bundle hits an
+// `Invalid URL` in fileURLToPath during build-time generation. Rendering
+// at request time avoids the bug; the response is cached by the CDN.
+export const dynamic = "force-dynamic";
 
 export default function Icon() {
   return new ImageResponse(

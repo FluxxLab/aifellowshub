@@ -6,9 +6,9 @@ import { getFacultyModule } from "@/lib/api/faculty.server";
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }): Promise<Metadata> {
-  const { id } = await params;
+  const { id } = params;
   const m = await getFacultyModule(id);
   if (!m) return { title: "Module not found · AI Fellows LMS" };
   return {
@@ -20,9 +20,9 @@ export async function generateMetadata({
 export default async function FacultyModuleEditPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }) {
-  const { id } = await params;
+  const { id } = params;
   const module_ = await getFacultyModule(id);
   if (!module_) notFound();
   return <FacultyModuleEditor initial={module_} />;

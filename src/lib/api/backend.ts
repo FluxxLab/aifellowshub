@@ -37,7 +37,7 @@ export async function backendFetch(path: string, opts: FetchOpts = {}) {
   headers.set("Origin", PUBLIC_ORIGIN);
 
   if (opts.forwardAuth !== false) {
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const token = cookieStore.get(SESSION_COOKIE)?.value;
     if (token) headers.set("Authorization", `Bearer ${token}`);
   }

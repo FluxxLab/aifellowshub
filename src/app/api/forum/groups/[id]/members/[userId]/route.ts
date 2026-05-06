@@ -9,9 +9,9 @@ import { proxy } from "@/lib/api/proxy";
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string; userId: string }> },
+  { params }: { params: { id: string; userId: string } },
 ) {
-  const { id, userId } = await params;
+  const { id, userId } = params;
   return proxy(
     req,
     `/forum/groups/${encodeURIComponent(id)}/members/${encodeURIComponent(userId)}`,

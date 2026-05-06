@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Button from "@/components/ui/button/Button";
 import { useCurrentUser } from "@/lib/auth/useCurrentUser";
 
@@ -12,24 +12,25 @@ type SignatureResponse = {
 };
 
 /**
- * Embeds a Zoom meeting via the Meeting SDK **Client View** (BRD §6.4).
+ * Embeds a Zoom meeting inline (Meeting SDK Component View, BRD §6.4).
  *
- * Why Client View instead of Component View:
- *   The Component View (`@zoom/meetingsdk/embedded`) bundles its own
- *   React 18.2 internals access pattern that breaks under Next.js 15's
- *   bundler — it crashes with `Cannot read properties of undefined
- *   (reading 'ReactCurrentOwner')` because Next ships a different React
- *   build to client chunks. Pinning React to 18.2.0 fixes the SDK but
- *   breaks Next 15 (which calls `React.cache()`, only available in
- *   ≥ 18.3). The Client View loads its asset bundle at runtime via
- *   `prepareWebSDK`, so it brings its own React + ReactDOM and never
- *   touches the host React tree.
+ * Loads the SDK lazily so the heavy WASM bundle never ships on
+ * non-meeting pages. The Component View renders into the `<div>` we
+ * mount via `containerRef`, leaving the LMS sidebar/header visible.
  *
- * Trade-off: Client View takes over the page (full-screen `#zmmtg-root`)
- * rather than rendering inline. We hide it on unmount and clean up.
+ * Stack constraints:
+ *   - Next 14 + React 18.2.0 — Component View's internal `__SECRET_
+ *     INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner`
+ *     access requires React 18.2 exactly. React 18.3+ broke the
+ *     property layout, and Next 15+ requires React 18.3+ (uses
+ *     `React.cache()` internally), so the inline embed only works on
+ *     this older trio. Don't bump Next without re-verifying.
  *
- * Cross-origin isolation (COOP `same-origin` + COEP `require-corp`) is
- * still required for the WASM SharedArrayBuffer path — see next.config.
+ * Cross-origin isolation (COOP `same-origin` + COEP `require-corp`)
+ * is required for the WASM SharedArrayBuffer path — see next.config.
+ *
+ * Cleanup is critical — `destroyClient()` MUST run on unmount or the
+ * next mount will fail with "client is already initialised".
  */
 export default function ZoomMeetingRoom({
   sessionId,
@@ -39,6 +40,8 @@ export default function ZoomMeetingRoom({
   onLeave?: () => void;
 }) {
   const user = useCurrentUser();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const clientRef = useRef<unknown>(null);
   const [phase, setPhase] = useState<
     "loading" | "joining" | "in-meeting" | "left" | "error"
   >("loading");
@@ -46,6 +49,7 @@ export default function ZoomMeetingRoom({
 
   useEffect(() => {
     let cancelled = false;
+    let cleanup: (() => void) | null = null;
 
     async function start() {
       try {
@@ -64,66 +68,48 @@ export default function ZoomMeetingRoom({
         const sig = (await sigRes.json()) as SignatureResponse;
         if (cancelled) return;
 
-        // Client View is exported from the package root (not /embedded).
-        // The SDK ships its own React 18.2 inside the runtime bundle it
-        // pulls from `source.zoom.us` via prepareWebSDK, so the host
-        // React version is irrelevant once this is set up.
-        const mod = await import("@zoom/meetingsdk");
+        const mod = await import("@zoom/meetingsdk/embedded");
         if (cancelled) return;
-        const ZoomMtg =
-          (mod as unknown as { ZoomMtg?: typeof import("@zoom/meetingsdk").ZoomMtg })
-            .ZoomMtg ??
-          (mod as unknown as { default: typeof import("@zoom/meetingsdk").ZoomMtg })
-            .default;
+        const ZoomMtgEmbedded = mod.default;
+        const client = ZoomMtgEmbedded.createClient();
+        clientRef.current = client;
 
-        // Lib version MUST match the npm @zoom/meetingsdk version exactly,
-        // otherwise the CDN bundle's runtime contracts (React internals
-        // access, redux store shape, etc.) drift from the npm wrapper and
-        // joining throws `ReactCurrentOwner` or similar internal errors.
-        ZoomMtg.setZoomJSLib("https://source.zoom.us/6.0.0/lib", "/av");
-        ZoomMtg.preLoadWasm();
-        ZoomMtg.prepareWebSDK();
+        if (!containerRef.current) {
+          throw new Error("Meeting container missing.");
+        }
 
-        // Make sure the SDK's mount point exists. It's removed on unmount.
-        ensureZoomRoot();
-
-        setPhase("joining");
-        await new Promise<void>((resolve, reject) => {
-          ZoomMtg.init({
-            leaveUrl: window.location.href,
-            patchJsMedia: true,
-            success: () => resolve(),
-            error: (e: unknown) =>
-              reject(
-                new Error(
-                  (e as { errorMessage?: string })?.errorMessage ??
-                    "Couldn't initialise meeting.",
-                ),
-              ),
-          });
+        await client.init({
+          zoomAppRoot: containerRef.current,
+          language: "en-US",
+          patchJsMedia: true,
+          leaveOnPageUnload: true,
         });
         if (cancelled) return;
 
-        await new Promise<void>((resolve, reject) => {
-          ZoomMtg.join({
-            signature: sig.signature,
-            sdkKey: sig.sdkKey,
-            meetingNumber: sig.meetingNumber,
-            userName: user?.fullName ?? "PIC LMS Fellow",
-            userEmail: user?.email ?? "",
-            passWord: "",
-            success: () => resolve(),
-            error: (e: unknown) =>
-              reject(
-                new Error(
-                  (e as { errorMessage?: string })?.errorMessage ??
-                    "Couldn't join meeting.",
-                ),
-              ),
-          });
+        setPhase("joining");
+        await client.join({
+          signature: sig.signature,
+          sdkKey: sig.sdkKey,
+          meetingNumber: sig.meetingNumber,
+          userName: user?.fullName ?? "PIC LMS Fellow",
+          userEmail: user?.email ?? "",
+          password: "",
         });
         if (cancelled) return;
         setPhase("in-meeting");
+
+        cleanup = () => {
+          try {
+            client.leaveMeeting?.();
+          } catch {
+            // ignore
+          }
+          try {
+            ZoomMtgEmbedded.destroyClient();
+          } catch {
+            // ignore
+          }
+        };
       } catch (e) {
         if (cancelled) return;
         setError(e instanceof Error ? e.message : "Couldn't join the meeting.");
@@ -134,11 +120,7 @@ export default function ZoomMeetingRoom({
     void start();
     return () => {
       cancelled = true;
-      // Hide the SDK chrome on unmount so navigating away doesn't leave
-      // the Zoom UI floating over the next page. Don't delete the node —
-      // the SDK keeps internal references and removing it can throw.
-      const root = document.getElementById("zmmtg-root");
-      if (root) root.style.display = "none";
+      if (cleanup) cleanup();
     };
   }, [sessionId, user?.fullName, user?.email]);
 
@@ -155,14 +137,20 @@ export default function ZoomMeetingRoom({
           {error}
         </div>
       )}
+      {/*
+        Zoom mounts its UI here. The element MUST stay in the DOM the
+        whole time the meeting is live; the SDK manages the inner DOM.
+      */}
+      <div
+        ref={containerRef}
+        className="min-h-[480px] w-full overflow-hidden rounded-2xl bg-black"
+      />
       {phase === "in-meeting" && (
         <div className="flex justify-end">
           <Button
             size="sm"
             variant="outline"
             onClick={() => {
-              const root = document.getElementById("zmmtg-root");
-              if (root) root.style.display = "none";
               setPhase("left");
               onLeave?.();
             }}
@@ -173,18 +161,4 @@ export default function ZoomMeetingRoom({
       )}
     </div>
   );
-}
-
-/**
- * Client View renders into `#zmmtg-root`. The SDK creates it on init,
- * but if a previous meeting hid it we need to restore visibility.
- */
-function ensureZoomRoot() {
-  let root = document.getElementById("zmmtg-root");
-  if (!root) {
-    root = document.createElement("div");
-    root.id = "zmmtg-root";
-    document.body.appendChild(root);
-  }
-  root.style.display = "block";
 }

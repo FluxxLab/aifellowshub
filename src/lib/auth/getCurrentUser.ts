@@ -35,7 +35,7 @@ function backendToCurrentUser(u: BackendUser): CurrentUser {
 }
 
 export async function getCurrentUser(): Promise<CurrentUser> {
-  const cookieStore = await cookies();
+  const cookieStore = cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
 
   if (!token) {

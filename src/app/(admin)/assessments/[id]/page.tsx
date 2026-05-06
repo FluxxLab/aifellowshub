@@ -6,13 +6,13 @@ import AssessmentDetailBody from "@/components/admin/assessments/AssessmentDetai
 import { getAssessmentServer } from "@/lib/api/assessments.server";
 
 type PageProps = {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 };
 
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const { id } = await params;
+  const { id } = params;
   const a = await getAssessmentServer(id);
   return {
     title: a ? `${a.title} · Assessments` : "Assessment · AI Fellows LMS",
@@ -20,7 +20,7 @@ export async function generateMetadata({
 }
 
 export default async function AssessmentDetailPage({ params }: PageProps) {
-  const { id } = await params;
+  const { id } = params;
   const assessment = await getAssessmentServer(id);
   if (!assessment) notFound();
 

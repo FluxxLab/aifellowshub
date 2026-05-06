@@ -5,13 +5,13 @@ import ModuleList from "@/components/admin/courses/ModuleList";
 import { getCourseDetail } from "@/lib/api/courses.server";
 
 type PageProps = {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 };
 
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const { id } = await params;
+  const { id } = params;
   const course = await getCourseDetail(id);
   return {
     title: course ? `${course.title} · Courses` : "Course · AI Fellows LMS",
@@ -19,7 +19,7 @@ export async function generateMetadata({
 }
 
 export default async function CourseDetailPage({ params }: PageProps) {
-  const { id } = await params;
+  const { id } = params;
   const course = await getCourseDetail(id);
   if (!course) notFound();
 

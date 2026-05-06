@@ -9,9 +9,9 @@ import {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ fellowId: string }>;
+  params: { fellowId: string };
 }): Promise<Metadata> {
-  const { fellowId } = await params;
+  const { fellowId } = params;
   const queue = await getMentorQueueServer();
   const entry = queue.find((q) => q.fellowId === fellowId);
   if (!entry) return { title: "Capstone not found · AI Fellows LMS" };
@@ -24,9 +24,9 @@ export async function generateMetadata({
 export default async function MentorCapstoneReviewPage({
   params,
 }: {
-  params: Promise<{ fellowId: string }>;
+  params: { fellowId: string };
 }) {
-  const { fellowId } = await params;
+  const { fellowId } = params;
   const [capstone, queue] = await Promise.all([
     getMentorCapstoneServer(fellowId),
     getMentorQueueServer(),
