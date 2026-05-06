@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import FacultyModuleEditor from "@/components/faculty/FacultyModuleEditor";
+import ModuleFeedbackPanel from "@/components/admin/modules/ModuleFeedbackPanel";
 import { getFacultyModule } from "@/lib/api/faculty.server";
 
 export async function generateMetadata({
@@ -25,5 +26,10 @@ export default async function FacultyModuleEditPage({
   const { id } = params;
   const module_ = await getFacultyModule(id);
   if (!module_) notFound();
-  return <FacultyModuleEditor initial={module_} />;
+  return (
+    <div className="flex flex-col gap-6">
+      <FacultyModuleEditor initial={module_} />
+      <ModuleFeedbackPanel moduleId={id} />
+    </div>
+  );
 }

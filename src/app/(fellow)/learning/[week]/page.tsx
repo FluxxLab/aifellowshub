@@ -18,6 +18,8 @@ import {
 import { getFellowModuleServer } from "@/lib/api/fellow-learning.server";
 import LessonsList from "@/components/fellow/LessonsList";
 import LiveSessionAction from "@/components/fellow/LiveSessionAction";
+import ModuleFeedbackForm from "@/components/fellow/ModuleFeedbackForm";
+import { getMyModuleFeedbackServer } from "@/lib/api/feedback.server";
 import type {
   FellowModuleDetail,
   ModuleSession,
@@ -55,6 +57,18 @@ export default async function ModuleDetailPage({
     return <LockedView module={m} />;
   }
 
+  // Completion is met when the fellow has either attended a session or
+  // passed the assessment. Once met, the feedback form gates the next
+  // module's unlock — show the form unless they've already submitted.
+  const completionMet =
+    m.sessionAttended === true || m.assessmentPassed === true;
+  // Only fetch the existing submission when the form would actually
+  // render; saves a backend round-trip on every module page load.
+  const existingFeedback =
+    completionMet && !m.feedbackSubmitted && m.id
+      ? await getMyModuleFeedbackServer(m.id)
+      : null;
+
   return (
     <div className="flex flex-col gap-4 md:gap-6">
       <Breadcrumbs
@@ -71,6 +85,12 @@ export default async function ModuleDetailPage({
         <div className="lg:col-span-2 flex flex-col gap-4 md:gap-6">
           <LessonsList lessons={m.lessons} />
           <ResourcesSection resources={m.resources} />
+          {completionMet && m.id && (
+            <ModuleFeedbackForm
+              moduleId={m.id}
+              existing={existingFeedback}
+            />
+          )}
         </div>
         <div className="flex flex-col gap-4 md:gap-6">
           <SessionCard session={m.session} weekNumber={m.weekNumber} />

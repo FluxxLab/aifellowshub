@@ -54,6 +54,7 @@ type BackendCurriculumModule = {
     latestStatus: "passed" | "failed" | "pending_review" | null;
   };
   unlocked: boolean;
+  feedbackSubmitted: boolean;
 };
 
 type BackendSession = {
@@ -175,6 +176,7 @@ export async function getFellowModuleServer(
     passed ? "passed" : failed ? "failed" : "not-started";
 
   return {
+    id: m.id,
     weekNumber: m.weekNumber,
     title: m.title,
     summary: m.summary,
@@ -188,6 +190,7 @@ export async function getFellowModuleServer(
     lessons,
     session,
     resources,
+    feedbackSubmitted: m.feedbackSubmitted ?? false,
     assessment: m.assessment
       ? {
           id: m.assessment.id,
