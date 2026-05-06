@@ -126,18 +126,31 @@ const nextConfig: NextConfig = {
       });
     }
 
+    // Routes that embed the Zoom Meeting SDK Component View. The SDK
+    // needs cross-origin isolation (COOP `same-origin` + COEP
+    // `require-corp`) for SharedArrayBuffer; without it, recent SDK
+    // versions crash the renderer and Chrome shows "This page couldn't
+    // load". Keep this list in sync with every route that mounts
+    // <ZoomMeetingRoom> directly or indirectly.
+    const zoomIsolationHeaders = [
+      { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+      { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
+    ];
+    const zoomIsolatedRoutes = [
+      "/learning/:path*", // fellow learning pages (LiveSessionAction)
+      "/sessions/:path*", // admin session detail (SessionDetailHeader)
+      "/my-sessions/:path*", // fellow sessions list (future embed)
+    ];
+
     return [
       {
         source: "/(.*)",
         headers: baseHeaders,
       },
-      {
-        source: "/learning/:path*",
-        headers: [
-          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
-          { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
-        ],
-      },
+      ...zoomIsolatedRoutes.map((source) => ({
+        source,
+        headers: zoomIsolationHeaders,
+      })),
     ];
   },
 };
