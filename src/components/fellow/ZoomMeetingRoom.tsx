@@ -1,7 +1,27 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
+import ReactDOM from "react-dom";
+import * as ReactDOMClient from "react-dom/client";
 import Button from "@/components/ui/button/Button";
 import { useCurrentUser } from "@/lib/auth/useCurrentUser";
+
+// Zoom Meeting SDK 6.x reads `window.React` / `window.ReactDOM` and
+// expects React's `__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.
+// ReactCurrentOwner` to exist. When Next.js tree-shakes those internals
+// out of the client bundle, the SDK throws
+//   "Cannot read properties of undefined (reading 'ReactCurrentOwner')"
+// during `client.init()`. Pinning React/ReactDOM onto `window` (and
+// merging the legacy ReactDOM API with the React 18 client API so
+// `createRoot` is also reachable) resolves it for SDK 6.0.x.
+if (typeof window !== "undefined") {
+  const w = window as unknown as {
+    React?: typeof React;
+    ReactDOM?: typeof ReactDOM & typeof ReactDOMClient;
+  };
+  w.React = React;
+  w.ReactDOM = Object.assign({}, ReactDOM, ReactDOMClient) as typeof ReactDOM &
+    typeof ReactDOMClient;
+}
 
 type SignatureResponse = {
   signature: string;
