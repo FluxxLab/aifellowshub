@@ -13,9 +13,7 @@ import type { SessionDetail, SessionStatus } from "@/lib/api/sessions";
 // Lazy-loaded so the ~3MB Zoom Meeting SDK bundle stays out of the admin
 // list view. SSR off because the SDK reaches for `window` on import.
 // Reused from the fellow tree — the backend's `issueZoomSignature` mints
-// a host-role token (role=1) for admins/faculty automatically. The
-// component itself contains a React 19 compatibility shim so the SDK's
-// React-18-era internal access works on Next.js 16.
+// a host-role token (role=1) for admins/faculty automatically.
 const ZoomMeetingRoom = dynamic(
   () => import("@/components/fellow/ZoomMeetingRoom"),
   {

@@ -8,8 +8,7 @@ import type { ModuleSession } from "@/lib/api/fellow-learning";
 
 // Lazy-loaded so the ~3MB Zoom Meeting SDK bundle stays out of every
 // other fellow page. SSR off because the SDK reaches for `window` on
-// import. The component itself contains a React 19 internals shim so
-// the SDK (built for React 18) works on Next.js 16's React 19.
+// import.
 const ZoomMeetingRoom = dynamic(
   () => import("@/components/fellow/ZoomMeetingRoom"),
   {
