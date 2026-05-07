@@ -17,8 +17,11 @@ import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
+import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { MoreDotIcon, PlusIcon } from "@/icons";
 import InviteModal from "./InviteModal";
+import { apiFetch } from "@/lib/api/client";
+import { toast } from "@/lib/toast";
 import type {
  Participants,
  Fellow,
@@ -110,6 +113,57 @@ function countsFor(data: Participants) {
  mentors: data.mentors.length,
  admins: data.admins.length,
  waitlist: data.waitlist.length,
+ };
+}
+
+/**
+ * Soft-delete helper: shows a confirmation dialog, calls the matching
+ * deactivate/reactivate endpoint, toasts the result, and refreshes the
+ * list. Backend rejects self-deactivation and last-super-admin
+ * deactivation — those errors surface via the toast.
+ */
+function useDeactivateUser() {
+ const router = useRouter();
+ const { confirm, dialog } = useConfirm();
+ async function run(user: { id: string; fullName: string; isActive: boolean }) {
+ const ok = await confirm({
+ title: user.isActive ? "Deactivate this user?" : "Reactivate this user?",
+ message: user.isActive
+ ? `${user.fullName} will lose access to the LMS immediately. Their data is preserved and you can reactivate later.`
+ : `${user.fullName} will regain access to the LMS.`,
+ confirmLabel: user.isActive ? "Deactivate" : "Reactivate",
+ tone: user.isActive ? "danger" : undefined,
+ });
+ if (!ok) return;
+ try {
+ await apiFetch(
+ `/admin/users/${encodeURIComponent(user.id)}/${
+ user.isActive ? "deactivate" : "reactivate"
+ }`,
+ { method: "PATCH" },
+ );
+ toast.success(user.isActive ? "User deactivated" : "User reactivated");
+ router.refresh();
+ } catch (err) {
+ toast.errorFromException(
+ user.isActive ? "Couldn't deactivate" : "Couldn't reactivate",
+ err,
+ );
+ }
+ }
+ return { dialog, run };
+}
+
+type DeactivateRunner = ReturnType<typeof useDeactivateUser>["run"];
+
+function deactivateAction(
+ user: { id: string; fullName: string; isActive: boolean },
+ run: DeactivateRunner,
+) {
+ return {
+ label: user.isActive ? "Deactivate" : "Reactivate",
+ onClick: () => run(user),
+ destructive: user.isActive,
  };
 }
 
@@ -353,9 +407,11 @@ function RowActions({
 }
 
 function FellowsTable({ fellows }: { fellows: Fellow[] }) {
+ const { dialog, run } = useDeactivateUser();
  if (fellows.length === 0) return <EmptyState label="No fellows match."/>;
  return (
  <>
+ {dialog}
  <MobileRowList>
  {fellows.map((f) => (
  <MobileRowCard
@@ -387,7 +443,7 @@ function FellowsTable({ fellows }: { fellows: Fellow[] }) {
  label={`Actions for ${f.fullName}`}
  actions={[
  { label: "View profile", href: `/participants/${f.id}` },
- { label: "Delete", destructive: true },
+ deactivateAction(f, run),
  ]}
  />
  }
@@ -449,7 +505,7 @@ function FellowsTable({ fellows }: { fellows: Fellow[] }) {
  label={`Actions for ${f.fullName}`}
  actions={[
  { label:"View profile", href:`/participants/${f.id}`},
- { label:"Delete", destructive: true },
+ deactivateAction(f, run),
  ]}
  />
  </ActionsCell>
@@ -469,9 +525,11 @@ function FellowStatusBadge({ status }: { status: FellowStatus }) {
 }
 
 function FacultyTable({ faculty }: { faculty: Faculty[] }) {
+ const { dialog, run } = useDeactivateUser();
  if (faculty.length === 0) return <EmptyState label="No faculty match."/>;
  return (
  <>
+ {dialog}
  <MobileRowList>
  {faculty.map((f) => (
  <MobileRowCard
@@ -524,7 +582,7 @@ function FacultyTable({ faculty }: { faculty: Faculty[] }) {
  label={`Actions for ${f.fullName}`}
  actions={[
  { label: "View courses", href: `/courses?owner=${f.id}` },
- { label: "Delete", destructive: true },
+ deactivateAction(f, run),
  ]}
  />
  }
@@ -592,7 +650,7 @@ function FacultyTable({ faculty }: { faculty: Faculty[] }) {
  label={`Actions for ${f.fullName}`}
  actions={[
  { label:"View courses", href:`/courses?owner=${f.id}`},
- { label:"Delete", destructive: true },
+ deactivateAction(f, run),
  ]}
  />
  </ActionsCell>
@@ -606,9 +664,11 @@ function FacultyTable({ faculty }: { faculty: Faculty[] }) {
 }
 
 function MentorsTable({ mentors }: { mentors: Mentor[] }) {
+ const { dialog, run } = useDeactivateUser();
  if (mentors.length === 0) return <EmptyState label="No mentors match."/>;
  return (
  <>
+ {dialog}
  <MobileRowList>
  {mentors.map((m) => (
  <MobileRowCard
@@ -659,9 +719,7 @@ function MentorsTable({ mentors }: { mentors: Mentor[] }) {
  actions={
  <RowActions
  label={`Actions for ${m.fullName}`}
- actions={[
- { label: "Delete", destructive: true },
- ]}
+ actions={[deactivateAction(m, run)]}
  />
  }
  />
@@ -728,9 +786,7 @@ function MentorsTable({ mentors }: { mentors: Mentor[] }) {
  <ActionsCell>
  <RowActions
  label={`Actions for ${m.fullName}`}
- actions={[
- { label:"Delete", destructive: true },
- ]}
+ actions={[deactivateAction(m, run)]}
  />
  </ActionsCell>
  </TableRow>
@@ -743,9 +799,11 @@ function MentorsTable({ mentors }: { mentors: Mentor[] }) {
 }
 
 function AdminsTable({ admins }: { admins: AdminUser[] }) {
+ const { dialog, run } = useDeactivateUser();
  if (admins.length === 0) return <EmptyState label="No admins match."/>;
  return (
  <>
+ {dialog}
  <MobileRowList>
  {admins.map((a) => (
  <MobileRowCard
@@ -785,9 +843,7 @@ function AdminsTable({ admins }: { admins: AdminUser[] }) {
  actions={
  <RowActions
  label={`Actions for ${a.fullName}`}
- actions={[
- { label: "Delete", destructive: true },
- ]}
+ actions={[deactivateAction(a, run)]}
  />
  }
  />
@@ -842,9 +898,7 @@ function AdminsTable({ admins }: { admins: AdminUser[] }) {
  <ActionsCell>
  <RowActions
  label={`Actions for ${a.fullName}`}
- actions={[
- { label:"Delete", destructive: true },
- ]}
+ actions={[deactivateAction(a, run)]}
  />
  </ActionsCell>
  </TableRow>
@@ -884,14 +938,6 @@ function WaitlistTable({ waitlist }: { waitlist: WaitlistEntry[] }) {
  stats={[
  { label: "Applied", value: relativeDays(w.appliedAt) },
  ]}
- actions={
- <RowActions
- label={`Actions for ${w.fullName}`}
- actions={[
- { label: "Delete", destructive: true },
- ]}
- />
- }
  />
  ))}
  </MobileRowList>
@@ -903,7 +949,6 @@ function WaitlistTable({ waitlist }: { waitlist: WaitlistEntry[] }) {
  <HeaderCell>Name</HeaderCell>
  <HeaderCell>Email</HeaderCell>
  <HeaderCell>Applied</HeaderCell>
- <ActionsHeaderCell />
  </TableRow>
  </TableHeader>
  <TableBody className="divide-y divide-gray-100">
@@ -928,14 +973,6 @@ function WaitlistTable({ waitlist }: { waitlist: WaitlistEntry[] }) {
  <TableCell className="px-5 py-4 text-sm text-gray-500">
  {relativeDays(w.appliedAt)}
  </TableCell>
- <ActionsCell>
- <RowActions
- label={`Actions for ${w.fullName}`}
- actions={[
- { label:"Delete", destructive: true },
- ]}
- />
- </ActionsCell>
  </TableRow>
  ))}
  </TableBody>

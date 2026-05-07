@@ -29,6 +29,7 @@ type BackendFellow = {
   sector: string | null;
   mentorName: string | null;
   status: "active" | "at_risk" | "inactive" | null;
+  isActive: boolean;
   joinedAt: string;
 };
 
@@ -115,6 +116,7 @@ function mapFellow(f: BackendFellow): Fellow {
     progressPercent: 0,
     attendanceRate: 0,
     status: f.status === "at_risk" ? "at-risk" : (f.status ?? "active"),
+    isActive: f.isActive,
     joinedAt: f.joinedAt,
   };
 }
@@ -170,6 +172,7 @@ type BackendFellowProfile = {
   bio: string | null;
   linkedinUrl: string | null;
   status: "active" | "at_risk" | "inactive" | null;
+  isActive: boolean;
   joinedAt: string;
   progressPercent: number;
   attendanceRate: number;
@@ -239,6 +242,7 @@ function mapFellowProfile(f: BackendFellowProfile): FellowProfile {
     progressPercent: f.progressPercent,
     attendanceRate: f.attendanceRate,
     status: f.status === "at_risk" ? "at-risk" : f.status ?? "active",
+    isActive: f.isActive,
     joinedAt: f.joinedAt,
     bio: f.bio,
     linkedinUrl: f.linkedinUrl,

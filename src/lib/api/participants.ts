@@ -31,6 +31,9 @@ export type Fellow = {
   progressPercent: number;
   attendanceRate: number;
   status: FellowStatus;
+  /** Login-level activity (set false by admin soft-delete). Distinct from
+   *  the fellow `status` enum, which is a programme-progress signal. */
+  isActive: boolean;
   joinedAt: string; // ISO date
 };
 
