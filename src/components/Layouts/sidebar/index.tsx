@@ -23,6 +23,10 @@ export function Sidebar({ userRole }: { userRole?: Role }) {
   // hover on touch + mobile uses an overlay drawer anyway).
   const [isHovered, setIsHovered] = useState(false);
   const visualOpen = isOpen || (!isMobile && isHovered);
+  // Fellow nav uses tighter icons — they read as too heavy at the
+  // default size-5 against the dense Programme dropdown. Other roles
+  // keep size-5 since their nav is sparser.
+  const iconSize = userRole === "fellow" ? "size-4" : "size-5";
 
   // Pick the role-aware nav once per render. Fall back to a path-
   // based guess when role hasn't hydrated yet so the rail doesn't
@@ -146,7 +150,7 @@ export function Sidebar({ userRole }: { userRole?: Role }) {
                               onClick={() => toggleExpanded(item.title)}
                             >
                               <item.icon
-                                className="size-5 shrink-0"
+                                className={cn("shrink-0", iconSize)}
                                 aria-hidden="true"
                               />
 
