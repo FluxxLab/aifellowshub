@@ -12,6 +12,11 @@ export type Sector =
 
 export type FellowStatus = "active"| "at-risk"| "inactive";
 
+export type AssignedMentor = {
+  id: string;
+  fullName: string;
+};
+
 export type Fellow = {
   id: string;
   fullName: string;
@@ -20,7 +25,8 @@ export type Fellow = {
   organisation: string;
   jobTitle: string;
   sector: Sector;
-  /** Mentor full name, or null if unassigned */
+  /** Mentor full name, or null if unassigned. Kept as a plain string for
+   *  the list view; the detail view uses `assignedMentor` for actions. */
   mentor: string | null;
   progressPercent: number;
   attendanceRate: number;
@@ -127,6 +133,11 @@ export type ActivityEntry = {
 export type FellowProfile = Fellow & {
   bio: string | null;
   linkedinUrl: string | null;
+  /** Currently resolved mentor (override → sector fallback). Null when
+   *  no override is set and no sector mentor exists. */
+  assignedMentor: AssignedMentor | null;
+  /** True when an admin has explicitly pinned a mentor for this fellow. */
+  hasMentorOverride: boolean;
   modules: ModuleProgressEntry[];
   recentSessions: SessionAttendance[];
   assessments: AssessmentScore[];

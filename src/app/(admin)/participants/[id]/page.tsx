@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import AvatarText from "@/components/ui/avatar/AvatarText";
 import Badge from "@/components/ui/badge/Badge";
 import ProfileHeader from "@/components/admin/participants/profile/ProfileHeader";
+import AssignMentorCard from "@/components/admin/participants/profile/AssignMentorCard";
 import { getFellowProfileServer } from "@/lib/api/participants.server";
+import { listMentorsForBrowseServer } from "@/lib/api/mentorship.server";
 import type {
  ActivityEntry,
  AssessmentScore,
@@ -27,7 +28,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function FellowProfilePage({ params }: PageProps) {
  const { id } = params;
- const fellow = await getFellowProfileServer(id);
+ const [fellow, mentors] = await Promise.all([
+ getFellowProfileServer(id),
+ listMentorsForBrowseServer(),
+ ]);
  if (!fellow) notFound();
 
  return (
@@ -43,7 +47,13 @@ export default async function FellowProfilePage({ params }: PageProps) {
  </div>
  <div className="col-span-12 flex flex-col gap-4 xl:col-span-4 md:gap-6">
  <ContactCard fellow={fellow} />
- <MentorCard mentor={fellow.mentor} />
+ <AssignMentorCard
+ fellowId={fellow.id}
+ fellowSector={fellow.sector ?? null}
+ assignedMentor={fellow.assignedMentor}
+ hasOverride={fellow.hasMentorOverride}
+ mentors={mentors}
+ />
  <ActivityCard activity={fellow.activity} />
  </div>
  </div>
@@ -293,39 +303,6 @@ function ContactRow({
  </dt>
  <dd className="text-sm text-gray-700">{value}</dd>
  </div>
- );
-}
-
-function MentorCard({ mentor }: { mentor: string | null }) {
- if (!mentor) {
- return (
- <Card title="Mentor">
- <div className="rounded-lg border border-dashed border-gray-200 px-4 py-5 text-center">
- <p className="text-sm text-gray-500">
- No mentor assigned yet.
- </p>
- <button className="mt-2 text-sm font-semibold text-fellowship-navy hover:text-fellowship-navy-dark">
- Assign a mentor
- </button>
- </div>
- </Card>
- );
- }
-
- return (
- <Card title="Mentor">
- <div className="flex items-center gap-3">
- <AvatarText name={mentor} className="h-11 w-11"/>
- <div className="min-w-0 flex-1">
- <p className="truncate text-sm font-semibold text-gray-800">
- {mentor}
- </p>
- <button className="mt-0.5 text-xs font-semibold text-fellowship-navy hover:text-fellowship-navy-dark">
- Reassign
- </button>
- </div>
- </div>
- </Card>
  );
 }
 

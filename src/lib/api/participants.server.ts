@@ -173,7 +173,9 @@ type BackendFellowProfile = {
   joinedAt: string;
   progressPercent: number;
   attendanceRate: number;
+  mentor: { id: string; fullName: string } | null;
   mentorName: string | null;
+  mentorOverrideId: string | null;
   modules: { weekNumber: number; title: string; status: ModuleProgressEntry["status"] }[];
   recentSessions: {
     id: string;
@@ -240,6 +242,8 @@ function mapFellowProfile(f: BackendFellowProfile): FellowProfile {
     joinedAt: f.joinedAt,
     bio: f.bio,
     linkedinUrl: f.linkedinUrl,
+    assignedMentor: f.mentor,
+    hasMentorOverride: Boolean(f.mentorOverrideId),
     modules: f.modules.map(
       (m): ModuleProgressEntry => ({
         weekNumber: m.weekNumber,
