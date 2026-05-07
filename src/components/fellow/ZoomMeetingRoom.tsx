@@ -10,6 +10,13 @@ type SignatureResponse = {
   role: number;
   sessionTitle: string;
   meetingPassword?: string;
+  /**
+   * Host token (Zoom Access Key). Backend mints one for admins/faculty
+   * who own the course; empty string for participants. Required by the
+   * Meeting SDK alongside `role: 1` to actually start the meeting on
+   * Zoom's side. The SDK ignores this field when role is 0.
+   */
+  zak?: string;
 };
 
 /**
@@ -95,6 +102,10 @@ export default function ZoomMeetingRoom({
           userName: user?.fullName ?? "PIC LMS Fellow",
           userEmail: user?.email ?? "",
           password: sig.meetingPassword ?? "",
+          // ZAK promotes the joiner to host on Zoom's side. Without it
+          // an admin signing in with role=1 would hang at "Connecting".
+          // Backend only returns a non-empty ZAK when role=1.
+          zak: sig.zak ?? "",
         });
         if (cancelled) return;
         setPhase("in-meeting");
