@@ -39,7 +39,12 @@ export default function DatePicker({
  monthSelectorType: "static",
  enableTime: timeOnly,
  noCalendar: timeOnly,
- time_24hr: timeOnly,
+ // 12-hour display with AM/PM in the UI; the underlying input value
+ // stays in 24-hour H:i so the form's `${date}T${time}` parse still
+ // produces a valid ISO Date.
+ time_24hr: false,
+ altInput: timeOnly,
+ altFormat: timeOnly ? "h:i K" : undefined,
  dateFormat: timeOnly ? "H:i" : "Y-m-d",
  defaultDate,
  minDate,
