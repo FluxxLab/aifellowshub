@@ -5,6 +5,7 @@ import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
+import DatePicker from "@/components/form/date-picker";
 import { CalenderIcon, TimeIcon } from "@/icons";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { apiFetch } from "@/lib/api/client";
@@ -183,22 +184,20 @@ export default function FellowMentorshipView({
           </div>
 
           <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div>
-              <Label>Date</Label>
-              <Input
-                type="date"
-                defaultValue={date}
-                onChange={(e) => setDate(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label>Start time</Label>
-              <Input
-                type="time"
-                defaultValue={time}
-                onChange={(e) => setTime(e.target.value)}
-              />
-            </div>
+            <DatePicker
+              id="mentorship-date"
+              label="Date"
+              placeholder="Pick a date"
+              minDate="today"
+              onChange={(_, dateStr) => setDate(dateStr)}
+            />
+            <DatePicker
+              id="mentorship-time"
+              mode="time"
+              label="Start time"
+              placeholder="--:--"
+              onChange={(_, timeStr) => setTime(timeStr)}
+            />
             <div>
               <Label>Duration (min)</Label>
               <Input
