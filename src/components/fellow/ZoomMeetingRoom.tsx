@@ -95,9 +95,13 @@ export default function ZoomMeetingRoom({
         if (cancelled) return;
 
         setPhase("joining");
+        // Note: `sdkKey` is intentionally NOT passed in joinOptions —
+        // it was removed from the JoinOptions interface in SDK v4.0.0.
+        // The signature JWT already carries the key (we sign with
+        // `sdkKey` + `appKey` in the payload), so passing it here just
+        // logs a deprecation warning to console without doing anything.
         await client.join({
           signature: sig.signature,
-          sdkKey: sig.sdkKey,
           meetingNumber: sig.meetingNumber,
           userName: user?.fullName ?? "PIC LMS Fellow",
           userEmail: user?.email ?? "",
