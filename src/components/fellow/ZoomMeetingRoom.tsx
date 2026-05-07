@@ -100,12 +100,21 @@ export default function ZoomMeetingRoom({
         // The signature JWT already carries the key (we sign with
         // `sdkKey` + `appKey` in the payload), so passing it here just
         // logs a deprecation warning to console without doing anything.
+        //
+        // `customerKey` is the dedup key Zoom uses to recognise the
+        // same user across rejoins. When a fellow's previous session
+        // didn't shut down cleanly (network blip, closed tab, browser
+        // crash) the ghost participant lingers in the roster until
+        // Zoom's timeout. Sending the LMS user id as customerKey on
+        // every join tells Zoom "boot the previous session for this
+        // user — this one is the new authoritative one."
         await client.join({
           signature: sig.signature,
           meetingNumber: sig.meetingNumber,
           userName: user?.fullName ?? "PIC LMS Fellow",
           userEmail: user?.email ?? "",
           password: sig.meetingPassword ?? "",
+          customerKey: user?.id ?? user?.email ?? undefined,
           // ZAK promotes the joiner to host on Zoom's side. Without it
           // an admin signing in with role=1 would hang at "Connecting".
           // Backend only returns a non-empty ZAK when role=1.
