@@ -56,6 +56,65 @@ const EMPTY_STATE: FellowCertificateState = {
   },
 };
 
+/**
+ * Backend `/me/certification` shape — weighted scorecard against the
+ * BRD Fellowship Assessment criteria.
+ */
+export type CertificationScorecard = {
+  totalScore: number;
+  eligible: boolean;
+  tier: "certified" | "merit" | "distinction" | null;
+  missingRequirements: string[];
+  criteria: {
+    postQuizWeight: number;
+    participationWeight: number;
+    assignmentWeight: number;
+    capstoneWeight: number;
+    requiredPostQuizzes: number;
+    requiredSessions: number;
+    passingThreshold: number;
+    meritThreshold: number;
+    distinctionThreshold: number;
+  };
+  breakdown: {
+    postQuizzes: {
+      weight: number;
+      completed: number;
+      required: number;
+      averageScore: number;
+      contribution: number;
+    };
+    participation: {
+      weight: number;
+      attendedSessions: number;
+      requiredSessions: number;
+      attendanceRate: number;
+      contribution: number;
+    };
+    assignments: {
+      weight: number;
+      completed: number;
+      averageScore: number;
+      contribution: number;
+    };
+    capstone: {
+      weight: number;
+      status: "approved" | "in_progress" | "not_started";
+      contribution: number;
+    };
+  };
+};
+
+export async function getMyCertificationServer(): Promise<CertificationScorecard | null> {
+  try {
+    const res = await backendFetch("/me/certification", { method: "GET" });
+    if (!res.ok) return null;
+    return (await res.json()) as CertificationScorecard;
+  } catch {
+    return null;
+  }
+}
+
 export async function getMyCertificateStateServer(): Promise<FellowCertificateState> {
   try {
     const res = await backendFetch("/me/certificates", { method: "GET" });

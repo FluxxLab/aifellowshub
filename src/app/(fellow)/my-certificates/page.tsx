@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import MyCertificatesView from "@/components/fellow/MyCertificatesView";
-import { getMyCertificateStateServer } from "@/lib/api/fellow-certificates.server";
+import CertificationScorecardCard from "@/components/fellow/CertificationScorecardCard";
+import {
+  getMyCertificateStateServer,
+  getMyCertificationServer,
+} from "@/lib/api/fellow-certificates.server";
 
 export const metadata: Metadata = {
   title: "My certificates · AI Fellows LMS",
@@ -9,6 +13,14 @@ export const metadata: Metadata = {
 };
 
 export default async function MyCertificatesPage() {
-  const state = await getMyCertificateStateServer();
-  return <MyCertificatesView state={state} />;
+  const [state, scorecard] = await Promise.all([
+    getMyCertificateStateServer(),
+    getMyCertificationServer(),
+  ]);
+  return (
+    <div className="flex flex-col gap-4 md:gap-6">
+      {scorecard && <CertificationScorecardCard scorecard={scorecard} />}
+      <MyCertificatesView state={state} />
+    </div>
+  );
 }
