@@ -61,6 +61,7 @@ const ADMIN_NAV: NavSection[] = [
       { title: "Assessments", icon: FileIcon as SvgComponent, url: "/assessments", items: [] },
       { title: "Library", icon: FolderIcon as SvgComponent, url: "/resources", items: [] },
       { title: "Module reviews", icon: CheckLineIcon as SvgComponent, url: "/module-reviews", items: [] },
+      { title: "Coaching bookings", icon: BoltIcon as SvgComponent, url: "/mentorship-bookings", items: [] },
       { title: "Capstone", icon: ShootingStarIcon as SvgComponent, url: "/capstone", items: [] },
       { title: "Certificates", icon: CheckCircleIcon as SvgComponent, url: "/certificates", items: [] },
       { title: "Forum groups", icon: ChatIcon as SvgComponent, url: "/forum-groups", items: [] },
@@ -98,6 +99,14 @@ const FELLOW_NAV: NavSection[] = [
     label: "ME",
     items: [
       { title: "Capstone", icon: ShootingStarIcon as SvgComponent, url: "/my-capstone", items: [] },
+      {
+        title: "Mentors",
+        icon: UsersRoundIcon as SvgComponent,
+        items: [
+          { title: "Find a mentor", url: "/mentors" },
+          { title: "My bookings", url: "/my-bookings" },
+        ],
+      },
       { title: "Forum", icon: ChatIcon as SvgComponent, url: "/forum", items: [] },
       { title: "Certificate", icon: CheckCircleIcon as SvgComponent, url: "/my-certificates", items: [] },
     ],
