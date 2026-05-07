@@ -61,7 +61,7 @@ const ADMIN_NAV: NavSection[] = [
       { title: "Assessments", icon: FileIcon as SvgComponent, url: "/assessments", items: [] },
       { title: "Library", icon: FolderIcon as SvgComponent, url: "/resources", items: [] },
       { title: "Module reviews", icon: CheckLineIcon as SvgComponent, url: "/module-reviews", items: [] },
-      { title: "Coaching bookings", icon: BoltIcon as SvgComponent, url: "/mentorship-bookings", items: [] },
+      { title: "Mentorship sessions", icon: BoltIcon as SvgComponent, url: "/mentorship-bookings", items: [] },
       { title: "Capstone", icon: ShootingStarIcon as SvgComponent, url: "/capstone", items: [] },
       { title: "Certificates", icon: CheckCircleIcon as SvgComponent, url: "/certificates", items: [] },
       { title: "Forum groups", icon: ChatIcon as SvgComponent, url: "/forum-groups", items: [] },
@@ -99,14 +99,7 @@ const FELLOW_NAV: NavSection[] = [
     label: "ME",
     items: [
       { title: "Capstone", icon: ShootingStarIcon as SvgComponent, url: "/my-capstone", items: [] },
-      {
-        title: "Mentors",
-        icon: UsersRoundIcon as SvgComponent,
-        items: [
-          { title: "Find a mentor", url: "/mentors" },
-          { title: "My bookings", url: "/my-bookings" },
-        ],
-      },
+      { title: "Mentorship sessions", icon: UsersRoundIcon as SvgComponent, url: "/mentorship-sessions", items: [] },
       { title: "Forum", icon: ChatIcon as SvgComponent, url: "/forum", items: [] },
       { title: "Certificate", icon: CheckCircleIcon as SvgComponent, url: "/my-certificates", items: [] },
     ],
@@ -119,7 +112,7 @@ const MENTOR_NAV: NavSection[] = [
     items: [
       { title: "Home", icon: GridIcon as SvgComponent, url: "/mentor", items: [] },
       { title: "Queue", icon: ShootingStarIcon as SvgComponent, url: "/mentor/queue", items: [] },
-      { title: "Coaching", icon: ChatIcon as SvgComponent, url: "/mentor/requests", items: [] },
+      { title: "Mentorship sessions", icon: ChatIcon as SvgComponent, url: "/mentor/requests", items: [] },
       { title: "Grading", icon: CheckCircleIcon as SvgComponent, url: "/mentor/grading", items: [] },
     ],
   },
@@ -162,7 +155,8 @@ export function getNavDataForPath(pathname: string): NavSection[] {
     pathname.startsWith("/my-") ||
     pathname.startsWith("/ai-buddy") ||
     pathname.startsWith("/forum") ||
-    pathname.startsWith("/library")
+    pathname.startsWith("/library") ||
+    pathname.startsWith("/mentorship-sessions")
   ) {
     return FELLOW_NAV;
   }

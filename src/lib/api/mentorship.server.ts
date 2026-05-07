@@ -21,18 +21,41 @@ async function getJson<T>(path: string): Promise<T | null> {
   }
 }
 
+/** Staff-only — full mentor roster for admin queue context. */
 export async function listMentorsForBrowseServer(): Promise<MentorSummary[]> {
   const data = await getJson<{ mentors: MentorSummary[] }>("/mentors");
   return data?.mentors ?? [];
 }
 
-export async function getMentorServer(
-  mentorId: string,
-): Promise<MentorSummary | null> {
-  const data = await getJson<{ mentor: MentorSummary }>(
-    `/mentors/${encodeURIComponent(mentorId)}`,
-  );
-  return data?.mentor ?? null;
+/**
+ * Fellow's auto-assigned mentor (sector match). Returns an envelope
+ * shape so the page can show a clear "contact admin" empty state when
+ * the lookup fails — fellows shouldn't pick mentors themselves.
+ */
+export type AssignedMentorResult =
+  | { ok: true; mentor: MentorSummary }
+  | { ok: false; message: string };
+
+export async function getMyAssignedMentorServer(): Promise<AssignedMentorResult> {
+  try {
+    const res = await backendFetch("/me/mentor", { method: "GET" });
+    if (!res.ok) {
+      const body = (await res.json().catch(() => ({}))) as { message?: string };
+      return {
+        ok: false,
+        message:
+          body.message ??
+          "We couldn't find a mentor assigned to you. Contact an admin.",
+      };
+    }
+    const data = (await res.json()) as { mentor: MentorSummary };
+    return { ok: true, mentor: data.mentor };
+  } catch {
+    return {
+      ok: false,
+      message: "We couldn't reach the mentor service. Try again in a moment.",
+    };
+  }
 }
 
 export async function listFellowBookingsServer(): Promise<FellowBooking[]> {
