@@ -25,20 +25,22 @@ export function useSidebarContext() {
 
 export function SidebarProvider({
   children,
-  defaultOpen = true,
+  defaultOpen = false,
 }: {
   children: React.ReactNode;
   defaultOpen?: boolean;
 }) {
+  // `isOpen` is now the *pinned* state — the user clicking the toggle
+  // pins it open. Hover-to-peek (in `Sidebar`) handles the temporary
+  // expand without flipping this. Default = collapsed; the rail
+  // expands on hover and pins on click.
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    if (isMobile) {
-      setIsOpen(false);
-    } else {
-      setIsOpen(true);
-    }
+    // Mobile collapses fully (the drawer is closed); desktop starts
+    // as a rail (collapsed) and reveals nav labels on hover.
+    setIsOpen(false);
   }, [isMobile]);
 
   function toggleSidebar() {

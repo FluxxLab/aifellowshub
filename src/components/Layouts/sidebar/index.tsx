@@ -16,6 +16,13 @@ export function Sidebar({ userRole }: { userRole?: Role }) {
   const pathname = usePathname();
   const { setIsOpen, isOpen, isMobile, toggleSidebar } = useSidebarContext();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  // Hover-to-peek: when the user-pinned `isOpen` state is collapsed, we
+  // still expand the rail temporarily while the cursor is over it. Click
+  // toggling keeps working — that updates `isOpen` (pin), and hover
+  // never collapses a pinned-open sidebar. Mobile ignores hover (no
+  // hover on touch + mobile uses an overlay drawer anyway).
+  const [isHovered, setIsHovered] = useState(false);
+  const visualOpen = isOpen || (!isMobile && isHovered);
 
   // Pick the role-aware nav once per render. Fall back to a path-
   // based guess when role hasn't hydrated yet so the rail doesn't
@@ -64,6 +71,8 @@ export function Sidebar({ userRole }: { userRole?: Role }) {
       )}
 
       <aside
+        onMouseEnter={() => !isMobile && setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
         className={cn(
           // Brand: navy fellowship background instead of the
           // reference's light gray. White text/icons; the section
@@ -73,15 +82,15 @@ export function Sidebar({ userRole }: { userRole?: Role }) {
           isMobile ? "fixed bottom-0 top-0 z-50" : "sticky top-0 h-screen",
           isMobile
             ? (isOpen ? "w-[260px] translate-x-0" : "w-0 -translate-x-full")
-            : (isOpen ? "w-[250px]" : "w-[80px]"),
+            : (visualOpen ? "w-[250px]" : "w-[80px]"),
         )}
         aria-label="Main navigation"
-        aria-hidden={!isOpen}
-        inert={!isOpen}
+        aria-hidden={!visualOpen}
+        inert={!visualOpen}
       >
         <div className={cn(
           "flex h-full flex-col py-6 transition-all duration-300",
-          isOpen ? "px-5" : "px-2 items-center"
+          visualOpen ? "px-5" : "px-2 items-center"
         )}>
           <div className="mb-8 flex items-center justify-center border-b border-white/10 pb-6">
             {/* Logo goes to the role-appropriate home (e.g.
@@ -119,7 +128,7 @@ export function Sidebar({ userRole }: { userRole?: Role }) {
               <div key={section.label} className="mb-4">
                 <h2 className={cn(
                   "mb-2 text-[10px] font-bold uppercase tracking-[0.1em] text-white/40 transition-opacity duration-300",
-                  isOpen ? "opacity-100 px-3" : "opacity-0 h-0 overflow-hidden"
+                  visualOpen ? "opacity-100 px-3" : "opacity-0 h-0 overflow-hidden"
                 )}>
                   {section.label}
                 </h2>
@@ -141,7 +150,7 @@ export function Sidebar({ userRole }: { userRole?: Role }) {
                                 aria-hidden="true"
                               />
 
-                              {isOpen && (
+                              {visualOpen && (
                                 <>
                                   <span>{item.title}</span>
 
@@ -169,7 +178,7 @@ export function Sidebar({ userRole }: { userRole?: Role }) {
                                       href={subItem.url}
                                       isActive={pathname === subItem.url}
                                     >
-                                      {isOpen && <span>{subItem.title}</span>}
+                                      {visualOpen && <span>{subItem.title}</span>}
                                     </MenuItem>
                                   </li>
                                 ))}
@@ -196,7 +205,7 @@ export function Sidebar({ userRole }: { userRole?: Role }) {
                                   aria-hidden="true"
                                 />
 
-                                {isOpen && <span>{item.title}</span>}
+                                {visualOpen && <span>{item.title}</span>}
                               </MenuItem>
                             );
                           })()
