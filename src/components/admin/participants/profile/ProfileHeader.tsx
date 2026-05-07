@@ -7,6 +7,7 @@ import Button from "@/components/ui/button/Button";
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import { ChevronLeftIcon, MoreDotIcon, PencilIcon } from "@/icons";
+import EditFellowModal from "./EditFellowModal";
 import type { FellowProfile, FellowStatus } from "@/lib/api/participants";
 
 type ProfileHeaderProps = {
@@ -15,9 +16,15 @@ type ProfileHeaderProps = {
 
 export default function ProfileHeader({ fellow }: ProfileHeaderProps) {
  const [menuOpen, setMenuOpen] = useState(false);
+ const [editOpen, setEditOpen] = useState(false);
 
  return (
  <div className="flex flex-col gap-4">
+ <EditFellowModal
+ isOpen={editOpen}
+ onClose={() => setEditOpen(false)}
+ fellow={fellow}
+ />
  <Link
  href="/participants" className="inline-flex w-fit items-center gap-1 text-sm text-gray-500 transition-colors hover:text-gray-700">
  <ChevronLeftIcon className="h-4 w-4"/>
@@ -43,7 +50,12 @@ export default function ProfileHeader({ fellow }: ProfileHeaderProps) {
  </div>
 
  <div className="flex shrink-0 items-center gap-2">
- <Button variant="outline" size="sm" startIcon={<PencilIcon />}>
+ <Button
+ variant="outline"
+ size="sm"
+ startIcon={<PencilIcon />}
+ onClick={() => setEditOpen(true)}
+ >
  Edit
  </Button>
  <div className="relative">
