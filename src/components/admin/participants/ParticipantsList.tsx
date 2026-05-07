@@ -387,7 +387,6 @@ function FellowsTable({ fellows }: { fellows: Fellow[] }) {
  label={`Actions for ${f.fullName}`}
  actions={[
  { label: "View profile", href: `/participants/${f.id}` },
- { label: "Edit" },
  { label: "Delete", destructive: true },
  ]}
  />
@@ -450,7 +449,6 @@ function FellowsTable({ fellows }: { fellows: Fellow[] }) {
  label={`Actions for ${f.fullName}`}
  actions={[
  { label:"View profile", href:`/participants/${f.id}`},
- { label:"Edit"},
  { label:"Delete", destructive: true },
  ]}
  />
@@ -526,7 +524,6 @@ function FacultyTable({ faculty }: { faculty: Faculty[] }) {
  label={`Actions for ${f.fullName}`}
  actions={[
  { label: "View courses", href: `/courses?owner=${f.id}` },
- { label: "Edit" },
  { label: "Delete", destructive: true },
  ]}
  />
@@ -595,7 +592,6 @@ function FacultyTable({ faculty }: { faculty: Faculty[] }) {
  label={`Actions for ${f.fullName}`}
  actions={[
  { label:"View courses", href:`/courses?owner=${f.id}`},
- { label:"Edit"},
  { label:"Delete", destructive: true },
  ]}
  />
@@ -664,7 +660,6 @@ function MentorsTable({ mentors }: { mentors: Mentor[] }) {
  <RowActions
  label={`Actions for ${m.fullName}`}
  actions={[
- { label: "Edit" },
  { label: "Delete", destructive: true },
  ]}
  />
@@ -734,7 +729,6 @@ function MentorsTable({ mentors }: { mentors: Mentor[] }) {
  <RowActions
  label={`Actions for ${m.fullName}`}
  actions={[
- { label:"Edit"},
  { label:"Delete", destructive: true },
  ]}
  />
@@ -792,7 +786,6 @@ function AdminsTable({ admins }: { admins: AdminUser[] }) {
  <RowActions
  label={`Actions for ${a.fullName}`}
  actions={[
- { label: "Edit" },
  { label: "Delete", destructive: true },
  ]}
  />
@@ -850,7 +843,6 @@ function AdminsTable({ admins }: { admins: AdminUser[] }) {
  <RowActions
  label={`Actions for ${a.fullName}`}
  actions={[
- { label:"Edit"},
  { label:"Delete", destructive: true },
  ]}
  />
@@ -896,7 +888,6 @@ function WaitlistTable({ waitlist }: { waitlist: WaitlistEntry[] }) {
  <RowActions
  label={`Actions for ${w.fullName}`}
  actions={[
- { label: "Edit" },
  { label: "Delete", destructive: true },
  ]}
  />
@@ -941,7 +932,6 @@ function WaitlistTable({ waitlist }: { waitlist: WaitlistEntry[] }) {
  <RowActions
  label={`Actions for ${w.fullName}`}
  actions={[
- { label:"Edit"},
  { label:"Delete", destructive: true },
  ]}
  />
