@@ -250,6 +250,7 @@ function RowActions({ cert }: { cert: IssuedCertificate }) {
  <Dropdown
  isOpen={open}
  onClose={() => setOpen(false)}
+ portal
  className="w-48 p-1">
  <ul role="menu" className="flex flex-col gap-0.5">
  <Item onClick={() => setOpen(false)}>Download PDF</Item>

@@ -366,6 +366,7 @@ function RowActions({ assessment }: { assessment: Assessment }) {
  <Dropdown
  isOpen={open}
  onClose={() => setOpen(false)}
+ portal
  className="w-48 p-1">
  <ul role="menu" className="flex flex-col gap-0.5">
  {actions.map((a, i) => (

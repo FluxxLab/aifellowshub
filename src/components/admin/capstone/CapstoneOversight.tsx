@@ -323,7 +323,7 @@ function RowActions({ submission }: { submission: CapstoneSubmission }) {
  className="dropdown-toggle inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800">
  <MoreDotIcon className="h-5 w-5"/>
  </button>
- <Dropdown isOpen={open} onClose={() => setOpen(false)} className="w-52 p-1">
+ <Dropdown isOpen={open} onClose={() => setOpen(false)} portal className="w-52 p-1">
  <ul role="menu" className="flex flex-col gap-0.5">
  {actions.map((a, i) => (
  <li key={i} role="none">
