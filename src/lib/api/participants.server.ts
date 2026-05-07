@@ -30,6 +30,8 @@ type BackendFellow = {
   mentorName: string | null;
   status: "active" | "at_risk" | "inactive" | null;
   isActive: boolean;
+  progressPercent: number;
+  attendanceRate: number;
   joinedAt: string;
 };
 
@@ -111,10 +113,8 @@ function mapFellow(f: BackendFellow): Fellow {
     jobTitle: f.jobTitle,
     sector: prettySector(f.sector),
     mentor: f.mentorName,
-    // Progress + attendance need session/assessment aggregation per fellow —
-    // not derived yet, surface 0 so the row renders cleanly.
-    progressPercent: 0,
-    attendanceRate: 0,
+    progressPercent: f.progressPercent,
+    attendanceRate: f.attendanceRate,
     status: f.status === "at_risk" ? "at-risk" : (f.status ?? "active"),
     isActive: f.isActive,
     joinedAt: f.joinedAt,
