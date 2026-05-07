@@ -110,6 +110,7 @@ const MENTOR_NAV: NavSection[] = [
     items: [
       { title: "Home", icon: GridIcon as SvgComponent, url: "/mentor", items: [] },
       { title: "Queue", icon: ShootingStarIcon as SvgComponent, url: "/mentor/queue", items: [] },
+      { title: "Coaching", icon: ChatIcon as SvgComponent, url: "/mentor/requests", items: [] },
       { title: "Grading", icon: CheckCircleIcon as SvgComponent, url: "/mentor/grading", items: [] },
     ],
   },

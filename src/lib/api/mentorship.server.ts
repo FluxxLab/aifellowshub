@@ -1,15 +1,13 @@
 /**
- * Server-side fetchers for the mentorship booking surface. All return
- * `null` (or empty list) when the backend is unreachable so pages can
- * render an empty state instead of crashing.
+ * Server-side fetchers for the mentorship coaching surface. Return null
+ * (or empty list) when the backend is unreachable so pages render an
+ * empty state instead of crashing.
  */
 import { backendFetch } from "./backend";
 import type {
   AdminBooking,
-  AvailabilitySlot,
   FellowBooking,
   MentorBooking,
-  MentorSlot,
   MentorSummary,
 } from "./mentorship";
 
@@ -28,23 +26,18 @@ export async function listMentorsForBrowseServer(): Promise<MentorSummary[]> {
   return data?.mentors ?? [];
 }
 
-export async function getMentorAvailabilityServer(
+export async function getMentorServer(
   mentorId: string,
-): Promise<{
-  mentor: { id: string; fullName: string; email: string; bio: string | null; sector: string | null };
-  slots: AvailabilitySlot[];
-} | null> {
-  return getJson(`/mentors/${encodeURIComponent(mentorId)}/availability`);
+): Promise<MentorSummary | null> {
+  const data = await getJson<{ mentor: MentorSummary }>(
+    `/mentors/${encodeURIComponent(mentorId)}`,
+  );
+  return data?.mentor ?? null;
 }
 
 export async function listFellowBookingsServer(): Promise<FellowBooking[]> {
   const data = await getJson<{ bookings: FellowBooking[] }>("/me/bookings");
   return data?.bookings ?? [];
-}
-
-export async function listMentorSlotsServer(): Promise<MentorSlot[]> {
-  const data = await getJson<{ slots: MentorSlot[] }>("/me/mentor/availability");
-  return data?.slots ?? [];
 }
 
 export async function listMentorBookingsServer(): Promise<MentorBooking[]> {
@@ -53,7 +46,7 @@ export async function listMentorBookingsServer(): Promise<MentorBooking[]> {
 }
 
 export async function listAdminBookingsServer(
-  status?: "pending" | "confirmed" | "declined" | "cancelled" | "completed",
+  status?: "pending_mentor" | "pending_admin" | "confirmed" | "declined" | "cancelled" | "completed",
 ): Promise<AdminBooking[]> {
   const path = status
     ? `/admin/mentorship-bookings?status=${encodeURIComponent(status)}`

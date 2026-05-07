@@ -52,8 +52,7 @@ export default async function MentorsBrowsePage() {
                   </p>
                 )}
                 <p className="mt-4 text-xs font-medium text-fellowship-navy">
-                  {m.openSlotCount} open{" "}
-                  {m.openSlotCount === 1 ? "slot" : "slots"}
+                  Request a coaching session →
                 </p>
               </Link>
             </li>

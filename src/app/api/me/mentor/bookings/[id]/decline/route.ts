@@ -6,8 +6,5 @@ export async function POST(
   { params }: { params: { id: string } },
 ) {
   const { id } = params;
-  return proxy(
-    req,
-    `/admin/mentorship-bookings/${encodeURIComponent(id)}/decline`,
-  );
+  return proxy(req, `/me/mentor/bookings/${encodeURIComponent(id)}/decline`);
 }

@@ -3,48 +3,50 @@ import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
+import Breadcrumbs from "@/components/common/Breadcrumbs";
+import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { CalenderIcon, TimeIcon } from "@/icons";
 import { apiFetch } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 import { toast } from "@/lib/toast";
-import { useConfirm } from "@/components/ui/ConfirmDialog";
-import type { AdminBooking, BookingStatus } from "@/lib/api/mentorship";
+import type { BookingStatus, MentorBooking } from "@/lib/api/mentorship";
 
-// Admin queue: defaults to "Awaiting admin" since that's the only
-// actionable state. Other statuses are visible for context.
 const STATUS_FILTERS: { id: "all" | BookingStatus; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "pending_mentor", label: "Awaiting your response" },
   { id: "pending_admin", label: "Awaiting admin" },
-  { id: "pending_mentor", label: "Awaiting mentor" },
   { id: "confirmed", label: "Confirmed" },
   { id: "declined", label: "Declined" },
   { id: "cancelled", label: "Cancelled" },
-  { id: "all", label: "All" },
 ];
 
 const STATUS_COPY: Record<
   BookingStatus,
-  { label: string; color: "info" | "success" | "warning" | "error" | "primary" }
+  { label: string; tone: "info" | "success" | "warning" | "error" | "primary" }
 > = {
-  pending_mentor: { label: "Awaiting mentor", color: "info" },
-  pending_admin: { label: "Awaiting admin", color: "warning" },
-  confirmed: { label: "Confirmed", color: "success" },
-  declined: { label: "Mentor declined", color: "error" },
-  cancelled: { label: "Cancelled", color: "info" },
-  completed: { label: "Completed", color: "primary" },
+  pending_mentor: { label: "Needs your response", tone: "warning" },
+  pending_admin: { label: "Awaiting admin", tone: "info" },
+  confirmed: { label: "Confirmed", tone: "success" },
+  declined: { label: "Declined", tone: "error" },
+  cancelled: { label: "Cancelled", tone: "info" },
+  completed: { label: "Completed", tone: "primary" },
 };
 
-export default function AdminBookingsView({
+/**
+ * Mentor's coaching-request inbox. Replaces the old availability-slot
+ * publishing page. Three actions: accept, decline (with optional reason),
+ * or no-op for rows that aren't waiting on the mentor.
+ */
+export default function MentorRequestsView({
   initialBookings,
 }: {
-  initialBookings: AdminBooking[];
+  initialBookings: MentorBooking[];
 }) {
   const router = useRouter();
   const { confirm, dialog } = useConfirm();
   const [bookings, setBookings] = useState(initialBookings);
-  // Default to the actionable queue — admins coming to this page are
-  // there to approve mentor-accepted requests.
   const [filter, setFilter] = useState<(typeof STATUS_FILTERS)[number]["id"]>(
-    "pending_admin",
+    "pending_mentor",
   );
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -53,38 +55,77 @@ export default function AdminBookingsView({
     return bookings.filter((b) => b.status === filter);
   }, [bookings, filter]);
 
-  async function approve(b: AdminBooking) {
+  async function accept(b: MentorBooking) {
     const ok = await confirm({
-      title: "Approve this booking?",
+      title: "Accept this request?",
       message:
-        "A Zoom meeting will be created under your email. You'll host the call.",
-      confirmLabel: "Approve & host",
+        "An admin will confirm and create the Zoom meeting. You'll get the join link once it's live.",
+      confirmLabel: "Accept",
     });
     if (!ok) return;
     setBusyId(b.id);
     try {
-      const res = await apiFetch<{ booking: AdminBooking }>(
-        `/admin/mentorship-bookings/${encodeURIComponent(b.id)}/approve`,
+      await apiFetch(
+        `/me/mentor/bookings/${encodeURIComponent(b.id)}/accept`,
         { method: "POST" },
       );
-      setBookings((prev) => prev.map((x) => (x.id === b.id ? res.booking : x)));
-      toast.success(
-        "Booking confirmed",
-        "Fellow and mentor will see the Zoom link on their pages.",
+      setBookings((prev) =>
+        prev.map((x) =>
+          x.id === b.id ? { ...x, status: "pending_admin" } : x,
+        ),
       );
+      toast.success("Request accepted", "An admin will confirm shortly.");
       router.refresh();
     } catch (err) {
-      toast.errorFromException("Couldn't approve booking", err);
+      toast.errorFromException("Couldn't accept", err);
     }
     setBusyId(null);
   }
 
-  // Admin can't decline — that's the mentor's call. If a booking
-  // shouldn't go ahead, the mentor declines or the fellow cancels.
+  async function decline(b: MentorBooking) {
+    const reason = window.prompt("Reason (optional)") ?? "";
+    setBusyId(b.id);
+    try {
+      await apiFetch(
+        `/me/mentor/bookings/${encodeURIComponent(b.id)}/decline`,
+        { method: "POST", body: { reason } },
+      );
+      setBookings((prev) =>
+        prev.map((x) =>
+          x.id === b.id
+            ? {
+                ...x,
+                status: "declined",
+                mentorDeclineReason: reason || null,
+              }
+            : x,
+        ),
+      );
+      toast.success("Request declined");
+      router.refresh();
+    } catch (err) {
+      toast.errorFromException("Couldn't decline", err);
+    }
+    setBusyId(null);
+  }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 md:gap-6">
       {dialog}
+      <Breadcrumbs
+        items={[{ label: "Home", href: "/mentor" }, { label: "Coaching requests" }]}
+      />
+      <div>
+        <h1 className="text-3xl font-bold text-gray-800 sm:text-4xl">
+          Coaching requests
+        </h1>
+        <p className="mt-2 max-w-2xl text-gray-600">
+          Fellows propose a time and topic. Accept if it works for you;
+          decline (with a reason) if it doesn&apos;t. Admin approval
+          comes next — you&apos;ll get the Zoom link once confirmed.
+        </p>
+      </div>
+
       <div className="flex flex-wrap gap-2">
         {STATUS_FILTERS.map((f) => (
           <button
@@ -104,13 +145,17 @@ export default function AdminBookingsView({
 
       {filtered.length === 0 ? (
         <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center">
-          <p className="text-sm text-gray-500">No bookings in this view.</p>
+          <p className="text-sm text-gray-500">
+            {filter === "pending_mentor"
+              ? "No requests waiting on you. Nice."
+              : "No bookings in this view."}
+          </p>
         </div>
       ) : (
         <ul className="flex flex-col gap-3">
           {filtered.map((b) => {
             const start = new Date(b.requestedStartsAt);
-            const s = STATUS_COPY[b.status];
+            const meta = STATUS_COPY[b.status];
             const isBusy = busyId === b.id;
             return (
               <li
@@ -133,24 +178,16 @@ export default function AdminBookingsView({
                       <TimeIcon className="h-3.5 w-3.5" />
                       {b.requestedDurationMinutes} min
                     </p>
-                    <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
-                      <div className="flex gap-2">
-                        <dt className="text-gray-500">Fellow</dt>
-                        <dd className="font-medium text-gray-800">
-                          {b.fellow?.fullName ?? "—"}
-                        </dd>
-                      </div>
-                      <div className="flex gap-2">
-                        <dt className="text-gray-500">Mentor</dt>
-                        <dd className="font-medium text-gray-800">
-                          {b.mentor?.fullName ?? "—"}
-                        </dd>
-                      </div>
-                    </dl>
+                    <p className="mt-2 text-sm text-gray-600">
+                      from{" "}
+                      <span className="font-semibold text-gray-800">
+                        {b.fellow?.fullName ?? "Fellow"}
+                      </span>
+                    </p>
                     {b.topic && (
                       <div className="mt-3 rounded-md bg-gray-50 p-3 text-sm text-gray-700">
                         <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                          Agenda
+                          Their agenda
                         </p>
                         <p className="mt-1">{b.topic}</p>
                       </div>
@@ -165,34 +202,37 @@ export default function AdminBookingsView({
                         >
                           Open Zoom meeting →
                         </a>
-                        {b.approvedBy && (
-                          <span className="ml-2 text-gray-500">
-                            (host: {b.approvedBy.fullName})
-                          </span>
-                        )}
                       </p>
                     )}
                     {b.status === "declined" && b.mentorDeclineReason && (
                       <p className="mt-3 text-xs text-error-700">
-                        Mentor declined: {b.mentorDeclineReason}
+                        Your reason: {b.mentorDeclineReason}
                       </p>
                     )}
                   </div>
-                  <Badge color={s.color} variant="light">
-                    {s.label}
+                  <Badge color={meta.tone} variant="light">
+                    {meta.label}
                   </Badge>
                 </div>
 
-                {b.status === "pending_admin" && (
+                {b.status === "pending_mentor" && (
                   <div className="mt-4 flex flex-wrap gap-2">
                     <Button
                       size="sm"
                       variant="fellowship"
-                      onClick={() => approve(b)}
+                      onClick={() => accept(b)}
                       disabled={isBusy}
                       className="bg-fellowship-navy! text-white! hover:bg-fellowship-navy-dark!"
                     >
-                      {isBusy ? "Working…" : "Approve & host"}
+                      {isBusy ? "Working…" : "Accept"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => decline(b)}
+                      disabled={isBusy}
+                    >
+                      Decline
                     </Button>
                   </div>
                 )}

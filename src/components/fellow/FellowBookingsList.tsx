@@ -14,10 +14,15 @@ type Props = {
 };
 
 const STATUS_COPY: Record<BookingStatus, { label: string; color: "info" | "success" | "warning" | "error" | "primary"; hint: string }> = {
-  pending: {
+  pending_mentor: {
+    label: "Awaiting mentor",
+    color: "warning",
+    hint: "Your mentor will accept or decline soon.",
+  },
+  pending_admin: {
     label: "Awaiting admin",
     color: "warning",
-    hint: "An admin will confirm and share the Zoom link.",
+    hint: "Mentor accepted — admin is confirming and creating the meeting.",
   },
   confirmed: {
     label: "Confirmed",
@@ -27,7 +32,7 @@ const STATUS_COPY: Record<BookingStatus, { label: string; color: "info" | "succe
   declined: {
     label: "Declined",
     color: "error",
-    hint: "The admin declined this request.",
+    hint: "Mentor wasn't available for that time.",
   },
   cancelled: {
     label: "Cancelled",
@@ -88,7 +93,7 @@ export default function FellowBookingsList({ initialBookings }: Props) {
       <ul className="flex flex-col gap-3">
         {bookings.map((b) => {
         const s = STATUS_COPY[b.status];
-        const start = new Date(b.slot.startsAt);
+        const start = new Date(b.requestedStartsAt);
         return (
           <li
             key={b.id}
@@ -108,7 +113,7 @@ export default function FellowBookingsList({ initialBookings }: Props) {
                 </div>
                 <p className="mt-1 inline-flex items-center gap-1 text-xs text-gray-500">
                   <TimeIcon className="h-3.5 w-3.5" />
-                  {b.slot.durationMinutes} min
+                  {b.requestedDurationMinutes} min
                 </p>
                 <p className="mt-2 text-sm text-gray-600">
                   with{" "}
@@ -133,12 +138,12 @@ export default function FellowBookingsList({ initialBookings }: Props) {
               </div>
             )}
 
-            {b.status === "declined" && b.declineReason && (
+            {b.status === "declined" && b.mentorDeclineReason && (
               <div className="mt-3 rounded-md border border-error-200 bg-error-50 p-3 text-sm text-error-700">
                 <p className="text-xs font-semibold uppercase tracking-wide">
                   Reason
                 </p>
-                <p className="mt-1">{b.declineReason}</p>
+                <p className="mt-1">{b.mentorDeclineReason}</p>
               </div>
             )}
 
@@ -159,7 +164,7 @@ export default function FellowBookingsList({ initialBookings }: Props) {
               </div>
             )}
 
-            {b.status === "pending" && (
+            {(b.status === "pending_mentor" || b.status === "pending_admin") && (
               <div className="mt-4">
                 <Button size="sm" variant="outline" onClick={() => cancel(b)}>
                   Cancel request
