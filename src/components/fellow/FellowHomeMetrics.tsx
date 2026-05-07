@@ -29,7 +29,7 @@ export default function FellowHomeMetrics({ metrics }: Props) {
       animate={reduce ? false : "show"}
     >
       <MetricCard
-        icon={<BoxIconLine className="text-fellowship-navy" />}
+        icon={<BoxIconLine className="text-fellowship-navy size-5" />}
         label="Modules complete"
         valueNode={
           <>
@@ -39,13 +39,13 @@ export default function FellowHomeMetrics({ metrics }: Props) {
         }
       />
       <MetricCard
-        icon={<CalenderIcon className="text-fellowship-navy" />}
+        icon={<CalenderIcon className="text-fellowship-navy size-5" />}
         label="Your attendance"
         valueNode={<CountUp value={metrics.attendanceRatePercent} suffix="%" />}
       />
       <MetricCard
         tourAnchor="ai-buddy"
-        icon={<BoltIcon className="text-fellowship-navy size-6" />}
+        icon={<BoltIcon className="text-fellowship-navy size-5" />}
         label="AI Buddy today"
         valueNode={
           <>
@@ -56,7 +56,7 @@ export default function FellowHomeMetrics({ metrics }: Props) {
         hint="messages left"
       />
       <MetricCard
-        icon={<CheckCircleIcon className="text-fellowship-navy" />}
+        icon={<CheckCircleIcon className="text-fellowship-navy size-5" />}
         label="Capstone"
         valueNode={<>{metrics.capstoneStatus}</>}
       />
@@ -95,7 +95,12 @@ function MetricCard({ icon, label, valueNode, hint, tourAnchor }: CardProps) {
       transition={{ type: "spring", stiffness: 300, damping: 22 }}
       className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6"
     >
-      <div className="flex items-center justify-center w-12 h-12 bg-warning-100 rounded-xl">
+      {/* Tighter badge — was w-12 h-12 with no icon-size cap, which let
+          the SVGR-bundled `h-5 w-5` defaults bloom because consumers
+          weren't pinning a size. Now the badge is 40px and every icon
+          is forced to size-5 (20px), so the proportion matches the
+          rest of the design system. */}
+      <div className="flex items-center justify-center w-10 h-10 bg-warning-100 rounded-xl">
         {icon}
       </div>
       <div className="mt-5">
