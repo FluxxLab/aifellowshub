@@ -5,7 +5,6 @@ import Badge from "@/components/ui/badge/Badge";
 import Breadcrumbs from "@/components/common/Breadcrumbs";
 import Button from "@/components/ui/button/Button";
 import {
-  CheckLineIcon,
   CopyIcon,
   DownloadIcon,
   PaperPlaneIcon,
@@ -13,7 +12,6 @@ import {
 } from "@/icons";
 import type {
   Certificate,
-  EligibilityRequirement,
   FellowCertificateState,
 } from "@/lib/api/fellow-certificates";
 
@@ -60,34 +58,11 @@ export default function MyCertificatesView({
 }
 
 function PendingView({ state }: { state: FellowCertificateState }) {
-  const met = state.eligibility.requirements.filter((r) => r.met).length;
-  const total = state.eligibility.requirements.length;
-
+  // Eligibility checklist intentionally omitted — the scorecard above
+  // already lists missing requirements. Keep the preview + verification
+  // example so fellows still see what they're working toward.
   return (
     <>
-      <section className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <Badge color="warning" variant="light">
-              Not yet issued
-            </Badge>
-            <h2 className="mt-2 text-xl font-semibold text-gray-800">
-              You&apos;re {met} of {total} requirements in
-            </h2>
-            <p className="mt-1 text-sm text-gray-600">
-              Once all three are met, your certificate is generated automatically
-              and a public verify URL becomes available.
-            </p>
-          </div>
-        </div>
-
-        <ul className="mt-4 space-y-3">
-          {state.eligibility.requirements.map((r) => (
-            <RequirementRow key={r.label} requirement={r} />
-          ))}
-        </ul>
-      </section>
-
       <CertificatePreview state={state} />
 
       <section className="rounded-2xl border border-gray-200 bg-gray-50 p-5 md:p-6">
@@ -111,32 +86,6 @@ function PendingView({ state }: { state: FellowCertificateState }) {
         </Link>
       </section>
     </>
-  );
-}
-
-function RequirementRow({ requirement: r }: { requirement: EligibilityRequirement }) {
-  return (
-    <li className="flex items-start gap-3 rounded-lg border border-gray-100 bg-white p-3 text-sm">
-      <span
-        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
-          r.met
-            ? "bg-success-100 text-success-600"
-            : "border-2 border-gray-200 bg-white"
-        }`}
-      >
-        {r.met && <CheckLineIcon className="h-3 w-3" />}
-      </span>
-      <div className="flex-1">
-        <p
-          className={`font-medium ${
-            r.met ? "text-gray-500 line-through" : "text-gray-800"
-          }`}
-        >
-          {r.label}
-        </p>
-        <p className="text-xs text-gray-500">{r.detail}</p>
-      </div>
-    </li>
   );
 }
 
