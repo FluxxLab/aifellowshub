@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
  Table,
  TableBody,
@@ -15,7 +16,10 @@ import AvatarText from "@/components/ui/avatar/AvatarText";
 import Badge from "@/components/ui/badge/Badge";
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
+import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { MoreDotIcon } from "@/icons";
+import { apiFetch } from "@/lib/api/client";
+import { toast } from "@/lib/toast";
 import type { LiveSession, SessionStatus } from "@/lib/api/sessions";
 
 type SessionsTableProps = {
@@ -227,22 +231,55 @@ function RowActions({
  sessionId: string;
  status: SessionStatus;
 }) {
+ const router = useRouter();
+ const { confirm, dialog } = useConfirm();
  const [open, setOpen] = useState(false);
 
- const actions: { label: string; href?: string; destructive?: boolean }[] = [
- { label:"Open", href:`/sessions/${sessionId}`},
- ];
- if (status ==="scheduled"|| status ==="live") {
- actions.push({ label:"Reschedule"});
- actions.push({ label:"Reassign host"});
- actions.push({ label:"Cancel session", destructive: true });
+ async function endNow() {
+   const ok = await confirm({
+     title: "End this session now?",
+     message:
+       "Everyone in the meeting will be booted. Attendance settles using a proportional threshold so fellows aren't punished for the early end.",
+     confirmLabel: "End session",
+     tone: "danger",
+   });
+   if (!ok) return;
+   try {
+     await apiFetch(`/sessions/${encodeURIComponent(sessionId)}/end`, {
+       method: "POST",
+     });
+     toast.success("Session ended", "Attendance has been settled.");
+     router.refresh();
+   } catch (err) {
+     toast.errorFromException("Couldn't end session", err);
+   }
  }
- if (status ==="ended") {
- actions.push({ label:"View attendance", href:`/sessions/${sessionId}`});
+
+ type Action = {
+   label: string;
+   href?: string;
+   onClick?: () => void;
+   destructive?: boolean;
+ };
+ const actions: Action[] = [{ label: "Open", href: `/sessions/${sessionId}` }];
+ if (status === "scheduled" || status === "live") {
+   actions.push({ label: "Reschedule" });
+   actions.push({ label: "Reassign host" });
+   // "End now" lives above the destructive cancel because it's the
+   // common-case action during a live session — host runs out of time
+   // or finishes early. Cancel is the rarer "kill the whole session" path.
+   if (status === "live") {
+     actions.push({ label: "End now", onClick: endNow, destructive: true });
+   }
+   actions.push({ label: "Cancel session", destructive: true });
+ }
+ if (status === "ended") {
+   actions.push({ label: "View attendance", href: `/sessions/${sessionId}` });
  }
 
  return (
  <div className="relative inline-block text-left">
+ {dialog}
  <button
  type="button" aria-label="Session actions" aria-haspopup="menu" aria-expanded={open}
  onClick={(e) => {
@@ -268,7 +305,10 @@ function RowActions({
  <DropdownItem
  tag={a.href ?"a":"button"}
  href={a.href}
- onItemClick={() => setOpen(false)}
+ onItemClick={() => {
+   setOpen(false);
+   a.onClick?.();
+ }}
  baseClassName="block w-full rounded-md text-left px-3 py-2 text-sm font-medium transition-colors" className={
  a.destructive
  ?"text-error-600 hover:bg-error-50":"text-gray-700 hover:bg-gray-100 hover:text-gray-900"}
