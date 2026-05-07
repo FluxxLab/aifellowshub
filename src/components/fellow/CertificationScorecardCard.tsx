@@ -1,5 +1,4 @@
 import Badge from "@/components/ui/badge/Badge";
-import { CheckLineIcon, CloseLineIcon } from "@/icons";
 import type { CertificationScorecard } from "@/lib/api/fellow-certificates.server";
 
 const TIER_COPY: Record<
@@ -23,8 +22,7 @@ export default function CertificationScorecardCard({
 }: {
   scorecard: CertificationScorecard;
 }) {
-  const { totalScore, eligible, tier, missingRequirements, breakdown, criteria } =
-    scorecard;
+  const { totalScore, tier, breakdown, criteria } = scorecard;
   const tierMeta = tier ? TIER_COPY[tier] : null;
 
   return (
@@ -90,37 +88,6 @@ export default function CertificationScorecardCard({
           detail={`Contributes ${breakdown.capstone.contribution.toFixed(1)} pts`}
         />
       </ul>
-
-      <div className="mt-5 rounded-xl border border-gray-200 bg-gray-50 p-4">
-        <div className="flex items-center gap-2">
-          {eligible ? (
-            <>
-              <CheckLineIcon className="h-4 w-4 text-success-600" />
-              <p className="text-sm font-semibold text-success-700">
-                You&apos;re eligible — your certificate auto-issues when your
-                capstone reaches final-approved.
-              </p>
-            </>
-          ) : (
-            <>
-              <CloseLineIcon className="h-4 w-4 text-warning-600" />
-              <p className="text-sm font-semibold text-gray-800">
-                Not yet eligible
-              </p>
-            </>
-          )}
-        </div>
-        {!eligible && missingRequirements.length > 0 && (
-          <ul className="mt-3 space-y-1.5 text-sm text-gray-700">
-            {missingRequirements.map((r, i) => (
-              <li key={i} className="flex gap-2">
-                <span className="text-gray-400">·</span>
-                <span>{r}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
     </section>
   );
 }
