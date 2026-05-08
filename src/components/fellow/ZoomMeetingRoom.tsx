@@ -1,7 +1,11 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import Button from "@/components/ui/button/Button";
+import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { useCurrentUser } from "@/lib/auth/useCurrentUser";
+import { apiFetch } from "@/lib/api/client";
+import { toast } from "@/lib/toast";
 
 type SignatureResponse = {
   signature: string;
@@ -55,6 +59,10 @@ export default function ZoomMeetingRoom({
   >("loading");
   const [error, setError] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isHost, setIsHost] = useState(false);
+  const [endingSession, setEndingSession] = useState(false);
+  const router = useRouter();
+  const { confirm, dialog } = useConfirm();
 
   // Esc exits fullscreen — matches every other "expanded" UI on the
   // web, and keeps users from getting trapped if the in-meeting Exit
@@ -95,6 +103,10 @@ export default function ZoomMeetingRoom({
         }
         const sig = (await sigRes.json()) as SignatureResponse;
         if (cancelled) return;
+        // Backend returns role=1 only for users it considers a host
+        // (admin / faculty owner). Drives whether the End-session
+        // control is rendered.
+        setIsHost(sig.role === 1);
 
         const mod = await import("@zoom/meetingsdk/embedded");
         if (cancelled) return;
@@ -169,11 +181,41 @@ export default function ZoomMeetingRoom({
     };
   }, [sessionId, user?.fullName, user?.email]);
 
+  // Host action — boots everyone via Zoom's end-meeting endpoint and
+  // settles attendance using the proportional threshold (BRD §6.4).
+  // Mirrors the SessionsTable kebab "End now" path so behaviour matches
+  // whether the admin ends from the list or from inside the meeting.
+  async function endSession() {
+    const ok = await confirm({
+      title: "End this session now?",
+      message:
+        "Everyone in the meeting will be booted. Attendance settles using a proportional threshold so fellows aren't punished for the early end.",
+      confirmLabel: "End session",
+      tone: "danger",
+    });
+    if (!ok) return;
+    setEndingSession(true);
+    try {
+      await apiFetch(`/sessions/${encodeURIComponent(sessionId)}/end`, {
+        method: "POST",
+      });
+      toast.success("Session ended", "Attendance has been settled.");
+      setIsFullscreen(false);
+      setPhase("left");
+      onLeave?.();
+      router.refresh();
+    } catch (err) {
+      toast.errorFromException("Couldn't end session", err);
+    } finally {
+      setEndingSession(false);
+    }
+  }
+
   return (
     <div
       className={
         isFullscreen
-          ? "fixed inset-0 z-[9999] flex flex-col bg-black"
+          ? "fixed inset-0 z-9999 flex flex-col bg-black"
           : "flex flex-col gap-3"
       }
     >
@@ -195,6 +237,7 @@ export default function ZoomMeetingRoom({
         affecting Zoom's inner DOM. Zoom manages everything inside
         `containerRef`.
       */}
+      {dialog}
       <div
         className={
           isFullscreen
@@ -204,16 +247,28 @@ export default function ZoomMeetingRoom({
       >
         <div ref={containerRef} className="absolute inset-0" />
         {phase === "in-meeting" && (
-          <button
-            type="button"
-            onClick={() => setIsFullscreen((v) => !v)}
-            className="absolute right-3 top-3 z-10 rounded-md bg-black/60 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-black/80"
-            aria-label={
-              isFullscreen ? "Exit fullscreen" : "Expand to fullscreen"
-            }
-          >
-            {isFullscreen ? "Exit fullscreen (Esc)" : "Expand"}
-          </button>
+          <div className="absolute right-3 top-3 z-10 flex gap-2">
+            {isHost && (
+              <button
+                type="button"
+                onClick={endSession}
+                disabled={endingSession}
+                className="rounded-md bg-error-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-error-700 disabled:opacity-60"
+              >
+                {endingSession ? "Ending…" : "End session"}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setIsFullscreen((v) => !v)}
+              className="rounded-md bg-black/60 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-black/80"
+              aria-label={
+                isFullscreen ? "Exit fullscreen" : "Expand to fullscreen"
+              }
+            >
+              {isFullscreen ? "Exit fullscreen (Esc)" : "Expand"}
+            </button>
+          </div>
         )}
       </div>
 
