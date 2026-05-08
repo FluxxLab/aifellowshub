@@ -21,6 +21,8 @@ import { MoreDotIcon } from "@/icons";
 import { apiFetch } from "@/lib/api/client";
 import { toast } from "@/lib/toast";
 import type { LiveSession, SessionStatus } from "@/lib/api/sessions";
+import RescheduleSessionModal from "./RescheduleSessionModal";
+import ReassignHostModal from "./ReassignHostModal";
 
 type SessionsTableProps = {
  sessions: LiveSession[];
@@ -91,7 +93,7 @@ export default function SessionsTable({ sessions }: SessionsTableProps) {
  ),
  },
  ]}
- actions={<RowActions sessionId={s.id} status={s.status} />}
+ actions={<RowActions session={s} />}
  />
  ))}
  </MobileRowList>
@@ -171,7 +173,7 @@ export default function SessionsTable({ sessions }: SessionsTableProps) {
  <SessionStatusBadge status={s.status} />
  </Td>
  <Td right>
- <RowActions sessionId={s.id} status={s.status} />
+ <RowActions session={s} />
  </Td>
  </TableRow>
  ))}
@@ -224,16 +226,14 @@ function SessionStatusBadge({ status }: { status: SessionStatus }) {
  return <Badge color="error">Cancelled</Badge>;
 }
 
-function RowActions({
- sessionId,
- status,
-}: {
- sessionId: string;
- status: SessionStatus;
-}) {
+function RowActions({ session: s }: { session: LiveSession }) {
  const router = useRouter();
  const { confirm, dialog } = useConfirm();
  const [open, setOpen] = useState(false);
+ const [rescheduleOpen, setRescheduleOpen] = useState(false);
+ const [reassignOpen, setReassignOpen] = useState(false);
+ const sessionId = s.id;
+ const status = s.status;
 
  async function endNow() {
    const ok = await confirm({
@@ -255,6 +255,26 @@ function RowActions({
    }
  }
 
+ async function cancelSession() {
+   const ok = await confirm({
+     title: "Cancel this session?",
+     message:
+       "RSVP'd fellows will be notified, the Zoom meeting is removed, and the session disappears from upcoming calendars. The row stays for analytics — use the table's delete action to remove it permanently.",
+     confirmLabel: "Cancel session",
+     tone: "danger",
+   });
+   if (!ok) return;
+   try {
+     await apiFetch(`/sessions/${encodeURIComponent(sessionId)}/cancel`, {
+       method: "POST",
+     });
+     toast.success("Session cancelled");
+     router.refresh();
+   } catch (err) {
+     toast.errorFromException("Couldn't cancel session", err);
+   }
+ }
+
  type Action = {
    label: string;
    href?: string;
@@ -263,15 +283,17 @@ function RowActions({
  };
  const actions: Action[] = [{ label: "Open", href: `/sessions/${sessionId}` }];
  if (status === "scheduled" || status === "live") {
-   actions.push({ label: "Reschedule" });
-   actions.push({ label: "Reassign host" });
+   if (status === "scheduled") {
+     actions.push({ label: "Reschedule", onClick: () => setRescheduleOpen(true) });
+     actions.push({ label: "Reassign host", onClick: () => setReassignOpen(true) });
+   }
    // "End now" lives above the destructive cancel because it's the
    // common-case action during a live session — host runs out of time
    // or finishes early. Cancel is the rarer "kill the whole session" path.
    if (status === "live") {
      actions.push({ label: "End now", onClick: endNow, destructive: true });
    }
-   actions.push({ label: "Cancel session", destructive: true });
+   actions.push({ label: "Cancel session", onClick: cancelSession, destructive: true });
  }
  if (status === "ended") {
    actions.push({ label: "View attendance", href: `/sessions/${sessionId}` });
@@ -319,6 +341,21 @@ function RowActions({
  ))}
  </ul>
  </Dropdown>
+ <RescheduleSessionModal
+ isOpen={rescheduleOpen}
+ onClose={() => setRescheduleOpen(false)}
+ sessionId={sessionId}
+ sessionTitle={s.title}
+ currentStartsAt={s.scheduledStart}
+ currentDurationMinutes={s.durationMinutes}
+ />
+ <ReassignHostModal
+ isOpen={reassignOpen}
+ onClose={() => setReassignOpen(false)}
+ sessionId={sessionId}
+ sessionTitle={s.title}
+ currentHostId={s.hostId}
+ />
  </div>
  );
 }

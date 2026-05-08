@@ -94,6 +94,8 @@ export type FacultyAssessmentMeta = {
 
 export type FacultyModuleSummary = {
   id: string;
+  /** Owning course id — drives the role-aware breadcrumbs in the editor. */
+  courseId: string;
   weekNumber: number;
   title: string;
   summary: string;
@@ -248,6 +250,7 @@ export function backendStatusToFaculty(
 export function backendToModuleSummary(m: BackendModule): FacultyModuleSummary {
   return {
     id: m.id,
+    courseId: m.courseId,
     weekNumber: m.weekNumber,
     title: m.title,
     summary: m.summary,
