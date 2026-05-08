@@ -19,6 +19,7 @@ import {
  type CapstoneStatus,
  type CapstoneSubmission,
 } from "@/lib/api/capstone";
+import AssignCapstoneMentorModal from "./AssignCapstoneMentorModal";
 
 const FILTERS: { id:"all"|"overdue"| CapstoneStatus; label: string }[] = [
  { id:"all", label:"All"},
@@ -297,22 +298,23 @@ function CapstoneStatusBadge({ status }: { status: CapstoneStatus }) {
 
 function RowActions({ submission }: { submission: CapstoneSubmission }) {
  const [open, setOpen] = useState(false);
- const overdue = isOverdue(submission);
+ const [assignOpen, setAssignOpen] = useState(false);
 
- const actions: { label: string; href?: string; destructive?: boolean }[] = [
- { label:"Open capstone", href:`/capstone/${submission.id}`},
+ const actions: {
+   label: string;
+   href?: string;
+   onClick?: () => void;
+   destructive?: boolean;
+ }[] = [
+ // The fellow profile already shows capstone status, last feedback,
+ // and links to attendance/assessments — gives admins the same
+ // context they'd want from a dedicated capstone page.
+ { label:"Open fellow profile", href:`/participants/${submission.fellowId}`},
  ];
- if (submission.mentorName) {
  actions.push({
- label: overdue ?"Nudge mentor":"Message mentor",
+   label: submission.mentorName ? "Reassign supervisor" : "Assign supervisor",
+   onClick: () => setAssignOpen(true),
  });
- }
- actions.push({ label:"Reassign mentor"});
- if (
- submission.status ==="submitted"||
- submission.status ==="under-review") {
- actions.push({ label:"Force approve (override)"});
- }
 
  return (
  <div className="relative inline-block text-left">
@@ -330,7 +332,10 @@ function RowActions({ submission }: { submission: CapstoneSubmission }) {
  <DropdownItem
  tag={a.href ?"a":"button"}
  href={a.href}
- onItemClick={() => setOpen(false)}
+ onItemClick={() => {
+   setOpen(false);
+   a.onClick?.();
+ }}
  baseClassName="block w-full rounded-md text-left px-3 py-2 text-sm font-medium transition-colors" className={
  a.destructive
  ?"text-error-600 hover:bg-error-50":"text-gray-700 hover:bg-gray-100 hover:text-gray-900"}
@@ -341,6 +346,14 @@ function RowActions({ submission }: { submission: CapstoneSubmission }) {
  ))}
  </ul>
  </Dropdown>
+ <AssignCapstoneMentorModal
+ isOpen={assignOpen}
+ onClose={() => setAssignOpen(false)}
+ capstoneId={submission.id}
+ fellowName={submission.fellowName}
+ fellowSector={submission.sector}
+ currentMentorId={submission.mentorId}
+ />
  </div>
  );
 }
