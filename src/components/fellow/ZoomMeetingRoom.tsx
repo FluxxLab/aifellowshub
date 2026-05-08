@@ -54,6 +54,26 @@ export default function ZoomMeetingRoom({
     "loading" | "joining" | "in-meeting" | "left" | "error"
   >("loading");
   const [error, setError] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Esc exits fullscreen — matches every other "expanded" UI on the
+  // web, and keeps users from getting trapped if the in-meeting Exit
+  // button overlaps a Zoom control.
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsFullscreen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    // Hide page scroll while fullscreen so the body can't scroll behind
+    // the meeting.
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [isFullscreen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -150,27 +170,54 @@ export default function ZoomMeetingRoom({
   }, [sessionId, user?.fullName, user?.email]);
 
   return (
-    <div className="flex flex-col gap-3">
-      {phase === "loading" && (
+    <div
+      className={
+        isFullscreen
+          ? "fixed inset-0 z-[9999] flex flex-col bg-black"
+          : "flex flex-col gap-3"
+      }
+    >
+      {phase === "loading" && !isFullscreen && (
         <p className="text-sm text-gray-600">Loading meeting…</p>
       )}
-      {phase === "joining" && (
+      {phase === "joining" && !isFullscreen && (
         <p className="text-sm text-gray-600">Joining meeting…</p>
       )}
-      {phase === "error" && (
+      {phase === "error" && !isFullscreen && (
         <div className="rounded-md border border-error-200 bg-error-50 p-3 text-sm text-error-700">
           {error}
         </div>
       )}
+
       {/*
-        Zoom mounts its UI here. The element MUST stay in the DOM the
-        whole time the meeting is live; the SDK manages the inner DOM.
+        Wrapper is `relative` so the Expand / Exit fullscreen button can
+        be positioned in the corner of the meeting tile without
+        affecting Zoom's inner DOM. Zoom manages everything inside
+        `containerRef`.
       */}
       <div
-        ref={containerRef}
-        className="min-h-[480px] w-full overflow-hidden rounded-2xl bg-black"
-      />
-      {phase === "in-meeting" && (
+        className={
+          isFullscreen
+            ? "relative flex-1 bg-black"
+            : "relative h-[70vh] w-full overflow-hidden rounded-2xl bg-black"
+        }
+      >
+        <div ref={containerRef} className="absolute inset-0" />
+        {phase === "in-meeting" && (
+          <button
+            type="button"
+            onClick={() => setIsFullscreen((v) => !v)}
+            className="absolute right-3 top-3 z-10 rounded-md bg-black/60 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-black/80"
+            aria-label={
+              isFullscreen ? "Exit fullscreen" : "Expand to fullscreen"
+            }
+          >
+            {isFullscreen ? "Exit fullscreen (Esc)" : "Expand"}
+          </button>
+        )}
+      </div>
+
+      {phase === "in-meeting" && !isFullscreen && (
         <div className="flex justify-end">
           <Button
             size="sm"
