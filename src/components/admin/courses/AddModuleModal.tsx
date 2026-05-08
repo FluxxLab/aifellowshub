@@ -132,9 +132,13 @@ export default function AddModuleModal({
  Week number <span className="text-error-500">*</span>
  </Label>
  <Input
- type="number" min="1" defaultValue={String(weekNumber)}
+ type="number" min="0" defaultValue={String(weekNumber)}
  onChange={(e) => setWeekNumber(Number(e.target.value))}
  />
+ <p className="mt-1 text-xs text-gray-500">
+ Use <span className="font-semibold">0</span> for an onboarding /
+ orientation module that runs before week 1.
+ </p>
  </div>
  <div>
  <Label>Category</Label>

@@ -14,6 +14,7 @@ import {
   VideoIcon,
 } from "@/icons";
 import LessonContentUpload from "@/components/faculty/LessonContentUpload";
+import { useCurrentUser } from "@/lib/auth/useCurrentUser";
 import {
   addModuleLesson,
   addModuleResource,
@@ -45,6 +46,24 @@ export default function FacultyModuleEditor({
 }: {
   initial: FacultyModuleDetail;
 }) {
+  const user = useCurrentUser();
+  // Admins reach this page from /courses/:id (they share the editor
+  // since admin and faculty have the same PATCH permissions). Sending
+  // them back to /faculty/* would strand them outside their sidebar —
+  // breadcrumbs adapt to where they came from.
+  const isAdminEditor = user?.role === "admin" || user?.role === "super_admin";
+  const breadcrumbItems = isAdminEditor
+    ? [
+        { label: "Courses", href: "/courses" },
+        { label: "Course", href: `/courses/${initial.courseId}` },
+        { label: initial.title },
+      ]
+    : [
+        { label: "Faculty home", href: "/faculty" },
+        { label: "My modules", href: "/faculty/modules" },
+        { label: initial.title },
+      ];
+
   const [status, setStatus] = useState<FacultyModuleStatus>(initial.status);
   const [title, setTitle] = useState(initial.title);
   const [summary, setSummary] = useState(initial.summary);
@@ -242,13 +261,7 @@ export default function FacultyModuleEditor({
 
   return (
     <div className="flex flex-col gap-4 md:gap-6">
-      <Breadcrumbs
-        items={[
-          { label: "Faculty home", href: "/faculty" },
-          { label: "My modules", href: "/faculty/modules" },
-          { label: initial.title },
-        ]}
-      />
+      <Breadcrumbs items={breadcrumbItems} />
 
       <section className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
