@@ -27,6 +27,8 @@ export type LiveSession = {
   expectedCount: number;
   /** Minimum minutes in room to be auto-credited (BRD §6.4 default = 50% of duration). */
   attendanceThresholdMinutes: number;
+  /** True once the recording has been pulled from Zoom into DO Spaces. */
+  hasRecording: boolean;
 };
 
 export async function getSessions(): Promise<LiveSession[]> {

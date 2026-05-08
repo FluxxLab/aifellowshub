@@ -31,6 +31,7 @@ type BackendAdminListSession = {
   rsvpCount: number;
   attendedCount: number;
   expectedCount: number;
+  hasRecording?: boolean;
 };
 
 /** Cohort-wide admin session list. Returns `[]` if backend unreachable. */
@@ -65,6 +66,7 @@ function mapToLiveSession(s: BackendAdminListSession): LiveSession {
     attendedCount: s.status === "ended" ? s.attendedCount : undefined,
     expectedCount: s.expectedCount,
     attendanceThresholdMinutes: s.attendanceThresholdMinutes,
+    hasRecording: Boolean(s.hasRecording),
   };
 }
 
@@ -155,6 +157,9 @@ function mapToSessionDetail(s: BackendAdminSession): SessionDetail {
     attendedCount: s.status === "ended" ? attendedCount : undefined,
     expectedCount,
     attendanceThresholdMinutes: s.attendanceThresholdMinutes,
+    hasRecording: Boolean(
+      (s as { hasRecording?: boolean }).hasRecording,
+    ),
     attendance,
     joinUrl: s.joinUrl,
     zoomMeetingId: s.zoomMeetingId,

@@ -255,6 +255,21 @@ function RowActions({ session: s }: { session: LiveSession }) {
    }
  }
 
+ async function openRecording() {
+   try {
+     const data = await apiFetch<{ url: string | null }>(
+       `/sessions/${encodeURIComponent(sessionId)}/recording-url`,
+     );
+     if (!data.url) {
+       toast.error("Recording isn't ready yet — check back in a few minutes.");
+       return;
+     }
+     window.open(data.url, "_blank", "noopener,noreferrer");
+   } catch (err) {
+     toast.errorFromException("Couldn't load recording", err);
+   }
+ }
+
  async function cancelSession() {
    const ok = await confirm({
      title: "Cancel this session?",
@@ -297,6 +312,9 @@ function RowActions({ session: s }: { session: LiveSession }) {
  }
  if (status === "ended") {
    actions.push({ label: "View attendance", href: `/sessions/${sessionId}` });
+   if (s.hasRecording) {
+     actions.push({ label: "Watch recording", onClick: openRecording });
+   }
  }
 
  return (
