@@ -17,6 +17,52 @@ export type AssignedMentor = {
   fullName: string;
 };
 
+/**
+ * Generic user profile shape returned by GET /admin/users/:id. Same
+ * baseline fields for every role; `stats` carries role-specific
+ * extensions used by /participants/:id when the user isn't a fellow.
+ */
+export type UserRole =
+  | "fellow"
+  | "mentor"
+  | "faculty"
+  | "admin"
+  | "super_admin";
+
+export type UserProfileStats =
+  | {
+      kind: "mentor";
+      assignedFellowsCount: number;
+      pendingReviewsCount: number;
+      bookingsCount: number;
+    }
+  | {
+      kind: "faculty";
+      ownedModulesCount: number;
+      draftModulesCount: number;
+    }
+  | {
+      kind: "admin";
+      lastActiveAt: string | null;
+    }
+  | { kind: "fellow" };
+
+export type UserProfile = {
+  id: string;
+  fullName: string;
+  email: string;
+  role: UserRole;
+  country: string | null;
+  organisation: string | null;
+  jobTitle: string | null;
+  sector: string | null;
+  bio: string | null;
+  linkedinUrl: string | null;
+  isActive: boolean;
+  joinedAt: string;
+  stats: UserProfileStats | null;
+};
+
 export type Fellow = {
   id: string;
   fullName: string;

@@ -581,6 +581,7 @@ function FacultyTable({ faculty }: { faculty: Faculty[] }) {
  <RowActions
  label={`Actions for ${f.fullName}`}
  actions={[
+ { label: "View profile", href: `/participants/${f.id}` },
  { label: "View courses", href: `/courses?owner=${f.id}` },
  deactivateAction(f, run),
  ]}
@@ -649,6 +650,7 @@ function FacultyTable({ faculty }: { faculty: Faculty[] }) {
  <RowActions
  label={`Actions for ${f.fullName}`}
  actions={[
+ { label:"View profile", href:`/participants/${f.id}`},
  { label:"View courses", href:`/courses?owner=${f.id}`},
  deactivateAction(f, run),
  ]}
@@ -719,7 +721,10 @@ function MentorsTable({ mentors }: { mentors: Mentor[] }) {
  actions={
  <RowActions
  label={`Actions for ${m.fullName}`}
- actions={[deactivateAction(m, run)]}
+ actions={[
+ { label: "View profile", href: `/participants/${m.id}` },
+ deactivateAction(m, run),
+ ]}
  />
  }
  />
@@ -786,7 +791,10 @@ function MentorsTable({ mentors }: { mentors: Mentor[] }) {
  <ActionsCell>
  <RowActions
  label={`Actions for ${m.fullName}`}
- actions={[deactivateAction(m, run)]}
+ actions={[
+ { label: "View profile", href: `/participants/${m.id}` },
+ deactivateAction(m, run),
+ ]}
  />
  </ActionsCell>
  </TableRow>
@@ -843,7 +851,10 @@ function AdminsTable({ admins }: { admins: AdminUser[] }) {
  actions={
  <RowActions
  label={`Actions for ${a.fullName}`}
- actions={[deactivateAction(a, run)]}
+ actions={[
+ { label: "View profile", href: `/participants/${a.id}` },
+ deactivateAction(a, run),
+ ]}
  />
  }
  />
@@ -898,7 +909,10 @@ function AdminsTable({ admins }: { admins: AdminUser[] }) {
  <ActionsCell>
  <RowActions
  label={`Actions for ${a.fullName}`}
- actions={[deactivateAction(a, run)]}
+ actions={[
+ { label: "View profile", href: `/participants/${a.id}` },
+ deactivateAction(a, run),
+ ]}
  />
  </ActionsCell>
  </TableRow>

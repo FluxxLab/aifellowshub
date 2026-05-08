@@ -17,6 +17,7 @@ import type {
   SessionAttendance,
   CapstoneSnapshot,
   ActivityEntry,
+  UserProfile,
 } from "./participants";
 
 type BackendFellow = {
@@ -203,6 +204,23 @@ type BackendFellowProfile = {
   };
   activity: { id: string; type: ActivityEntry["type"]; message: string; at: string }[];
 };
+
+/** Generic profile fetcher (any role) used by /participants/:id. */
+export async function getUserProfileServer(
+  id: string,
+): Promise<UserProfile | null> {
+  try {
+    const res = await backendFetch(
+      `/admin/users/${encodeURIComponent(id)}`,
+      { method: "GET" },
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as { user: UserProfile };
+    return data.user;
+  } catch {
+    return null;
+  }
+}
 
 export async function getFellowProfileServer(
   id: string,

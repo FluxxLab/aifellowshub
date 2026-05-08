@@ -3,7 +3,11 @@ import { notFound } from "next/navigation";
 import Badge from "@/components/ui/badge/Badge";
 import ProfileHeader from "@/components/admin/participants/profile/ProfileHeader";
 import AssignMentorCard from "@/components/admin/participants/profile/AssignMentorCard";
-import { getFellowProfileServer } from "@/lib/api/participants.server";
+import GenericProfileView from "@/components/admin/participants/profile/GenericProfileView";
+import {
+ getFellowProfileServer,
+ getUserProfileServer,
+} from "@/lib/api/participants.server";
 import { listMentorsForBrowseServer } from "@/lib/api/mentorship.server";
 import type {
  ActivityEntry,
@@ -20,14 +24,23 @@ type PageProps = {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
  const { id } = params;
- const fellow = await getFellowProfileServer(id);
+ const user = await getUserProfileServer(id);
  return {
- title: fellow ?`${fellow.fullName} · Participants`:"Participant · AI Fellows LMS",
+ title: user ?`${user.fullName} · Participants`:"Participant · AI Fellows LMS",
  };
 }
 
-export default async function FellowProfilePage({ params }: PageProps) {
+export default async function ParticipantProfilePage({ params }: PageProps) {
  const { id } = params;
+ const user = await getUserProfileServer(id);
+ if (!user) notFound();
+
+ // Non-fellow roles get a lighter generic profile view — they don't
+ // have a curriculum / attendance / capstone tied to them.
+ if (user.role !== "fellow") {
+ return <GenericProfileView user={user} />;
+ }
+
  const [fellow, mentors] = await Promise.all([
  getFellowProfileServer(id),
  listMentorsForBrowseServer(),
