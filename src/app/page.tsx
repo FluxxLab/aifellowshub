@@ -242,16 +242,6 @@ export default function LandingPage() {
  </li>
  ))}
  </ol>
-
- <div className="mt-10 flex justify-start">
- <Link
- href="/learning"
- className="inline-flex items-center gap-2 rounded-lg bg-fellowship-navy px-6 py-3 text-base font-semibold text-white shadow-theme-sm transition hover:bg-fellowship-navy-dark"
- >
- Go to Current Week
- <ArrowRightIcon className="h-4 w-4" />
- </Link>
- </div>
  </div>
  </section>
 
