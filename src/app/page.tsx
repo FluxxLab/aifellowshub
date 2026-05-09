@@ -150,8 +150,11 @@ export default function LandingPage() {
  >
  <div className="mx-auto flex h-[84px] max-w-(--breakpoint-content) items-center justify-between gap-6 px-6 lg:px-12 xl:px-16">
  <Link href="/" className="inline-flex items-center gap-4">
+ {/* Same swap pattern as the AHFID lockup below: dark variant
+     (`luminatewhite.png`) for the scrolled white header, original
+     (`luminate.png`) for the transparent header over the navy hero. */}
  <Image
- src="/images/luminate.png"
+ src={scrolled ? "/images/luminatewhite.png" : "/images/luminate.png"}
  alt="Luminate"
  width={110}
  height={36}
