@@ -149,30 +149,34 @@ export default function LandingPage() {
  ?"bg-white shadow-theme-sm":"bg-transparent")}
  >
  <div className="mx-auto flex h-[84px] max-w-(--breakpoint-content) items-center justify-between gap-6 px-6 lg:px-12 xl:px-16">
- <Link href="/" className="inline-flex items-center gap-4">
- {/* `luminatewhite.png` = white-text variant (visible on the navy
-     hero); `luminate.png` = dark-text variant (visible on the
-     scrolled white header). Same swap pattern as the AHFID lockup
-     below. */}
+ {/* Both `luminatewhite.png` and `white-logo.png` are the
+     white-text variants — designed to sit on a dark surface. We
+     wrap them in a navy contrast pill that fades in only when the
+     nav is on the scrolled white state, so the brand mark stays
+     readable in both header states without needing a separate
+     dark-text variant of either file. */}
+ <Link
+ href="/"
+ className={cn(
+ "inline-flex items-center gap-4 rounded-lg transition-colors",
+ scrolled && "bg-fellowship-navy px-4 py-2",
+ )}
+ >
  <Image
- src={scrolled ? "/images/luminate.png" : "/images/luminatewhite.png"}
+ src="/images/luminatewhite.png"
  alt="Luminate"
  width={110}
  height={36}
  className="h-8 w-auto"
  priority
  />
- {/* Two logo variants for two header states:
-     - over the navy hero (transparent header) → `white-logo.png`,
-       white-text-on-transparent
-     - over the scrolled white header → `logo.png`, dark text for
-       light backgrounds.
-     Swapping src is cheaper than wrapping in a contrast pill,
-     and keeps the logo at its native colour in both states. */}
  <Image
- src={scrolled ?"/images/logo.png":"/images/white-logo.png"} alt="Africa Hub for Innovation & Development" width={160}
+ src="/images/white-logo.png"
+ alt="Africa Hub for Innovation & Development"
+ width={160}
  height={48}
- className="h-10 w-auto" priority
+ className="h-10 w-auto"
+ priority
  />
  </Link>
  {/* Single navbar CTA — `/signin` is the unified auth surface
