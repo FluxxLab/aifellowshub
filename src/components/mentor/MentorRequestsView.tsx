@@ -120,9 +120,8 @@ export default function MentorRequestsView({
           Coaching requests
         </h1>
         <p className="mt-2 max-w-2xl text-gray-600">
-          Fellows propose a time and topic. Accept if it works for you;
-          decline (with a reason) if it doesn&apos;t. Admin approval
-          comes next — you&apos;ll get the Zoom link once confirmed.
+          Review the proposed time from your fellows. Accept if it fits
+          your schedule, or decline with a comment.
         </p>
       </div>
 
