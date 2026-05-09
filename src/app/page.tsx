@@ -410,7 +410,7 @@ function RegisterSection({ cohortIsFull }: { cohortIsFull: boolean }) {
  id="register-section-heading"
  className="text-3xl font-bold leading-tight text-fellowship-navy md:text-5xl"
  >
- {cohortIsFull ? "Join the Waitlist" : "Join the Next Cohort"}
+ Your Fellowship Journey
  </h2>
  <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-gray-600">
  {cohortIsFull
