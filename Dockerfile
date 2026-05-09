@@ -21,13 +21,20 @@ WORKDIR /app
 
 RUN apk add --no-cache libc6-compat
 
-COPY package.json package-lock.json* ./
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci
+# Project uses pnpm — corepack ships with Node 20 and pins the version
+# from package.json's `packageManager` field if set, falling back to
+# the latest pnpm 10 line otherwise.
+RUN corepack enable && corepack prepare pnpm@10 --activate
+
+COPY package.json pnpm-lock.yaml ./
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
 
 # ---------- Stage 2: builder ----------
 FROM node:${NODE_VERSION} AS builder
 WORKDIR /app
+
+RUN corepack enable && corepack prepare pnpm@10 --activate
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -40,7 +47,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # `BACKEND_API_URL` rename), so there's nothing to inject here. If that
 # changes, add `--build-arg NEXT_PUBLIC_X=...` and `ARG NEXT_PUBLIC_X` +
 # `ENV NEXT_PUBLIC_X=$NEXT_PUBLIC_X` above this line.
-RUN npm run build
+RUN pnpm build
 
 # ---------- Stage 3: runner ----------
 FROM node:${NODE_VERSION} AS runner
