@@ -16,12 +16,20 @@
 
 name: frontend-e2e
 
+# Manual-only until two prerequisites are in place:
+#  1. ACTIONS_BACKEND_TOKEN secret — a PAT with read access to
+#     FluxxLab/pic-lms-backend. The default GITHUB_TOKEN can't pull
+#     a different repo.
+#  2. docker-compose.yml at the root of the backend repo — the
+#     workflow boots the stack from there. Without it the teardown
+#     step fails with "no configuration file provided: not found".
+# Once both are sorted, uncomment the push + pull_request triggers.
 on:
   workflow_dispatch:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
+  # push:
+  #   branches: [main, develop]
+  # pull_request:
+  #   branches: [main, develop]
 
 concurrency:
   group: frontend-e2e-${{ github.workflow }}-${{ github.ref }}
