@@ -1,23 +1,24 @@
-// `.js` extensions are required — eslint-config-next exposes these as
-// concrete files, and Node's ESM loader won't infer extensions on
-// non-package-conditional paths.
-import nextVitals from "eslint-config-next/core-web-vitals.js";
-import nextTs from "eslint-config-next/typescript.js";
-import { defineConfig, globalIgnores } from "eslint/config";
+// eslint-config-next@14 ships the legacy (eslintrc) format. ESLint 9
+// uses flat config natively, so we run the legacy config through
+// FlatCompat to translate `extends:` chains into flat-config blocks.
+// The dirname dance is what the official ESLint migration guide
+// recommends — `import.meta` doesn't expose __dirname directly in ESM.
+import { FlatCompat } from "@eslint/eslintrc";
+import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 
-// Each export from eslint-config-next is a single flat-config object
-// (not an array), so include them directly rather than spreading.
-const eslintConfig = defineConfig([
-  nextVitals,
-  nextTs,
-  // Override default ignores of eslint-config-next.
-  globalIgnores([
-    // Default ignores of eslint-config-next:
-    ".next/**",
-    "out/**",
-    "build/**",
-    "next-env.d.ts",
-  ]),
-]);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const compat = new FlatCompat({
+  baseDirectory: __dirname,
+});
+
+const eslintConfig = [
+  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  {
+    ignores: [".next/**", "out/**", "build/**", "next-env.d.ts"],
+  },
+];
 
 export default eslintConfig;
