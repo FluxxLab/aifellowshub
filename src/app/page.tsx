@@ -3,20 +3,11 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
- Accordion,
- AccordionContent,
- AccordionItem,
- AccordionTrigger,
-} from "@/components/ui/accordion/Accordion";
-import {
  ArrowRightIcon,
- BoxIcon,
  GroupIcon,
  CheckCircleIcon,
  BoxCubeIcon,
  ShootingStarIcon,
- GridIcon,
- CalenderIcon,
  DocsIcon,
 } from "@/icons";
 import { useCohortIsFull } from "@/lib/hooks/useCohortIsFull";
@@ -30,80 +21,12 @@ const features = [
  { Icon: CheckCircleIcon, label: "Present your work to government agencies and regulators" },
 ] as const;
 
-const weeks = [
- {
- w:"01",
- title:"AI Fundamentals",
- objectives: ["Understand core AI concepts such as machine learning, automated decision systems, generative AI, and data infrastructures.","Understand AI system fundamentals for policy in public services, finance, healthcare, education, and governance.","Analyse the socio-technical nature of AI systems — how human, institutional, and technical elements interact.","Learn AI development lifecycle stages.","Identify AI limitations: bias, hallucinations, explainability.",
- ],
- },
- {
- w:"02",
- title:"Global & African AI Governance Landscape",
- objectives: ["Map global AI governance frameworks (UNESCO, OECD, EU AI Act).","Master AU Continental AI Strategy & Kigali Declaration.","Analyze regional frameworks (ECOWAS, EAC, SADC).",
- ],
- },
- {
- w:"03",
- title:"Ethical Reasoning & African Values",
- objectives: ["Apply Ubuntu philosophy to AI ethics frameworks.","Integrate indigenous knowledge systems in AI governance.","Navigate ethical trade-offs in resource-constrained settings.",
- ],
- },
- {
- w:"04",
- title:"Algorithmic Justice",
- objectives: ["Apply human rights frameworks to AI systems assessment.","Assess algorithmic discrimination risks in African contexts.","Apply fairness metrics and mitigation strategies.","Design rights-based AI governance mechanisms.",
- ],
- },
- {
- w:"05",
- title:"Risk Management & Assessment",
- objectives: ["Apply AI risk classification frameworks.","Conduct systematic AI risk assessments.","Design risk mitigation strategies for African contexts.",
- ],
- },
- {
- w:"06",
- title:"AI Auditing & Monitoring",
- objectives: ["Design AI audit frameworks and protocols.","Develop ongoing monitoring mechanisms.","Create accountability documentation systems.",
- ],
- },
- {
- w:"07",
- title:"Transparency and Explainable AI",
- objectives: ["Explain the concept of black-box models vs interpretable AI systems.","Understand Explainable AI (XAI) approaches.","Design transparency standards for AI deployment.","Evaluate transparency in public/private sector AI procurement.","Promote open governance approaches for AI systems.",
- ],
- },
- {
- w:"08",
- title:"Policy Communication & Stakeholder Engagement",
- objectives: ["Master policy brief writing techniques.","Conduct comprehensive stakeholder mapping.","Translate technical AI concepts for diverse audiences.",
- ],
- },
- {
- w:"09",
- title:"Sector Governance & Capstone Launch",
- objectives: ["Apply WHO health AI ethics guidelines.","Address EdTech governance challenges.","Design sector-specific oversight mechanisms.","Address agricultural AI data sovereignty issues.","Govern fintech & credit scoring AI fairly.","Launch capstone projects with mentor guidance.",
- ],
- },
- {
- w:"10",
- title:"Capstone Development & Stakeholder Consultation",
- objectives: ["Develop capstone project core content.","Conduct real stakeholder consultations.","Integrate feedback and refine methodology.",
- ],
- },
- {
- w:"11",
- title:"Coalition Building & Implementation Planning",
- objectives: ["Design coalition development strategies.","Create actionable implementation roadmaps.","Build consensus mechanisms for AI governance.",
- ],
- },
- {
- w:"12",
- title:"Graduation & AI Summit Showcase",
- objectives: ["Present capstone projects to expert panels.","Launch Africa AI Ethics & Governance Network.","Showcase outputs at AI Summit sessions.",
- ],
- },
-];
+const phases = [
+ { weeks: "Weeks 1–3", title: "Foundations" },
+ { weeks: "Weeks 4–8", title: "Core Competencies" },
+ { weeks: "Weeks 9–11", title: "Capstone & Implementation" },
+ { weeks: "Week 12", title: "Completion & Showcase" },
+] as const;
 
 export default function LandingPage() {
  const [scrolled, setScrolled] = useState(false);
@@ -279,65 +202,56 @@ export default function LandingPage() {
  </div>
  </section>
 
- {/* CURRICULUM */}
+ {/* CURRICULUM — four phases over 12 weeks. */}
  <section
- id="curriculum" className="mx-auto max-w-(--breakpoint-content) px-6 lg:px-12 xl:px-16 py-20 md:py-28">
+ id="curriculum"
+ className="mx-auto max-w-(--breakpoint-content) px-6 lg:px-12 xl:px-16 py-20 md:py-28"
+ >
  <div className="mx-auto max-w-5xl">
  <div className="mb-12 max-w-3xl">
  <span className="text-xs font-semibold uppercase tracking-wider text-fellowship-navy">
  12-Week Curriculum
  </span>
  <h2 className="mt-2 text-3xl font-bold text-gray-900 md:text-5xl">
- From foundations to governance artefacts.
+ Four phases. One outcome.
  </h2>
  <p className="mt-5 text-base leading-relaxed text-gray-600 md:text-lg">
- Move from foundational understanding to producing real governance
- artefacts: policy frameworks, AI audit protocols, sector-specific
- safeguards, and accountability mechanisms.
+ The fellowship moves from foundational knowledge through core
+ competencies into a hands-on capstone, capped by a public
+ showcase to government and regulatory partners.
  </p>
  </div>
 
- <Accordion>
- {weeks.map((wk) => (
- <AccordionItem key={wk.w} value={wk.w}>
- <AccordionTrigger>
- <div className="grid w-full grid-cols-12 items-center gap-4 pr-4">
- <div className="col-span-3 md:col-span-2">
- <div className="w-fit overflow-hidden rounded-md border border-gray-300 bg-gray-100">
- <div className="flex items-center justify-center gap-1 bg-gray-500 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-white">
- <CalenderIcon className="h-2.5 w-2.5"/>
- WEEK
+ <ol className="grid gap-4 md:grid-cols-2">
+ {phases.map((phase, i) => (
+ <li
+ key={phase.title}
+ className="group rounded-2xl border border-gray-200 bg-white p-6 transition hover:shadow-theme-lg"
+ >
+ <div className="flex items-center gap-3">
+ <span className="flex h-10 w-10 items-center justify-center rounded-md bg-pic-yellow text-fellowship-navy font-bold transition group-hover:bg-fellowship-navy group-hover:text-pic-yellow">
+ {i + 1}
+ </span>
+ <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+ {phase.weeks}
+ </span>
  </div>
- <div className="px-3 py-2 text-center">
- <div className="text-2xl font-bold leading-none text-gray-800 md:text-3xl">
- {wk.w}
- </div>
- </div>
- </div>
- </div>
- <div className="col-span-9 text-left text-lg font-semibold md:col-span-10 md:text-xl">
- {wk.title}
- </div>
- </div>
- </AccordionTrigger>
- <AccordionContent>
- <div className="grid grid-cols-12 gap-4">
- <div className="col-span-3 md:col-span-2"/>
- <div className="col-span-9 pb-2 md:col-span-10">
- <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
- Learning Objectives
- </div>
- <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-gray-600">
- {wk.objectives.map((o, i) => (
- <li key={i}>{o}</li>
+ <h3 className="mt-4 text-xl font-bold leading-snug text-gray-900">
+ {phase.title}
+ </h3>
+ </li>
  ))}
- </ul>
+ </ol>
+
+ <div className="mt-10 flex justify-start">
+ <Link
+ href="/learning"
+ className="inline-flex items-center gap-2 rounded-lg bg-fellowship-navy px-6 py-3 text-base font-semibold text-white shadow-theme-sm transition hover:bg-fellowship-navy-dark"
+ >
+ Go to Current Week
+ <ArrowRightIcon className="h-4 w-4" />
+ </Link>
  </div>
- </div>
- </AccordionContent>
- </AccordionItem>
- ))}
- </Accordion>
  </div>
  </section>
 
