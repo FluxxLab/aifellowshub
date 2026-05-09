@@ -198,18 +198,18 @@ export default function LandingPage() {
  <div className="mx-auto flex min-h-[85vh] max-w-(--breakpoint-content) items-center px-6 lg:px-12 xl:px-16 pt-32 pb-24 md:pt-44 md:pb-36">
  <div className="max-w-4xl">
  <h1 className="text-4xl font-bold leading-[1.05] tracking-tight md:text-6xl lg:text-7xl">
- Shaping the future of{" "}
- <span className="text-pic-yellow">responsible AI</span> in Africa.
+ Welcome to the{" "}
+ <span className="text-pic-yellow">AI Ethics &amp; Governance Fellowship</span>.
+ <span className="block mt-2">Your journey starts here.</span>
  </h1>
  <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/80 md:text-xl">
- The AI Ethics &amp; Governance Fellowship equips a new generation
- of African leaders with the knowledge, frameworks, and networks
- needed to design ethical and accountable AI governance systems.
+ Onboard, access your curriculum, track your progress, and complete
+ your capstone over the next 12 weeks.
  </p>
  <div className="mt-8 flex flex-wrap gap-3">
  <Link
  href="/signin#register" className="inline-flex items-center gap-2 rounded-lg bg-pic-yellow px-6 py-3 text-base font-semibold text-fellowship-navy shadow-theme-sm transition hover:bg-pic-yellow-hover">
- Become a Fellow
+ Start your Fellowship
  <ArrowRightIcon className="h-4 w-4"/>
  </Link>
  <a
