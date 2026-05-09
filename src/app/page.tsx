@@ -23,36 +23,11 @@ import { useCohortIsFull } from "@/lib/hooks/useCohortIsFull";
 import { cn } from "@/lib/utils";
 
 const features = [
- {
- Icon: DocsIcon,
- title:"Rigorous, Industry-Relevant Curriculum",
- body:"Build a strong foundation in AI policy, risk governance, and regulatory strategy through hands-on, interactive learning.",
- },
- {
- Icon: GroupIcon,
- title:"Personalised Expert Mentorship",
- body:"Work closely with experienced practitioners who provide tailored guidance, feedback, and career direction.",
- },
- {
- Icon: GridIcon,
- title:"Access to a Global Network",
- body:"Collaborate with a diverse cohort of leaders across policy, tech, and research shaping the future of AI governance.",
- },
- {
- Icon: ShootingStarIcon,
- title:"AI-Powered Analytical Tools",
- body:"Use cutting-edge tools to assess AI systems, uncover bias, and evaluate real-world socio-economic impacts.",
- },
- {
- Icon: BoxCubeIcon,
- title:"Real-World Capstone Projects",
- body:"Develop practical AI governance solutions — policy briefs, audit protocols, impact assessments — deployable in real contexts.",
- },
- {
- Icon: CheckCircleIcon,
- title:"Accelerated Career Opportunities",
- body:"Unlock pathways to fellowships, leadership roles, and high-impact opportunities in leading organisations.",
- },
+ { Icon: DocsIcon, label: "Learn core concepts in AI ethics and governance" },
+ { Icon: ShootingStarIcon, label: "Audit real-world AI systems" },
+ { Icon: GroupIcon, label: "Engage with experts and peers across Africa" },
+ { Icon: BoxCubeIcon, label: "Build a governance capstone project" },
+ { Icon: CheckCircleIcon, label: "Present your work to government agencies and regulators" },
 ] as const;
 
 const weeks = [
@@ -221,6 +196,17 @@ export default function LandingPage() {
  </div>
  </section>
 
+ {/* WELCOME — narrow, centred statement that bridges hero to detail. */}
+ <section className="border-b border-gray-100 bg-white py-16 md:py-20">
+ <div className="mx-auto max-w-3xl px-6 text-center lg:px-12">
+ <p className="text-xl leading-relaxed text-gray-700 md:text-2xl">
+ You are part of a select group shaping how AI is governed across
+ Africa. Over the next 12 weeks, you will move from foundational
+ knowledge to building real governance solutions.
+ </p>
+ </div>
+ </section>
+
  {/* ABOUT */}
  <section className="mx-auto grid max-w-(--breakpoint-content) gap-10 px-6 lg:px-12 xl:px-16 py-20 md:grid-cols-12 md:py-28">
  <div className="md:col-span-5">
@@ -272,26 +258,24 @@ export default function LandingPage() {
  Program Features
  </span>
  <h2 className="mt-2 text-3xl font-bold text-gray-900 md:text-5xl">
- Built for impact, designed for African contexts.
+ What you&rsquo;ll do in this fellowship.
  </h2>
  </div>
- <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
- {features.map(({ Icon, title, body }) => (
- <article
- key={title}
- className="group rounded-2xl border border-gray-200 bg-white p-7 transition hover:shadow-theme-lg">
- <div className="flex h-11 w-11 items-center justify-center rounded-md bg-pic-yellow text-fellowship-navy transition group-hover:bg-fellowship-navy group-hover:text-pic-yellow">
- <Icon className="h-5 w-5"/>
- </div>
- <h3 className="mt-5 text-lg font-bold leading-snug text-gray-900">
- {title}
- </h3>
- <p className="mt-2 text-sm leading-relaxed text-gray-600">
- {body}
+ <ul className="mt-12 grid gap-4 md:grid-cols-2">
+ {features.map(({ Icon, label }) => (
+ <li
+ key={label}
+ className="group flex items-start gap-4 rounded-2xl border border-gray-200 bg-white p-5 transition hover:shadow-theme-lg"
+ >
+ <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-pic-yellow text-fellowship-navy transition group-hover:bg-fellowship-navy group-hover:text-pic-yellow">
+ <Icon className="h-5 w-5" />
+ </span>
+ <p className="pt-2 text-base font-semibold leading-snug text-gray-900 md:text-lg">
+ {label}
  </p>
- </article>
+ </li>
  ))}
- </div>
+ </ul>
  </div>
  </section>
 
