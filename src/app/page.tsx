@@ -150,11 +150,12 @@ export default function LandingPage() {
  >
  <div className="mx-auto flex h-[84px] max-w-(--breakpoint-content) items-center justify-between gap-6 px-6 lg:px-12 xl:px-16">
  <Link href="/" className="inline-flex items-center gap-4">
- {/* Same swap pattern as the AHFID lockup below: dark variant
-     (`luminatewhite.png`) for the scrolled white header, original
-     (`luminate.png`) for the transparent header over the navy hero. */}
+ {/* `luminatewhite.png` = white-text variant (visible on the navy
+     hero); `luminate.png` = dark-text variant (visible on the
+     scrolled white header). Same swap pattern as the AHFID lockup
+     below. */}
  <Image
- src={scrolled ? "/images/luminatewhite.png" : "/images/luminate.png"}
+ src={scrolled ? "/images/luminate.png" : "/images/luminatewhite.png"}
  alt="Luminate"
  width={110}
  height={36}
@@ -162,14 +163,14 @@ export default function LandingPage() {
  priority
  />
  {/* Two logo variants for two header states:
-     - over the navy hero (transparent header) → `logo.png`,
+     - over the navy hero (transparent header) → `white-logo.png`,
        white-text-on-transparent
-     - over the scrolled white header → `white-logo.png`,
-       designed for light backgrounds
+     - over the scrolled white header → `logo.png`, dark text for
+       light backgrounds.
      Swapping src is cheaper than wrapping in a contrast pill,
      and keeps the logo at its native colour in both states. */}
  <Image
- src={scrolled ?"/images/white-logo.png":"/images/logo.png"} alt="Africa Hub for Innovation & Development" width={160}
+ src={scrolled ?"/images/logo.png":"/images/white-logo.png"} alt="Africa Hub for Innovation & Development" width={160}
  height={48}
  className="h-10 w-auto" priority
  />
