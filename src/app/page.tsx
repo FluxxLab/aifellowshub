@@ -149,19 +149,7 @@ export default function LandingPage() {
  ?"bg-white shadow-theme-sm":"bg-transparent")}
  >
  <div className="mx-auto flex h-[84px] max-w-(--breakpoint-content) items-center justify-between gap-6 px-6 lg:px-12 xl:px-16">
- {/* Both `luminatewhite.png` and `white-logo.png` are the
-     white-text variants — designed to sit on a dark surface. We
-     wrap them in a navy contrast pill that fades in only when the
-     nav is on the scrolled white state, so the brand mark stays
-     readable in both header states without needing a separate
-     dark-text variant of either file. */}
- <Link
- href="/"
- className={cn(
- "inline-flex items-center gap-4 rounded-lg transition-colors",
- scrolled && "bg-fellowship-navy px-4 py-2",
- )}
- >
+ <Link href="/" className="inline-flex items-center gap-4">
  <Image
  src="/images/luminatewhite.png"
  alt="Luminate"
