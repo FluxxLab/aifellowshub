@@ -221,42 +221,45 @@ export default function LandingPage() {
  </div>
  </section>
 
- {/* INTRO */}
+ {/* ABOUT */}
  <section className="mx-auto grid max-w-(--breakpoint-content) gap-10 px-6 lg:px-12 xl:px-16 py-20 md:grid-cols-12 md:py-28">
  <div className="md:col-span-5">
- <h2 className="text-3xl font-bold leading-tight text-gray-900 md:text-5xl">
- Africa is writing
- <br />
- the rules for AI.
+ <span className="text-xs font-semibold uppercase tracking-wider text-fellowship-navy">
+ About the Fellowship
+ </span>
+ <h2 className="mt-2 text-3xl font-bold leading-tight text-gray-900 md:text-5xl">
+ A 12-week programme shaping responsible AI in Africa.
  </h2>
  </div>
  <div className="space-y-5 text-base leading-relaxed text-gray-600 md:col-span-7 md:text-lg">
  <p>
- Artificial Intelligence is rapidly reshaping economies, governance,
- and social systems across Africa. Yet the frameworks that will
- determine how AI is deployed, regulated, and held accountable are
- still being written.
+ The AI Ethics &amp; Governance Fellowship is a 12-week programme
+ that equips African leaders with the skills, tools, and networks
+ to design responsible and accountable AI systems.
  </p>
  <p>
  Delivered by the{" "}
  <strong className="text-gray-900">
  Policy Innovation Centre (PIC)
  </strong>{" "}
- in partnership with{" "}
+ in partnership with the{" "}
  <strong className="text-gray-900">
- Africa Hub For Innovation &amp; Development (AHFID)
- </strong>{" "}
- and support from{" "}
- <strong className="text-gray-900">Luminate</strong>
- , this program brings together policy professionals, regulators,
+ Africa Hub for Innovation &amp; Development (AHFID)
+ </strong>
+ , with support from{" "}
+ <strong className="text-gray-900">Luminate</strong>, the
+ fellowship brings together policy professionals, regulators,
  researchers, and civil society leaders.
  </p>
  <p>
- Rather than importing governance models developed elsewhere, the
- fellowship centres African ethical traditions, local institutional
- realities, and community perspectives — including principles such as{" "}
- <em>Ubuntu</em> and collective responsibility in technology
- governance.
+ Through a practical, hands-on approach, fellows develop
+ real-world governance outputs — from policy frameworks to AI
+ audit protocols — grounded in African contexts and ethical
+ principles.
+ </p>
+ <p>
+ More than a programme, it is a growing Pan-African network
+ shaping the future of responsible AI.
  </p>
  </div>
  </section>
@@ -380,7 +383,7 @@ export default function LandingPage() {
  <div className="mt-8 flex flex-wrap gap-3">
  <Link
  href="/signin#register" className="inline-flex items-center gap-2 rounded-lg bg-pic-yellow px-6 py-3 text-base font-semibold text-fellowship-navy shadow-theme-sm transition hover:bg-pic-yellow-hover">
- Start your application
+ Start your Fellowship
  </Link>
  </div>
  </div>
