@@ -8,7 +8,15 @@ import Image from "next/image";
  */
 export function Logo() {
   return (
-    <div className="relative flex h-10 w-auto items-center justify-center overflow-hidden rounded-md">
+    <div className="relative flex h-10 w-auto items-center gap-4">
+      <Image
+        src="/images/luminate.png"
+        alt="Luminate"
+        width={120}
+        height={40}
+        className="h-full w-auto object-contain"
+        priority
+      />
       <Image
         src="/images/logo.png"
         alt="Africa Hub for Innovation & Development"

@@ -149,7 +149,15 @@ export default function LandingPage() {
  ?"bg-white shadow-theme-sm":"bg-transparent")}
  >
  <div className="mx-auto flex h-[84px] max-w-(--breakpoint-content) items-center justify-between gap-6 px-6 lg:px-12 xl:px-16">
- <Link href="/" className="inline-flex items-center gap-2">
+ <Link href="/" className="inline-flex items-center gap-4">
+ <Image
+ src="/images/luminate.png"
+ alt="Luminate"
+ width={110}
+ height={36}
+ className="h-8 w-auto"
+ priority
+ />
  {/* Two logo variants for two header states:
      - over the navy hero (transparent header) → `logo.png`,
        white-text-on-transparent
