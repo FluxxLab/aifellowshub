@@ -222,26 +222,21 @@ export default function LandingPage() {
  </p>
  </div>
 
- <ol className="grid gap-4 md:grid-cols-2">
- {phases.map((phase, i) => (
+ <ul className="grid gap-4 md:grid-cols-2">
+ {phases.map((phase) => (
  <li
  key={phase.title}
- className="group rounded-2xl border border-gray-200 bg-white p-6 transition hover:shadow-theme-lg"
+ className="rounded-2xl border border-gray-200 bg-white p-6 transition hover:shadow-theme-lg"
  >
- <div className="flex items-center gap-3">
- <span className="flex h-10 w-10 items-center justify-center rounded-md bg-pic-yellow text-fellowship-navy font-bold transition group-hover:bg-fellowship-navy group-hover:text-pic-yellow">
- {i + 1}
- </span>
  <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
  {phase.weeks}
  </span>
- </div>
- <h3 className="mt-4 text-xl font-bold leading-snug text-gray-900">
+ <h3 className="mt-3 text-xl font-bold leading-snug text-gray-900">
  {phase.title}
  </h3>
  </li>
  ))}
- </ol>
+ </ul>
  </div>
  </section>
 
