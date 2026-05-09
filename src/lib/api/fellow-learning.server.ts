@@ -74,11 +74,14 @@ type BackendSession = {
   joinUrl: string | null;
   host: { id: string; fullName: string } | null;
   status: "scheduled" | "live" | "ended" | "cancelled";
+  hasRecording?: boolean;
+  recordingDurationSeconds?: number | null;
   myAttendance: {
-    status: "rsvpd" | "attended" | "missed";
+    status: "rsvpd" | "attended" | "attended_recording" | "missed";
     minutesAttended: number | null;
     joinedAt: string | null;
     leftAt: string | null;
+    recordingWatchedSeconds?: number;
   } | null;
 };
 
@@ -207,6 +210,10 @@ function mapBackendCurriculumModule(
         hostName: "TBD",
         rsvpd: false,
         attended: null,
+        attendanceState: null,
+        hasRecording: false,
+        recordingDurationSeconds: null,
+        recordingWatchedSeconds: 0,
         joinUrl: "#",
       };
 
@@ -280,6 +287,7 @@ function mapBackendListedSession(b: BackendListedSession) {
       : b.status === "cancelled"
       ? "cancelled"
       : "ended";
+  const myStatus = b.myAttendance?.status ?? null;
   return {
     id: b.id,
     weekNumber: b.module?.weekNumber ?? 0,
@@ -290,14 +298,27 @@ function mapBackendListedSession(b: BackendListedSession) {
     hostName: b.host?.fullName ?? "TBD",
     rsvpd: Boolean(b.myAttendance),
     attended:
-      b.myAttendance?.status === "attended"
+      myStatus === "attended" || myStatus === "attended_recording"
         ? true
-        : b.myAttendance?.status === "missed"
+        : myStatus === "missed"
         ? false
         : null,
+    attendanceState: mapAttendanceState(myStatus),
+    hasRecording: Boolean(b.hasRecording),
+    recordingDurationSeconds: b.recordingDurationSeconds ?? null,
+    recordingWatchedSeconds: b.myAttendance?.recordingWatchedSeconds ?? 0,
     joinUrl: b.joinUrl ?? "#",
     attendanceThresholdMinutes: b.attendanceThresholdMinutes,
   };
+}
+
+function mapAttendanceState(
+  status: string | null,
+): ModuleSession["attendanceState"] {
+  if (status === "attended") return "attended";
+  if (status === "attended_recording") return "attended_recording";
+  if (status === "missed") return "missed";
+  return null;
 }
 
 function mapBackendSession(b: BackendSession): ModuleSession {
@@ -309,6 +330,7 @@ function mapBackendSession(b: BackendSession): ModuleSession {
       : b.status === "cancelled"
       ? "cancelled"
       : "ended";
+  const myStatus = b.myAttendance?.status ?? null;
   return {
     id: b.id,
     status,
@@ -317,11 +339,15 @@ function mapBackendSession(b: BackendSession): ModuleSession {
     hostName: b.host?.fullName ?? "TBD",
     rsvpd: Boolean(b.myAttendance),
     attended:
-      b.myAttendance?.status === "attended"
+      myStatus === "attended" || myStatus === "attended_recording"
         ? true
-        : b.myAttendance?.status === "missed"
+        : myStatus === "missed"
         ? false
         : null,
+    attendanceState: mapAttendanceState(myStatus),
+    hasRecording: Boolean(b.hasRecording),
+    recordingDurationSeconds: b.recordingDurationSeconds ?? null,
+    recordingWatchedSeconds: b.myAttendance?.recordingWatchedSeconds ?? 0,
     joinUrl: b.joinUrl ?? "#",
   };
 }

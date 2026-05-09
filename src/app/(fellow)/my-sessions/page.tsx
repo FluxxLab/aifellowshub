@@ -3,13 +3,8 @@ import Link from "next/link";
 import Badge from "@/components/ui/badge/Badge";
 import Breadcrumbs from "@/components/common/Breadcrumbs";
 import LiveSessionAction from "@/components/fellow/LiveSessionAction";
-import {
-  CalenderIcon,
-  CheckLineIcon,
-  ChevronRightIcon,
-  CloseLineIcon,
-  TimeIcon,
-} from "@/icons";
+import PastSessionsTable from "@/components/fellow/PastSessionsTable";
+import { CalenderIcon, ChevronRightIcon, TimeIcon } from "@/icons";
 import { getFellowSessionsServer } from "@/lib/api/fellow-learning.server";
 import type { FellowSession } from "@/lib/api/fellow-learning";
 
@@ -91,66 +86,7 @@ export default async function FellowSessionsPage() {
       {past.length > 0 && (
         <section>
           <h2 className="mb-3 text-lg font-semibold text-gray-800">Past</h2>
-          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                <tr>
-                  <th className="px-5 py-3">Week</th>
-                  <th className="px-5 py-3">Module</th>
-                  <th className="px-5 py-3">Date</th>
-                  <th className="px-5 py-3">Host</th>
-                  <th className="px-5 py-3">Attendance</th>
-                  <th className="px-5 py-3 text-right">Module</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {past.map((s) => {
-                  const start = new Date(s.startsAt);
-                  return (
-                    <tr key={s.weekNumber} className="text-gray-700">
-                      <td className="px-5 py-3 font-medium text-gray-800">
-                        {s.weekNumber}
-                      </td>
-                      <td className="px-5 py-3">{s.moduleTitle}</td>
-                      <td className="px-5 py-3">
-                        {start.toLocaleDateString(undefined, {
-                          day: "numeric",
-                          month: "short",
-                        })}
-                      </td>
-                      <td className="px-5 py-3">{s.hostName}</td>
-                      <td className="px-5 py-3">
-                        {s.attended ? (
-                          <Badge color="success" variant="light">
-                            <CheckLineIcon className="h-3.5 w-3.5" />
-                            Attended
-                          </Badge>
-                        ) : (
-                          <Badge color="light" variant="light">
-                            <CloseLineIcon className="h-3.5 w-3.5" />
-                            Missed
-                          </Badge>
-                        )}
-                      </td>
-                      <td className="px-5 py-3 text-right">
-                        <Link
-                          href={`/learning/${s.weekNumber}`}
-                          className="inline-flex items-center gap-1 text-sm font-medium text-fellowship-navy hover:text-fellowship-navy-dark"
-                        >
-                          Open
-                          <ChevronRightIcon className="h-4 w-4" />
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-          <p className="mt-3 text-xs text-gray-500">
-            Sessions are not recorded — if you missed one, the assessment is
-            the alternative path to completing that module (BRD §6.3, §6.4).
-          </p>
+          <PastSessionsTable sessions={past} />
         </section>
       )}
     </div>

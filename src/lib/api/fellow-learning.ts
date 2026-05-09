@@ -52,10 +52,25 @@ export type ModuleSession = {
   startsAt: string;
   durationMinutes: number;
   hostName: string;
-  /** Whether the fellow has RSVP'd. */
+  /** Whether the fellow has registered (RSVP'd). */
   rsvpd: boolean;
-  /** Final attendance state once the session is over. null until ended. */
+  /**
+   * Final attendance state once the session is over. null until ended.
+   * Live attendance and recording-watched are both truthy here; use
+   * `attendanceState` to distinguish the two for half-credit display.
+   */
   attended: boolean | null;
+  /**
+   * Richer attendance state. "attended" = full credit (live), "attended_recording"
+   * = half credit (caught up via recording), "missed" = no credit, null = pending.
+   */
+  attendanceState: "attended" | "attended_recording" | "missed" | null;
+  /** True once the session's recording has been archived to DO Spaces. */
+  hasRecording: boolean;
+  /** Total length of the recording, in seconds. Null if no recording yet. */
+  recordingDurationSeconds: number | null;
+  /** Cumulative seconds the fellow has already watched of this recording. */
+  recordingWatchedSeconds: number;
   /**
    * Zoom join URL — fallback when in-app embedding can't be used (e.g.,
    * `zoomMeetingId` not configured on the session). The Component View
