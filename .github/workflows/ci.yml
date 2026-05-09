@@ -39,12 +39,15 @@ jobs:
       # Lint step intentionally skipped — eslint-config-next@14 + the
       # bundled @next/eslint-plugin-next@14 call ESLint context APIs
       # that were removed in ESLint 9 (`context.getAncestors`, etc.).
-      # Typecheck + build below still catch the real errors. Re-enable
-      # once we bump to next@15 + eslint-config-next@15, both of which
-      # ship native flat-config support.
-
-      - name: Typecheck
-        run: pnpm exec tsc --noEmit
+      # Re-enable once we bump to next@15 + eslint-config-next@15, both
+      # of which ship native flat-config support.
+      #
+      # Standalone `tsc --noEmit` is also intentionally skipped — plain
+      # tsc doesn't know about Next's SVG-import-as-React-component
+      # module resolution, so it surfaces ~200 false positives on every
+      # icon usage ("className does not exist on IntrinsicAttributes").
+      # `next build` below runs Next's own typecheck pass with the
+      # right module resolution; real type errors still fail CI there.
 
       - name: Build
         env:
