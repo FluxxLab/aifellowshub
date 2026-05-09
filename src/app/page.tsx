@@ -149,9 +149,13 @@ export default function LandingPage() {
  ?"bg-white shadow-theme-sm":"bg-transparent")}
  >
  <div className="mx-auto flex h-[84px] max-w-(--breakpoint-content) items-center justify-between gap-6 px-6 lg:px-12 xl:px-16">
+ {/* File-naming convention: `*-white.png` and `*white.png` = "for
+     white background" (dark text); the non-suffixed version = "for
+     dark background" (white text). So we render the white-text
+     pair on the navy hero and the dark-text pair when scrolled. */}
  <Link href="/" className="inline-flex items-center gap-4">
  <Image
- src="/images/luminatewhite.png"
+ src={scrolled ? "/images/luminatewhite.png" : "/images/luminate.png"}
  alt="Luminate"
  width={110}
  height={36}
@@ -159,7 +163,7 @@ export default function LandingPage() {
  priority
  />
  <Image
- src="/images/white-logo.png"
+ src={scrolled ? "/images/white-logo.png" : "/images/logo.png"}
  alt="Africa Hub for Innovation & Development"
  width={160}
  height={48}
