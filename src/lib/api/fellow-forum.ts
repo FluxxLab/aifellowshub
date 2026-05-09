@@ -118,6 +118,43 @@ export async function listForumGroups(): Promise<ForumGroup[]> {
   return data.groups;
 }
 
+/* ---------- Group chat (flat messages — replaces threads in the new UI) ---------- */
+
+export type ForumMessageAuthor = {
+  id: string;
+  fullName: string;
+  role: "fellow" | "mentor" | "faculty" | "admin" | "super_admin";
+};
+
+export type ForumMessage = {
+  id: string;
+  body: string;
+  createdAt: string;
+  author: ForumMessageAuthor;
+};
+
+/** GET /forum/groups/:id/messages — recent messages, oldest-first. */
+export async function listForumMessages(
+  groupId: string,
+): Promise<ForumMessage[]> {
+  const data = await apiFetch<{ messages: ForumMessage[] }>(
+    `/forum/groups/${encodeURIComponent(groupId)}/messages`,
+  );
+  return data.messages;
+}
+
+/** POST /forum/groups/:id/messages — send a message. */
+export async function sendForumMessage(
+  groupId: string,
+  body: string,
+): Promise<ForumMessage> {
+  const data = await apiFetch<{ message: ForumMessage }>(
+    `/forum/groups/${encodeURIComponent(groupId)}/messages`,
+    { method: "POST", body: { body } },
+  );
+  return data.message;
+}
+
 /* ---------- Admin-only mutators ---------- */
 
 export type CreateGroupPayload = {

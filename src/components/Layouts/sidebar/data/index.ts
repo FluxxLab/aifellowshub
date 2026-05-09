@@ -64,7 +64,14 @@ const ADMIN_NAV: NavSection[] = [
       { title: "Mentorship sessions", icon: BoltIcon as SvgComponent, url: "/mentorship-bookings", items: [] },
       { title: "Capstone", icon: ShootingStarIcon as SvgComponent, url: "/capstone", items: [] },
       { title: "Certificates", icon: CheckCircleIcon as SvgComponent, url: "/certificates", items: [] },
-      { title: "Forum groups", icon: ChatIcon as SvgComponent, url: "/forum-groups", items: [] },
+      {
+        title: "Forum",
+        icon: ChatIcon as SvgComponent,
+        items: [
+          { title: "Chat", url: "/forum" },
+          { title: "Manage groups", url: "/forum-groups" },
+        ],
+      },
     ],
   },
   {
