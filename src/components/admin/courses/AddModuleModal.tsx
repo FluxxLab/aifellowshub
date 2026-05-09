@@ -40,7 +40,11 @@ export default function AddModuleModal({
  const [submitting, setSubmitting] = useState(false);
  const [error, setError] = useState<string | null>(null);
 
- const canSubmit = title.trim().length > 1 && weekNumber > 0;
+ // Week 0 is valid (orientation/onboarding); only block negatives or NaN.
+ const canSubmit =
+ title.trim().length > 1 &&
+ Number.isInteger(weekNumber) &&
+ weekNumber >= 0;
 
  const reset = () => {
  setTitle("");
