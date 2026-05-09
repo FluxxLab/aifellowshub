@@ -16,11 +16,17 @@
 
 name: frontend-e2e
 
+# Runs only on manual trigger from the Actions tab while we're still
+# iterating on landing-page copy + deploy config. Re-enable the
+# automatic push/pull_request triggers below once the required
+# secrets (E2E_JWT_SECRET, etc.) are set on the repo and the backend
+# repo is checkoutable from this workflow.
 on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
+  workflow_dispatch:
+  # push:
+  #   branches: [main, develop]
+  # pull_request:
+  #   branches: [main, develop]
 
 concurrency:
   group: frontend-e2e-${{ github.workflow }}-${{ github.ref }}
