@@ -19,8 +19,9 @@ export default async function AdminMentorshipBookingsPage() {
           Mentorship bookings
         </h1>
         <p className="mt-2 max-w-2xl text-gray-600">
-          Fellows request 1:1 sessions with mentors. Approving here creates
-          the Zoom meeting under your email — you&apos;re the host.
+          Fellows request 1-on-1 sessions with mentors. Approving a request
+          here will automatically create a Zoom meeting under your email,
+          with you as the host.
         </p>
       </div>
       <AdminBookingsView initialBookings={bookings} />
