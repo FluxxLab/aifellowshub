@@ -37,9 +37,8 @@ export default async function MentorshipSessionsPage() {
           Mentorship sessions
         </h1>
         <p className="mt-2 max-w-2xl text-gray-600">
-          Your sector mentor is assigned by an admin. Propose a time below;
-          your mentor accepts or declines, then an admin confirms and you
-          get the Zoom link.
+          Schedule a call with your mentor. Your mentor will review the
+          request, and the faculty will confirm and share the Zoom link.
         </p>
       </div>
       <FellowMentorshipView assigned={assigned} initialBookings={bookings} />
