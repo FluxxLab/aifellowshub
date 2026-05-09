@@ -124,7 +124,7 @@ export default function AttendanceRoster({ sessionId, session }: AttendanceRoste
  if (session.status ==="scheduled") {
  return (
  <EmptyRoster
- title="Session hasn’t started" body="The attendance roster appears once the session begins. Until then you’ll see RSVPs."/>
+ title="Session hasn’t started" body="The attendance roster appears once the session begins. Until then you’ll see who has registered."/>
  );
  }
  if (session.status ==="cancelled") {

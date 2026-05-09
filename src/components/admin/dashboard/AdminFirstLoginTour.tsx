@@ -39,7 +39,7 @@ export default function AdminFirstLoginTour({ firstName }: Props) {
       popover: {
         title: "Upcoming live sessions",
         description:
-          "Schedule, RSVPs, and host info live here. Click any session to see the attendance roster or override credit manually.",
+          "Schedule, registrations, and host info live here. Click any session to see the attendance roster or override credit manually.",
         side: "left",
         align: "start",
       },

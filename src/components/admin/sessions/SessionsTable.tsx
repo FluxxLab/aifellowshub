@@ -82,7 +82,7 @@ export default function SessionsTable({ sessions }: SessionsTableProps) {
  label:
  s.status === "ended" && s.attendedCount !== undefined
  ? "Attended"
- : "RSVPs",
+ : "Registered",
  value:
  s.status === "ended" && s.attendedCount !== undefined ? (
  <span className="tabular-nums">
@@ -107,7 +107,7 @@ export default function SessionsTable({ sessions }: SessionsTableProps) {
  <Th>Host</Th>
  <Th>Date &amp; time</Th>
  <Th>Duration</Th>
- <Th>RSVPs / Attended</Th>
+ <Th>Registered / Attended</Th>
  <Th>Status</Th>
  <Th right>
  <span className="sr-only">Actions</span>
@@ -165,7 +165,7 @@ export default function SessionsTable({ sessions }: SessionsTableProps) {
  </span>
  ) : (
  <span className="text-sm text-gray-700 tabular-nums">
- {s.rsvpCount} RSVPs
+ {s.rsvpCount} registered
  </span>
  )}
  </Td>
@@ -294,7 +294,7 @@ function RowActions({ session: s }: { session: LiveSession }) {
    const ok = await confirm({
      title: "Cancel this session?",
      message:
-       "RSVP'd fellows will be notified, the Zoom meeting is removed, and the session disappears from upcoming calendars. The row stays for analytics — use the table's delete action to remove it permanently.",
+       "Registered fellows will be notified, the Zoom meeting is removed, and the session disappears from upcoming calendars. The row stays for analytics — use the table's delete action to remove it permanently.",
      confirmLabel: "Cancel session",
      tone: "danger",
    });

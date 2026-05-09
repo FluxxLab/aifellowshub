@@ -38,7 +38,7 @@ export default function FirstLoginTour({ firstName }: Props) {
       popover: {
         title: "Your next live session",
         description:
-          "Live sessions aren't recorded. RSVP from here, then join via the LMS — no Zoom app needed. Miss one? Pass the assessment to still complete the module.",
+          "Register from here, then join via the LMS — no Zoom app needed. Miss one? Pass the assessment or watch the recording to still complete the module.",
         side: "left",
         align: "start",
       },

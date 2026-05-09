@@ -18,7 +18,7 @@ const ZoomMeetingRoom = dynamic(
 );
 
 /**
- * Client-side session controls. Handles RSVP, in-app meeting embed, and
+ * Client-side session controls. Handles registration, in-app meeting embed, and
  * the external-link fallback. The Zoom Component View embed is rendered
  * full-screen via a fixed overlay so it has the room it needs without
  * fighting the existing card layout.
@@ -37,7 +37,7 @@ export default function LiveSessionAction({
 
   async function rsvp() {
     if (!s.id) {
-      // Mock-only session — RSVP isn't wired to a real backend, just toggle UI.
+      // Mock-only session — registration isn't wired to a real backend, just toggle UI.
       setRsvpd(true);
       return;
     }
@@ -49,12 +49,12 @@ export default function LiveSessionAction({
       });
       if (!r.ok) {
         const body = (await r.json().catch(() => ({}))) as { message?: string };
-        throw new Error(body.message ?? `RSVP failed (${r.status})`);
+        throw new Error(body.message ?? `Registration failed (${r.status})`);
       }
       setRsvpd(true);
-      toast.success("RSVP confirmed");
+      toast.success("Registered", "You'll get a reminder before the session.");
     } catch (e) {
-      toast.errorFromException("Couldn't RSVP", e);
+      toast.errorFromException("Couldn't register", e);
     }
     setBusy(false);
   }
@@ -121,7 +121,7 @@ export default function LiveSessionAction({
     return rsvpd ? (
       <Button size="sm" variant="outline" className="w-full" disabled={busy}>
         <CheckLineIcon className="h-3.5 w-3.5" />
-        RSVP&apos;d · Add to calendar
+        Registered · Add to calendar
       </Button>
     ) : (
       <>
@@ -132,7 +132,7 @@ export default function LiveSessionAction({
           onClick={rsvp}
           disabled={busy}
         >
-          {busy ? "Saving…" : "RSVP"}
+          {busy ? "Saving…" : "Register"}
         </Button>
       </>
     );

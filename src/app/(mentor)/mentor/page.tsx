@@ -182,7 +182,7 @@ export default async function MentorHomePage() {
               </div>
             </div>
             <p className="mt-3 text-xs text-gray-500">
-              {office.rsvpCount} fellows RSVP&apos;d so far.
+              {office.rsvpCount} fellows registered so far.
             </p>
             <Button size="sm" variant="outline" className="mt-3 w-full">
               Add to calendar

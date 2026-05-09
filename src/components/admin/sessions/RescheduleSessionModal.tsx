@@ -81,7 +81,7 @@ export default function RescheduleSessionModal({
           </h2>
           <p className="mt-1 text-sm text-gray-500">
             Move <span className="font-semibold text-gray-700">{sessionTitle}</span> to
-            a new time. RSVP&apos;d fellows are notified.
+            a new time. Registered fellows are notified.
           </p>
         </div>
 
