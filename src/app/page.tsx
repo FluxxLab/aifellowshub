@@ -272,16 +272,15 @@ export default function LandingPage() {
  <div className="mx-auto max-w-(--breakpoint-content) px-6 lg:px-12 xl:px-16 py-20 md:py-28">
  <div className="max-w-3xl">
  <h2 className="text-3xl font-bold leading-tight md:text-5xl">
- Join the foundation of a Pan-African network.
+ Continue your fellowship journey.
  </h2>
  <p className="mt-5 max-w-xl text-lg text-white/80">
- Apply now to be part of the cohort shaping how AI is governed
- across the continent.
+ Pick up where you left off and stay on track.
  </p>
  <div className="mt-8 flex flex-wrap gap-3">
  <Link
- href="/signin#register" className="inline-flex items-center gap-2 rounded-lg bg-pic-yellow px-6 py-3 text-base font-semibold text-fellowship-navy shadow-theme-sm transition hover:bg-pic-yellow-hover">
- Start your Fellowship
+ href="/learning" className="inline-flex items-center gap-2 rounded-lg bg-pic-yellow px-6 py-3 text-base font-semibold text-fellowship-navy shadow-theme-sm transition hover:bg-pic-yellow-hover">
+ Resume Learning
  </Link>
  </div>
  </div>
