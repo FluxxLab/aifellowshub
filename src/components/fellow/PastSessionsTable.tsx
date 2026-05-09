@@ -113,9 +113,9 @@ export default function PastSessionsTable({
         </table>
       </div>
       <p className="mt-3 text-xs text-gray-500">
-        Live attendance counts as full credit. Catching up via the recording
-        (watch ≥50%) counts as half-credit. Either path completes the module
-        for unlock purposes.
+        Live attendance counts as full credit. You earn half-credit only if
+        you watch the full recording end-to-end — skipping ahead doesn&apos;t
+        count. Either path completes the module for unlock purposes.
       </p>
 
       {open && (

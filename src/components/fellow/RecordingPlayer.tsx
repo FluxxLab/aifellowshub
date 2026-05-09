@@ -52,8 +52,11 @@ export default function RecordingPlayer({
   const [credited, setCredited] = useState(false);
   const [watched, setWatched] = useState(0);
 
-  const halfThreshold = durationSeconds
-    ? Math.floor(durationSeconds / 2)
+  // Mirror the backend rule: must watch ≥95% of the recording end-to-end
+  // to earn the half-credit. The 5% slack accounts for buffering jitter
+  // and any trailing silence in the export.
+  const fullThreshold = durationSeconds
+    ? Math.floor(durationSeconds * 0.95)
     : null;
 
   async function postProgress(seconds: number) {
@@ -141,7 +144,8 @@ export default function RecordingPlayer({
         Session recording
       </h2>
       <p className="mt-1 text-sm text-gray-500">
-        Watch ≥50% to earn half-credit attendance for this session.
+        Watch the full recording to earn half-credit attendance for this
+        session. Skipping ahead doesn&apos;t count.
       </p>
 
       <video
@@ -162,9 +166,9 @@ export default function RecordingPlayer({
             {durationSeconds &&
               ` of ${formatDuration(durationSeconds)}`}
           </span>
-          {halfThreshold !== null && !credited && (
+          {fullThreshold !== null && !credited && (
             <span>
-              Need {formatDuration(Math.max(0, halfThreshold - Math.floor(watched)))} more for half-credit
+              Watch {formatDuration(Math.max(0, fullThreshold - Math.floor(watched)))} more to earn half-credit
             </span>
           )}
           {credited && (
@@ -173,14 +177,14 @@ export default function RecordingPlayer({
             </span>
           )}
         </div>
-        {halfThreshold !== null && (
+        {fullThreshold !== null && (
           <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
             <div
               className="h-full rounded-full bg-fellowship-navy transition-all"
               style={{
                 width: `${Math.min(
                   100,
-                  Math.round((watched / halfThreshold) * 100),
+                  Math.round((watched / fullThreshold) * 100),
                 )}%`,
               }}
             />
