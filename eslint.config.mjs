@@ -1,5 +1,8 @@
-import nextVitals from "eslint-config-next/core-web-vitals";
-import nextTs from "eslint-config-next/typescript";
+// `.js` extensions are required — eslint-config-next exposes these as
+// concrete files, and Node's ESM loader won't infer extensions on
+// non-package-conditional paths.
+import nextVitals from "eslint-config-next/core-web-vitals.js";
+import nextTs from "eslint-config-next/typescript.js";
 import { defineConfig, globalIgnores } from "eslint/config";
 
 const eslintConfig = defineConfig([
