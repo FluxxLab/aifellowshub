@@ -270,6 +270,26 @@ function RowActions({ session: s }: { session: LiveSession }) {
    }
  }
 
+ async function deleteSession() {
+   const ok = await confirm({
+     title: "Delete this session permanently?",
+     message:
+       "The row is removed from the table for good. Attendance history and any cached analytics tied to it go with it. This can't be undone.",
+     confirmLabel: "Delete permanently",
+     tone: "danger",
+   });
+   if (!ok) return;
+   try {
+     await apiFetch(`/sessions/${encodeURIComponent(sessionId)}`, {
+       method: "DELETE",
+     });
+     toast.success("Session deleted");
+     router.refresh();
+   } catch (err) {
+     toast.errorFromException("Couldn't delete session", err);
+   }
+ }
+
  async function cancelSession() {
    const ok = await confirm({
      title: "Cancel this session?",
@@ -315,6 +335,9 @@ function RowActions({ session: s }: { session: LiveSession }) {
    if (s.hasRecording) {
      actions.push({ label: "Watch recording", onClick: openRecording });
    }
+ }
+ if (status === "cancelled") {
+   actions.push({ label: "Delete permanently", onClick: deleteSession, destructive: true });
  }
 
  return (
