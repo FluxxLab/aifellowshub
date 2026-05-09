@@ -33,15 +33,7 @@ export default async function VerifyCertificatePage({
       {/* Public header — minimal, no auth */}
       <header className="border-b border-gray-200 bg-white">
         <div className="mx-auto flex max-w-(--breakpoint-content) items-center justify-between px-4 py-4 md:px-6">
-          <Link href="/" className="inline-flex items-center gap-4">
-            <Image
-              src="/images/luminate.png"
-              alt="Luminate"
-              width={100}
-              height={32}
-              className="h-7 w-auto"
-              priority
-            />
+          <Link href="/" className="inline-flex items-center gap-2">
             <Image
               src="/images/logo.png"
               alt="Africa Hub for Innovation & Development"

@@ -21,15 +21,8 @@ export default function AuthLayout({
                   designed for the navy panel — no white pill needed. */}
               <Link
                 href="/"
-                className="mb-8 inline-flex items-center gap-5"
+                className="mb-8 inline-flex items-center"
               >
-                <Image
-                  width={140}
-                  height={56}
-                  src="/images/luminate.png"
-                  alt="Luminate"
-                  className="h-10 w-auto"
-                />
                 <Image
                   width={220}
                   height={64}

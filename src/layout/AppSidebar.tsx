@@ -118,24 +118,14 @@ export default function AppSidebar({
             {collapsed ? (
               <span aria-hidden>PIC</span>
             ) : (
-              <span className="flex items-center gap-4">
-                <Image
-                  src="/images/luminate.png"
-                  alt="Luminate"
-                  width={120}
-                  height={40}
-                  className="h-8 w-auto"
-                  priority
-                />
-                <Image
-                  src="/images/logo.png"
-                  alt="Africa Hub for Innovation & Development"
-                  width={180}
-                  height={56}
-                  className="h-10 w-auto"
-                  priority
-                />
-              </span>
+              <Image
+                src="/images/logo.png"
+                alt="Africa Hub for Innovation & Development"
+                width={180}
+                height={56}
+                className="h-10 w-auto"
+                priority
+              />
             )}
           </Link>
         </div>
