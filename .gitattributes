@@ -1,0 +1,16 @@
+# Normalise line endings to LF on commit. Without this, every file
+# touched on Windows triggers a CRLF→LF conversion warning and
+# `git diff` lights up with phantom changes when developers swap
+# operating systems. Set once, ignored forever.
+* text=auto eol=lf
+
+# Common binary types — keep them byte-exact, never normalised.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.webp binary
+*.pdf  binary
+*.woff binary
+*.woff2 binary
