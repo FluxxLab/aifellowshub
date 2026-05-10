@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import MyCapstoneView from "@/components/fellow/MyCapstoneView";
+import CapstoneTour from "@/components/fellow/tours/CapstoneTour";
 import { getFellowCapstoneServer } from "@/lib/api/fellow-capstone.server";
 
 export const metadata: Metadata = {
@@ -10,5 +11,10 @@ export const metadata: Metadata = {
 
 export default async function MyCapstonePage() {
   const capstone = await getFellowCapstoneServer();
-  return <MyCapstoneView capstone={capstone} />;
+  return (
+    <>
+      <CapstoneTour />
+      <MyCapstoneView capstone={capstone} />
+    </>
+  );
 }

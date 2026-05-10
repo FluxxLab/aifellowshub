@@ -24,8 +24,7 @@ export default async function DashboardPage() {
   ]);
 
   const showAdminTour =
-    !user.hasSeenTour &&
-    (user.role === "admin" || user.role === "super_admin");
+    user.role === "admin" || user.role === "super_admin";
   const firstName = user.fullName.split(" ")[0];
 
   return (

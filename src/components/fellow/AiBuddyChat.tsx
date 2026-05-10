@@ -159,7 +159,10 @@ export default function AiBuddyChat() {
           { label: "AI Buddy" },
         ]}
       />
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div
+        data-tour="ai-buddy-heading"
+        className="flex flex-wrap items-start justify-between gap-3"
+      >
         <div>
           <h1 className="text-3xl font-bold text-gray-800 sm:text-4xl">
             AI Buddy
@@ -169,10 +172,15 @@ export default function AiBuddyChat() {
             through assessment prep, or explore ideas for your capstone.
           </p>
         </div>
-        <QuotaBadge remaining={quota.remaining} limit={quota.limit} />
+        <span data-tour="ai-buddy-quota">
+          <QuotaBadge remaining={quota.remaining} limit={quota.limit} />
+        </span>
       </div>
 
-      <section className="flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white">
+      <section
+        data-tour="ai-buddy-chat"
+        className="flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white"
+      >
         <div className="flex items-center gap-3 border-b border-gray-100 bg-gray-50 px-5 py-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-fellowship-navy text-warning-400">
             <BoltIcon className="h-5 w-5" />

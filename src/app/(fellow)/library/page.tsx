@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import LibraryView from "@/components/fellow/LibraryView";
+import LibraryTour from "@/components/fellow/tours/LibraryTour";
 import { getLibraryServer } from "@/lib/api/fellow-library.server";
 
 export const metadata: Metadata = {
@@ -10,5 +11,10 @@ export const metadata: Metadata = {
 
 export default async function LibraryPage() {
   const resources = await getLibraryServer();
-  return <LibraryView resources={resources} />;
+  return (
+    <>
+      <LibraryTour />
+      <LibraryView resources={resources} />
+    </>
+  );
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import MyCertificatesView from "@/components/fellow/MyCertificatesView";
 import CertificationScorecardCard from "@/components/fellow/CertificationScorecardCard";
+import CertificatesTour from "@/components/fellow/tours/CertificatesTour";
 import {
   getMyCertificateStateServer,
   getMyCertificationServer,
@@ -19,6 +20,7 @@ export default async function MyCertificatesPage() {
   ]);
   return (
     <div className="flex flex-col gap-4 md:gap-6">
+      <CertificatesTour />
       {scorecard && <CertificationScorecardCard scorecard={scorecard} />}
       <MyCertificatesView state={state} />
     </div>

@@ -182,7 +182,7 @@ export default function MyCapstoneView({
           { label: "Capstone" },
         ]}
       />
-      <div>
+      <div data-tour="capstone-heading">
         <h1 className="text-3xl font-bold text-gray-800 sm:text-4xl">
           My capstone
         </h1>
@@ -193,11 +193,13 @@ export default function MyCapstoneView({
         </p>
       </div>
 
-      <StatusBanner
-        status={status}
-        lastSavedAt={lastSaved}
-        wordCount={wordCount}
-      />
+      <div data-tour="capstone-status">
+        <StatusBanner
+          status={status}
+          lastSavedAt={lastSaved}
+          wordCount={wordCount}
+        />
+      </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 md:gap-6">
         <div className="lg:col-span-2 flex flex-col gap-4 md:gap-6">

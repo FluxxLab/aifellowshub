@@ -66,5 +66,5 @@ export default function AdminFirstLoginTour({ firstName }: Props) {
     },
   ];
 
-  return <Tour steps={steps} />;
+  return <Tour pageKey="admin-dashboard" steps={steps} />;
 }

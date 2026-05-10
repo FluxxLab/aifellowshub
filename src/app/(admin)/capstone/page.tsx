@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import CapstoneOversight from "@/components/admin/capstone/CapstoneOversight";
+import AdminCapstoneTour from "@/components/admin/tours/CapstoneTour";
 import { getCapstoneSubmissionsServer } from "@/lib/api/capstone.server";
 
 export const metadata: Metadata = {
@@ -10,5 +11,10 @@ export const metadata: Metadata = {
 
 export default async function CapstonePage() {
   const submissions = await getCapstoneSubmissionsServer();
-  return <CapstoneOversight submissions={submissions} />;
+  return (
+    <>
+      <AdminCapstoneTour />
+      <CapstoneOversight submissions={submissions} />
+    </>
+  );
 }

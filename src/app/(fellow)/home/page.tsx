@@ -34,9 +34,7 @@ export default async function FellowHomePage() {
 
   return (
     <div className="flex flex-col gap-4 md:gap-6">
-      {!user.hasSeenTour && user.role === "fellow" && (
-        <FirstLoginTour firstName={firstName} />
-      )}
+      {user.role === "fellow" && <FirstLoginTour firstName={firstName} />}
       <div data-tour="welcome">
         <h1 className="text-3xl font-bold text-gray-800 sm:text-4xl">
           Hi, {firstName}.

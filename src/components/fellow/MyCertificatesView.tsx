@@ -36,7 +36,7 @@ export default function MyCertificatesView({
           { label: "Certificate" },
         ]}
       />
-      <div>
+      <div data-tour="certificate-heading">
         <h1 className="text-3xl font-bold text-gray-800 sm:text-4xl">
           My certificate
         </h1>

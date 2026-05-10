@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import ParticipantsList from "@/components/admin/participants/ParticipantsList";
+import ParticipantsTour from "@/components/admin/tours/ParticipantsTour";
 import { getParticipantsServer } from "@/lib/api/participants.server";
 
 export const metadata: Metadata = {
@@ -15,6 +16,7 @@ export default async function ParticipantsPage() {
 
   return (
     <>
+      <ParticipantsTour />
       <PageBreadcrumb pageTitle="Participants" />
       <Suspense fallback={null}>
         <ParticipantsList data={data} />

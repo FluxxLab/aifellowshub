@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import SessionsView from "@/components/admin/sessions/SessionsView";
+import SessionsTour from "@/components/admin/tours/SessionsTour";
 import { getSessionsServer } from "@/lib/api/sessions.server";
 
 export const metadata: Metadata = {
@@ -11,5 +12,10 @@ export const metadata: Metadata = {
 export default async function SessionsPage() {
   const sessions = await getSessionsServer();
 
-  return <SessionsView sessions={sessions} />;
+  return (
+    <>
+      <SessionsTour />
+      <SessionsView sessions={sessions} />
+    </>
+  );
 }

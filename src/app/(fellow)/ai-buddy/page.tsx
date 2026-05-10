@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import AiBuddyChat from "@/components/fellow/AiBuddyChat";
+import AiBuddyTour from "@/components/fellow/tours/AiBuddyTour";
 
 export const metadata: Metadata = {
   title: "AI Buddy · AI Fellows LMS",
@@ -8,5 +9,10 @@ export const metadata: Metadata = {
 };
 
 export default function AiBuddyPage() {
-  return <AiBuddyChat />;
+  return (
+    <>
+      <AiBuddyTour />
+      <AiBuddyChat />
+    </>
+  );
 }

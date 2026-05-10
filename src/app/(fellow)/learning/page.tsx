@@ -10,6 +10,7 @@ import {
   LockIcon,
   TimeIcon,
 } from "@/icons";
+import LearningTour from "@/components/fellow/tours/LearningTour";
 import { getFellowCurriculumServer } from "@/lib/api/fellow-learning.server";
 import type { FellowModuleSummary } from "@/lib/api/fellow-learning";
 
@@ -30,13 +31,14 @@ export default async function LearningPage() {
 
   return (
     <div className="flex flex-col gap-4 md:gap-6">
+      <LearningTour />
       <Breadcrumbs
         items={[
           { label: "Home", href: "/home" },
           { label: "Modules" },
         ]}
       />
-      <div>
+      <div data-tour="learning-heading">
         <h1 className="text-3xl font-bold text-gray-800 sm:text-4xl">Curriculum</h1>
         <p className="mt-2 text-gray-600">
           12 modules across the Fellowship. The next module unlocks when you
@@ -46,7 +48,10 @@ export default async function LearningPage() {
         </p>
       </div>
 
-      <section className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
+      <section
+        data-tour="learning-progress"
+        className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6"
+      >
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
@@ -75,7 +80,10 @@ export default async function LearningPage() {
         </div>
       </section>
 
-      <ol className="flex flex-col gap-3 md:gap-4">
+      <ol
+        data-tour="learning-modules"
+        className="flex flex-col gap-3 md:gap-4"
+      >
         {modules.map((m, i) => (
           <ModuleCard
             key={m.weekNumber}

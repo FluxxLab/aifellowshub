@@ -74,7 +74,7 @@ export default function LibraryView({
           { label: "Library" },
         ]}
       />
-      <div>
+      <div data-tour="library-heading">
         <h1 className="text-3xl font-bold text-gray-800 sm:text-4xl">Library</h1>
         <p className="mt-2 max-w-3xl text-gray-600">
           Readings, audits, frameworks, and templates across the Fellowship
@@ -83,7 +83,10 @@ export default function LibraryView({
         </p>
       </div>
 
-      <section className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
+      <section
+        data-tour="library-search"
+        className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6"
+      >
         <input
           type="search"
           value={query}

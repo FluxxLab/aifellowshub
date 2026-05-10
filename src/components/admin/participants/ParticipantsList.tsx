@@ -169,7 +169,9 @@ function deactivateAction(
 
 function PageHeader({ onInvite }: { onInvite: () => void }) {
  return (
- <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+ <div
+ data-tour="participants-heading"
+ className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
  <div>
  <h1 className="text-title-md font-bold text-gray-800">
  Participants
@@ -181,6 +183,7 @@ function PageHeader({ onInvite }: { onInvite: () => void }) {
  <Button
  variant="fellowship" size="sm" startIcon={<PlusIcon />}
  onClick={onInvite}
+ data-tour="participants-invite"
  >
  Invite team member
  </Button>

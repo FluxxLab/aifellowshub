@@ -55,5 +55,5 @@ export default function FirstLoginTour({ firstName }: Props) {
     },
   ];
 
-  return <Tour steps={steps} />;
+  return <Tour pageKey="home" steps={steps} />;
 }

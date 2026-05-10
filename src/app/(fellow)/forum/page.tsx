@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ForumChat from "@/components/forum/ForumChat";
+import ForumTour from "@/components/fellow/tours/ForumTour";
 import { getForumGroupsServer } from "@/lib/api/fellow-forum.server";
 
 export const metadata: Metadata = {
@@ -10,5 +11,10 @@ export const metadata: Metadata = {
 
 export default async function ForumPage() {
   const groups = await getForumGroupsServer();
-  return <ForumChat groups={groups} />;
+  return (
+    <>
+      <ForumTour />
+      <ForumChat groups={groups} />
+    </>
+  );
 }

@@ -4,6 +4,7 @@ import Badge from "@/components/ui/badge/Badge";
 import Breadcrumbs from "@/components/common/Breadcrumbs";
 import LiveSessionAction from "@/components/fellow/LiveSessionAction";
 import PastSessionsTable from "@/components/fellow/PastSessionsTable";
+import SessionsTour from "@/components/fellow/tours/SessionsTour";
 import { CalenderIcon, ChevronRightIcon, TimeIcon } from "@/icons";
 import { getFellowSessionsServer } from "@/lib/api/fellow-learning.server";
 import type { FellowSession } from "@/lib/api/fellow-learning";
@@ -31,13 +32,14 @@ export default async function FellowSessionsPage() {
 
   return (
     <div className="flex flex-col gap-4 md:gap-6">
+      <SessionsTour />
       <Breadcrumbs
         items={[
           { label: "Home", href: "/home" },
           { label: "Sessions" },
         ]}
       />
-      <div>
+      <div data-tour="sessions-heading">
         <h1 className="text-3xl font-bold text-gray-800 sm:text-4xl">
           My sessions
         </h1>
@@ -48,7 +50,10 @@ export default async function FellowSessionsPage() {
         </p>
       </div>
 
-      <section className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
+      <section
+        data-tour="sessions-stats"
+        className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6"
+      >
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <Stat label="Total sessions" value={String(sessions.length)} />
           <Stat label="Attended" value={`${attendedCount} / ${past.length}`} />

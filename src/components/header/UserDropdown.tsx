@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import AvatarText from "../ui/avatar/AvatarText";
-import { ChevronDownIcon, UserCircleIcon } from "@/icons";
+import { BoltIcon, ChevronDownIcon, UserCircleIcon } from "@/icons";
 import { useCurrentUser } from "@/lib/auth/useCurrentUser";
 
 export default function UserDropdown() {
@@ -36,6 +36,29 @@ export default function UserDropdown() {
  // backend offline — continue with local sign-out
  }
  router.push("/signin");
+ router.refresh();
+ }
+
+ /**
+  * Wipe every page-tour completion flag (`pic-lms-tour:*`) and reload so
+  * the user can replay the guided tour on every page they visit. Per-page
+  * gating is localStorage-only, so a hard refresh is enough — no backend
+  * round-trip needed.
+  */
+ function handleRestartTour() {
+ closeDropdown();
+ try {
+ const keysToRemove: string[] = [];
+ for (let i = 0; i < window.localStorage.length; i++) {
+ const k = window.localStorage.key(i);
+ if (k && k.startsWith("pic-lms-tour:")) keysToRemove.push(k);
+ }
+ keysToRemove.forEach((k) => window.localStorage.removeItem(k));
+ } catch {
+ // Storage unavailable — nothing to clear; the reload below still
+ // gives the user a fresh chance if they enable storage.
+ }
+ router.push(user.role === "fellow" ? "/home" : "/dashboard");
  router.refresh();
  }
 
@@ -76,6 +99,16 @@ export default function UserDropdown() {
  <UserCircleIcon className="h-5 w-5 text-gray-500"/>
  Edit profile
  </DropdownItem>
+ </li>
+ <li>
+ <button
+ type="button"
+ onClick={handleRestartTour}
+ className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-theme-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900"
+ >
+ <BoltIcon className="h-5 w-5 text-gray-500" />
+ Restart tour
+ </button>
  </li>
  </ul>
 

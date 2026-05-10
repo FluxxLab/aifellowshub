@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import CoursesView from "@/components/admin/courses/CoursesView";
+import CoursesTour from "@/components/admin/tours/CoursesTour";
 import { getCourses } from "@/lib/api/courses.server";
 
 export const metadata: Metadata = {
@@ -10,5 +11,10 @@ export const metadata: Metadata = {
 
 export default async function CoursesPage() {
   const courses = await getCourses();
-  return <CoursesView courses={courses} />;
+  return (
+    <>
+      <CoursesTour />
+      <CoursesView courses={courses} />
+    </>
+  );
 }

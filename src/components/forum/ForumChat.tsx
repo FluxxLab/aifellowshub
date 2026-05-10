@@ -119,7 +119,7 @@ export default function ForumChat({
           { label: "Forum" },
         ]}
       />
-      <div>
+      <div data-tour="forum-heading">
         <h1 className="text-3xl font-bold text-gray-800 sm:text-4xl">
           Forum
         </h1>
@@ -132,7 +132,10 @@ export default function ForumChat({
 
       <div className="grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-[280px_1fr]">
         {/* Sidebar — group list */}
-        <aside className="rounded-2xl border border-gray-200 bg-white p-3">
+        <aside
+          data-tour="forum-groups"
+          className="rounded-2xl border border-gray-200 bg-white p-3"
+        >
           <p className="px-2 pb-2 pt-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Groups
           </p>
