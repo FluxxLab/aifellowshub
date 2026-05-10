@@ -18,7 +18,6 @@ type BackendUser = {
   email: string;
   role: Role;
   avatarUrl: string | null;
-  hasSeenTour?: boolean;
   mustChangePassword?: boolean;
 };
 
@@ -29,7 +28,6 @@ function backendToCurrentUser(u: BackendUser): CurrentUser {
     email: u.email,
     role: u.role,
     avatarUrl: u.avatarUrl ?? "/images/user/owner.jpg",
-    hasSeenTour: u.hasSeenTour ?? true,
     mustChangePassword: u.mustChangePassword ?? false,
   };
 }

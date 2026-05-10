@@ -46,12 +46,14 @@ export default async function FacultyModulesPage() {
             published modules below.
           </p>
         </div>
-        <span data-tour="faculty-modules-new">
-          <Button size="md" variant="fellowship">
-            <PlusIcon className="h-4 w-4" />
-            Propose new module
-          </Button>
-        </span>
+        <Button
+          size="md"
+          variant="fellowship"
+          data-tour="faculty-modules-new"
+        >
+          <PlusIcon className="h-4 w-4" />
+          Propose new module
+        </Button>
       </div>
 
       <ol

@@ -2,26 +2,17 @@
 import { driver, type DriveStep } from "driver.js";
 import "driver.js/dist/driver.css";
 import { useEffect, useRef } from "react";
-import { apiFetch } from "@/lib/api/client";
 import "./tour.css";
 
 type TourProps = {
   /** Steps in display order. `element` should be a `[data-tour="…"]` selector. */
   steps: DriveStep[];
   /**
-   * Per-page identifier (e.g. "learning", "my-sessions"). When set, the
-   * tour gates itself on `localStorage["pic-lms-tour:{pageKey}"]` so each
-   * page's tour fires only the first time the user lands there. Without
-   * a `pageKey` the tour falls back to the parent's gating (typically the
-   * server-side `hasSeenTour` flag — used for the home + dashboard tours
-   * that are first-login welcomes rather than per-page reveals).
+   * Per-page identifier (e.g. "learning", "my-sessions"). The tour gates
+   * itself on `localStorage["pic-lms-tour:{pageKey}"]` so each page's
+   * tour fires only the first time the user lands there.
    */
-  pageKey?: string;
-  /**
-   * Tells the parent the tour finished/skipped. Default behaviour POSTs to
-   * `/users/me/tour-seen`; pass `null` to disable persistence (e.g. tests).
-   */
-  onSeen?: (() => void) | null;
+  pageKey: string;
 };
 
 const TOUR_STORAGE_PREFIX = "pic-lms-tour:";
@@ -35,23 +26,11 @@ export function tourStorageKey(pageKey: string): string {
 /**
  * Reusable first-visit tour built on driver.js. Renders nothing visually —
  * it attaches a tour to the elements with `data-tour="…"` anchors, runs
- * once after mount, and persists "seen" state via the parent's callback
- * (default: `POST /users/me/tour-seen`).
- *
- * Two gating modes:
- *   - **Page-scoped** (`pageKey` set): self-gates via localStorage so each
- *     page's tour only fires on the user's first visit there. Set the page
- *     key once and let the tour mount unconditionally — it short-circuits
- *     itself if already seen.
- *   - **Parent-gated** (no `pageKey`): the parent decides whether to mount
- *     based on the global `currentUser.hasSeenTour` flag. Used for the
- *     login-day welcome on home/dashboard.
+ * once after mount, and writes a per-page flag to localStorage so it
+ * doesn't re-fire on subsequent visits. "Restart tour" in the user menu
+ * wipes those flags so the whole walkthrough can be replayed on demand.
  */
-export default function Tour({
-  steps,
-  pageKey,
-  onSeen = defaultOnSeen,
-}: TourProps) {
+export default function Tour({ steps, pageKey }: TourProps) {
   // Guard against React 18 StrictMode dev double-effects.
   const startedRef = useRef(false);
   const seenRef = useRef(false);
@@ -60,9 +39,9 @@ export default function Tour({
     if (startedRef.current) return;
     startedRef.current = true;
 
-    // Per-page tours self-gate on localStorage so we don't need to mint
-    // a per-page DB column for each new tour we add.
-    if (pageKey && typeof window !== "undefined") {
+    // Self-gate on localStorage so we don't need a per-page DB column
+    // for each new tour we add.
+    if (typeof window !== "undefined") {
       try {
         if (window.localStorage.getItem(tourStorageKey(pageKey))) return;
       } catch {
@@ -132,31 +111,17 @@ export default function Tour({
     function markSeen() {
       if (seenRef.current) return;
       seenRef.current = true;
-      // Page-scoped tours only need the localStorage flag — no backend
-      // round-trip per page (we'd accumulate a write storm as the cohort
-      // grows). The global welcome tours (no pageKey) keep posting to
-      // `/users/me/tour-seen` so the server still knows you've onboarded.
-      if (pageKey && typeof window !== "undefined") {
-        try {
-          window.localStorage.setItem(
-            tourStorageKey(pageKey),
-            new Date().toISOString(),
-          );
-        } catch {
-          // Storage unavailable; nothing we can do client-side.
-        }
-        return;
+      if (typeof window === "undefined") return;
+      try {
+        window.localStorage.setItem(
+          tourStorageKey(pageKey),
+          new Date().toISOString(),
+        );
+      } catch {
+        // Storage unavailable; nothing we can do client-side.
       }
-      onSeen?.();
     }
-  }, [steps, onSeen, pageKey]);
+  }, [steps, pageKey]);
 
   return null;
-}
-
-function defaultOnSeen() {
-  apiFetch("/users/me/tour-seen", { method: "POST" }).catch(() => {
-    // Backend offline: the per-instance guard prevents looping for this
-    // session; next reload retries. Not worth surfacing an error.
-  });
 }

@@ -7,10 +7,11 @@ type Props = {
 };
 
 /**
- * Admin / super-admin first-login tour. Mounted by the admin dashboard
- * page only when `currentUser.hasSeenTour === false` and the user's role
- * is admin/super-admin. Anchors target `data-tour="…"` attributes on the
- * dashboard sections.
+ * Admin / super-admin first-login tour. Mounts on the admin dashboard
+ * for admin / super-admin only; the underlying `Tour` component
+ * self-gates on `localStorage["pic-lms-tour:admin-dashboard"]` so it
+ * only fires the first time. Anchors target `data-tour="…"` attributes
+ * on the dashboard sections.
  */
 export default function AdminFirstLoginTour({ firstName }: Props) {
   const steps: DriveStep[] = [

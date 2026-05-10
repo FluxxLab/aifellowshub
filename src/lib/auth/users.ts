@@ -18,8 +18,6 @@ export type CurrentUser = {
   email: string;
   role: Role;
   avatarUrl: string;
-  /** True once the user has finished or skipped their post-login tour. */
-  hasSeenTour: boolean;
   /**
    * True when the user signed in with an admin-issued temp password and
    * must rotate it before continuing. The layout uses this to redirect
@@ -40,6 +38,5 @@ export const LOADING_USER: CurrentUser = {
   email: "",
   role: "fellow",
   avatarUrl: "/images/user/owner.jpg",
-  hasSeenTour: true,
   mustChangePassword: false,
 };

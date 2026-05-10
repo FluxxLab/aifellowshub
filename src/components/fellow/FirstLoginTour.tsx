@@ -7,9 +7,11 @@ type Props = {
 };
 
 /**
- * Fellow first-login tour (BRD §6.1). Mounted by the fellow home page
- * only when `currentUser.hasSeenTour === false`. Anchors target
- * `data-tour="…"` attributes on the page.
+ * Fellow first-login tour (BRD §6.1). Mounts on the fellow home page;
+ * the underlying `Tour` component self-gates on
+ * `localStorage["pic-lms-tour:home"]` so it only fires the first time
+ * the user lands here. Anchors target `data-tour="…"` attributes on the
+ * page.
  */
 export default function FirstLoginTour({ firstName }: Props) {
   const steps: DriveStep[] = [
