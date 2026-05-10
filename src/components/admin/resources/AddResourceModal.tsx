@@ -85,11 +85,16 @@ export default function AddResourceModal({
    };
  }, [isOpen]);
 
- const canSubmit =
- title.trim().length > 1 &&
- /^https?:\/\/\S+$/.test(url.trim()) &&
- moduleId.length > 0 &&
- !submitting;
+ // Centralised validation. Each rule is computed individually so we
+ // can show inline feedback against the offending field — a disabled
+ // submit button without explanation is a UX trap (the user types a
+ // bare word, the button greys out, and there's nothing pointing at
+ // the URL field as the reason).
+ const titleValid = title.trim().length > 1;
+ const urlValid = /^https?:\/\/\S+$/.test(url.trim());
+ const urlTouched = url.trim().length > 0;
+ const moduleValid = moduleId.length > 0;
+ const canSubmit = titleValid && urlValid && moduleValid && !submitting;
 
  const reset = () => {
  setTitle("");
@@ -240,9 +245,18 @@ export default function AddResourceModal({
  URL <span className="text-error-500">*</span>
  </Label>
  <Input
- type="url" placeholder="https://…" defaultValue={url}
+ type="url" placeholder="https://example.com/article" defaultValue={url}
  onChange={(e) => setUrl(e.target.value)}
  />
+ {urlTouched && !urlValid ? (
+ <p className="mt-1 text-xs text-error-600">
+ Must start with <code>http://</code> or <code>https://</code>.
+ </p>
+ ) : (
+ <p className="mt-1 text-xs text-gray-500">
+ Include the full URL — protocol included.
+ </p>
+ )}
  </div>
 
  <div>
