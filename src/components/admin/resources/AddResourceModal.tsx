@@ -87,14 +87,25 @@ export default function AddResourceModal({
 
  // Centralised validation. Each rule is computed individually so we
  // can show inline feedback against the offending field — a disabled
- // submit button without explanation is a UX trap (the user types a
- // bare word, the button greys out, and there's nothing pointing at
- // the URL field as the reason).
+ // submit button without explanation is a UX trap.
+ //
+ // URL rule: domain-shaped (one+ dot, no whitespace). We accept both
+ // `https://example.com/x` and bare `example.com/x` because admins
+ // pasting from anywhere shouldn't have to remember the protocol.
+ // `normaliseUrl` (used at submit) prepends `https://` when missing,
+ // so the data stored is always a fully-qualified URL.
  const titleValid = title.trim().length > 1;
- const urlValid = /^https?:\/\/\S+$/.test(url.trim());
- const urlTouched = url.trim().length > 0;
+ const urlTrimmed = url.trim();
+ const urlValid = /^(https?:\/\/)?\S+\.\S+$/.test(urlTrimmed);
+ const urlTouched = urlTrimmed.length > 0;
  const moduleValid = moduleId.length > 0;
  const canSubmit = titleValid && urlValid && moduleValid && !submitting;
+
+ const normaliseUrl = (raw: string) => {
+ const trimmed = raw.trim();
+ if (/^https?:\/\//i.test(trimmed)) return trimmed;
+ return `https://${trimmed}`;
+ };
 
  const reset = () => {
  setTitle("");
@@ -127,7 +138,7 @@ export default function AddResourceModal({
      // delete + recreate covers it for now.
      await updateResource(editing.id, {
        title: title.trim(),
-       url: url.trim(),
+       url: normaliseUrl(url),
        kind: toBackendKind(type),
        description: description.trim(),
        tags,
@@ -141,7 +152,7 @@ export default function AddResourceModal({
        method: "POST",
        body: {
          title: title.trim(),
-         url: url.trim(),
+         url: normaliseUrl(url),
          kind: toBackendKind(type),
          description: description.trim(),
          tags,
@@ -245,16 +256,17 @@ export default function AddResourceModal({
  URL <span className="text-error-500">*</span>
  </Label>
  <Input
- type="url" placeholder="https://example.com/article" defaultValue={url}
+ type="url" placeholder="example.com/article" defaultValue={url}
  onChange={(e) => setUrl(e.target.value)}
  />
  {urlTouched && !urlValid ? (
  <p className="mt-1 text-xs text-error-600">
- Must start with <code>http://</code> or <code>https://</code>.
+ That doesn&apos;t look like a URL — needs at least one dot
+ (e.g. <code>example.com</code>).
  </p>
  ) : (
  <p className="mt-1 text-xs text-gray-500">
- Include the full URL — protocol included.
+ We&apos;ll add <code>https://</code> for you if you don&apos;t.
  </p>
  )}
  </div>
