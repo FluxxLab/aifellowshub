@@ -21,9 +21,24 @@ const STATUS_FILTERS: {
 
 type SessionsViewProps = {
  sessions: LiveSession[];
+ /**
+  * When true, hides the "Schedule session" CTA and the row-level
+  * mutation actions. Used on /faculty/sessions where the model is
+  * "admin schedules, faculty teaches" — faculty can see what they're
+  * teaching but can't create/edit/cancel from here.
+  */
+ readOnly?: boolean;
+ /** Header copy override — defaults to the admin "across the cohort" framing. */
+ heading?: string;
+ description?: string;
 };
 
-export default function SessionsView({ sessions }: SessionsViewProps) {
+export default function SessionsView({
+ sessions,
+ readOnly = false,
+ heading,
+ description,
+}: SessionsViewProps) {
  const [view, setView] = useState<"calendar"|"list">("calendar");
  const [statusFilter, setStatusFilter] =
  useState<(typeof STATUS_FILTERS)[number]["id"]>("all");
@@ -37,7 +52,11 @@ export default function SessionsView({ sessions }: SessionsViewProps) {
  return (
  <>
  <div className="flex flex-col gap-4">
- <Header onSchedule={() => setScheduleOpen(true)} />
+ <Header
+ onSchedule={readOnly ? null : () => setScheduleOpen(true)}
+ heading={heading}
+ description={description}
+ />
  <Toolbar
  view={view}
  setView={setView}
@@ -50,32 +69,43 @@ export default function SessionsView({ sessions }: SessionsViewProps) {
  <SessionsTable sessions={filteredSessions} />
  )}
  </div>
+ {!readOnly && (
  <ScheduleSessionModal
  isOpen={scheduleOpen}
  onClose={() => setScheduleOpen(false)}
  />
+ )}
  </>
  );
 }
 
-function Header({ onSchedule }: { onSchedule: () => void }) {
+type HeaderProps = {
+ /** When null, the schedule CTA is hidden (read-only views like faculty). */
+ onSchedule: (() => void) | null;
+ heading?: string;
+ description?: string;
+};
+
+function Header({ onSchedule, heading, description }: HeaderProps) {
  return (
  <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
  <div>
  <h1 className="text-title-md font-bold text-gray-800">
- Sessions
+ {heading ?? "Sessions"}
  </h1>
  <p className="mt-1 text-sm text-gray-500">
- Schedule and monitor live sessions across the cohort. Sessions are
- live-only — no recordings.
+ {description ??
+ "Schedule and monitor live sessions across the cohort. Sessions are live-only — no recordings."}
  </p>
  </div>
+ {onSchedule && (
  <Button
  variant="fellowship" size="sm" startIcon={<PlusIcon />}
  onClick={onSchedule}
  >
  Schedule session
  </Button>
+ )}
  </div>
  );
 }

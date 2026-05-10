@@ -22,6 +22,11 @@ type AdminModule = {
   status: "draft" | "in_review" | "published";
 };
 
+type FacultyOption = {
+  id: string;
+  fullName: string;
+};
+
 export default function ScheduleSessionModal({
  isOpen,
  onClose,
@@ -29,12 +34,15 @@ export default function ScheduleSessionModal({
  const router = useRouter();
  const [title, setTitle] = useState("");
  const [moduleId, setModuleId] = useState("");
+ const [teacherId, setTeacherId] = useState("");
  const [startsAt, setStartsAt] = useState("");
  const [duration, setDuration] = useState(90);
  const [submitting, setSubmitting] = useState(false);
  const [submitted, setSubmitted] = useState(false);
  const [modules, setModules] = useState<AdminModule[]>([]);
  const [loadingModules, setLoadingModules] = useState(true);
+ const [faculty, setFaculty] = useState<FacultyOption[]>([]);
+ const [loadingFaculty, setLoadingFaculty] = useState(true);
 
  useEffect(() => {
    if (!isOpen) return;
@@ -48,6 +56,15 @@ export default function ScheduleSessionModal({
      })
      .catch(() => {
        if (!cancelled) setLoadingModules(false);
+     });
+   apiFetch<{ faculty: FacultyOption[] }>("/admin/faculty")
+     .then((res) => {
+       if (cancelled) return;
+       setFaculty(res.faculty);
+       setLoadingFaculty(false);
+     })
+     .catch(() => {
+       if (!cancelled) setLoadingFaculty(false);
      });
    return () => {
      cancelled = true;
@@ -64,6 +81,7 @@ export default function ScheduleSessionModal({
  const reset = () => {
  setTitle("");
  setModuleId(modules[0]?.id ?? "");
+ setTeacherId("");
  setStartsAt("");
  setDuration(90);
  setSubmitted(false);
@@ -85,6 +103,9 @@ export default function ScheduleSessionModal({
        title: title.trim(),
        startsAt: new Date(startsAt).toISOString(),
        durationMinutes: duration,
+       // Optional — falls back to "no teacher" when admin runs the
+       // session themselves (orientation, summit, etc.).
+       teacherId: teacherId || undefined,
      },
    });
    setSubmitted(true);
@@ -156,6 +177,27 @@ export default function ScheduleSessionModal({
    label: `Week ${m.weekNumber} · ${m.title}`,
  }))}
  />
+ </div>
+
+ <div>
+ <Label>Teacher</Label>
+ <SelectField
+ value={teacherId}
+ onChange={setTeacherId}
+ placeholder={
+   loadingFaculty
+     ? "Loading faculty…"
+     : faculty.length === 0
+       ? "No faculty available — admin will run this one"
+       : "No teacher (admin runs the session)"
+ }
+ options={faculty.map((f) => ({ value: f.id, label: f.fullName }))}
+ />
+ <p className="mt-1 text-xs text-gray-500">
+   Faculty teacher gets a Zoom Start link so they can run the
+   meeting without admin needing to be online. Leave blank for
+   sessions admin runs themselves.
+ </p>
  </div>
 
  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

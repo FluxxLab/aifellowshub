@@ -14,6 +14,13 @@ export type LiveSession = {
   title: string;
   hostId: string;
   hostName: string;
+  /**
+   * Faculty member delivering the session. Null when admin runs the
+   * session themselves (orientation, summit, etc.). Distinct from
+   * `host` — the host owns the Zoom meeting; the teacher teaches.
+   */
+  teacherId: string | null;
+  teacherName: string | null;
   /** ISO timestamp */
   scheduledStart: string;
   /** ISO timestamp */

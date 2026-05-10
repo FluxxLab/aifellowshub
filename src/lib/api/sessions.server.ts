@@ -22,6 +22,7 @@ type BackendAdminListSession = {
   attendanceThresholdMinutes: number;
   status: SessionStatus;
   host: { id: string; fullName: string } | null;
+  teacher: { id: string; fullName: string } | null;
   module: {
     id: string;
     title: string;
@@ -58,6 +59,8 @@ function mapToLiveSession(s: BackendAdminListSession): LiveSession {
     title: s.title,
     hostId: s.host?.id ?? "",
     hostName: s.host?.fullName ?? "TBD",
+    teacherId: s.teacher?.id ?? null,
+    teacherName: s.teacher?.fullName ?? null,
     scheduledStart,
     scheduledEnd,
     durationMinutes: s.durationMinutes,
@@ -95,6 +98,7 @@ type BackendAdminSession = {
   joinUrl: string | null;
   zoomMeetingId: string | null;
   host: { id: string; fullName: string } | null;
+  teacher: { id: string; fullName: string } | null;
   status: SessionStatus;
   attendance: BackendAdminAttendance[];
 };
@@ -149,6 +153,8 @@ function mapToSessionDetail(s: BackendAdminSession): SessionDetail {
     title: s.title,
     hostId: s.host?.id ?? "",
     hostName: s.host?.fullName ?? "TBD",
+    teacherId: s.teacher?.id ?? null,
+    teacherName: s.teacher?.fullName ?? null,
     scheduledStart,
     scheduledEnd,
     durationMinutes: s.durationMinutes,
