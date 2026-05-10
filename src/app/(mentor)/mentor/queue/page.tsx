@@ -6,6 +6,7 @@ import Breadcrumbs from "@/components/common/Breadcrumbs";
 import { ChevronRightIcon } from "@/icons";
 import { getMentorQueueServer } from "@/lib/api/mentor-capstone.server";
 import type { CapstoneStatus } from "@/lib/api/fellow-capstone";
+import MentorQueueTour from "@/components/mentor/tours/MentorQueueTour";
 
 export const metadata: Metadata = {
   title: "Review queue · AI Fellows LMS",
@@ -32,13 +33,14 @@ export default async function MentorQueuePage() {
 
   return (
     <div className="flex flex-col gap-4 md:gap-6">
+      <MentorQueueTour />
       <Breadcrumbs
         items={[
           { label: "Mentor home", href: "/mentor" },
           { label: "Queue" },
         ]}
       />
-      <div>
+      <div data-tour="mentor-queue-heading">
         <h1 className="text-3xl font-bold text-gray-800 sm:text-4xl">
           Review queue
         </h1>
@@ -48,7 +50,10 @@ export default async function MentorQueuePage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
+      <div
+        data-tour="mentor-queue-stats"
+        className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6"
+      >
         <Stat label="Total fellows" value={String(sorted.length)} />
         <Stat
           label="Awaiting your reply"
@@ -63,7 +68,7 @@ export default async function MentorQueuePage() {
         />
       </div>
 
-      <section>
+      <section data-tour="mentor-queue-table">
         <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">

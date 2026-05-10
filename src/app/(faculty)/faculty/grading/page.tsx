@@ -5,6 +5,7 @@ import Breadcrumbs from "@/components/common/Breadcrumbs";
 import Button from "@/components/ui/button/Button";
 import { ChevronRightIcon, TimeIcon } from "@/icons";
 import { getGradingQueue } from "@/lib/api/grading.server";
+import FacultyGradingTour from "@/components/faculty/tours/FacultyGradingTour";
 
 export const metadata: Metadata = {
   title: "Grading queue · AI Fellows LMS",
@@ -17,6 +18,7 @@ export default async function GradingQueuePage() {
 
   return (
     <div className="flex flex-col gap-4 md:gap-6">
+      <FacultyGradingTour />
       <Breadcrumbs
         items={[
           { label: "Faculty home", href: "/faculty" },

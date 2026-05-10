@@ -180,13 +180,14 @@ function PageHeader({ onInvite }: { onInvite: () => void }) {
  Manage fellows, faculty, mentors, admins, and the cohort waitlist.
  </p>
  </div>
+ <span data-tour="participants-invite">
  <Button
  variant="fellowship" size="sm" startIcon={<PlusIcon />}
  onClick={onInvite}
- data-tour="participants-invite"
  >
  Invite team member
  </Button>
+ </span>
  </div>
  );
 }

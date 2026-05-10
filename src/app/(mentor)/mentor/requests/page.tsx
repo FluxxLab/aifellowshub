@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import MentorRequestsView from "@/components/mentor/MentorRequestsView";
+import MentorRequestsTour from "@/components/mentor/tours/MentorRequestsTour";
 import { listMentorBookingsServer } from "@/lib/api/mentorship.server";
 
 export const metadata: Metadata = {
@@ -10,5 +11,10 @@ export const metadata: Metadata = {
 
 export default async function MentorRequestsPage() {
   const bookings = await listMentorBookingsServer();
-  return <MentorRequestsView initialBookings={bookings} />;
+  return (
+    <>
+      <MentorRequestsTour />
+      <MentorRequestsView initialBookings={bookings} />
+    </>
+  );
 }

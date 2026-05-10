@@ -6,6 +6,7 @@ import Button from "@/components/ui/button/Button";
 import { ChevronRightIcon, PencilIcon, PlusIcon } from "@/icons";
 import { getFacultyModules } from "@/lib/api/faculty.server";
 import type { FacultyModuleStatus } from "@/lib/api/faculty";
+import FacultyModulesTour from "@/components/faculty/tours/FacultyModulesTour";
 
 export const metadata: Metadata = {
   title: "My modules · AI Fellows LMS",
@@ -25,13 +26,17 @@ export default async function FacultyModulesPage() {
 
   return (
     <div className="flex flex-col gap-4 md:gap-6">
+      <FacultyModulesTour />
       <Breadcrumbs
         items={[
           { label: "Faculty home", href: "/faculty" },
           { label: "My modules" },
         ]}
       />
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div
+        data-tour="faculty-modules-heading"
+        className="flex flex-wrap items-end justify-between gap-3"
+      >
         <div>
           <h1 className="text-3xl font-bold text-gray-800 sm:text-4xl">
             My modules
@@ -41,13 +46,18 @@ export default async function FacultyModulesPage() {
             published modules below.
           </p>
         </div>
-        <Button size="md" variant="fellowship">
-          <PlusIcon className="h-4 w-4" />
-          Propose new module
-        </Button>
+        <span data-tour="faculty-modules-new">
+          <Button size="md" variant="fellowship">
+            <PlusIcon className="h-4 w-4" />
+            Propose new module
+          </Button>
+        </span>
       </div>
 
-      <ol className="flex flex-col gap-3 md:gap-4">
+      <ol
+        data-tour="faculty-modules-list"
+        className="flex flex-col gap-3 md:gap-4"
+      >
         {sorted.map((m) => (
           <li
             key={m.id}

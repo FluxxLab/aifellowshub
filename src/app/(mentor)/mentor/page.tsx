@@ -17,6 +17,7 @@ import {
 } from "@/lib/api/fellow-capstone";
 import { getMentorQueueServer } from "@/lib/api/mentor-capstone.server";
 import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import MentorHomeTour from "@/components/mentor/tours/MentorHomeTour";
 
 export const metadata: Metadata = {
   title: "Mentor home · AI Fellows LMS",
@@ -55,7 +56,8 @@ export default async function MentorHomePage() {
 
   return (
     <div className="flex flex-col gap-4 md:gap-6">
-      <div>
+      <MentorHomeTour />
+      <div data-tour="mentor-home-heading">
         <h1 className="text-3xl font-bold text-gray-800 sm:text-4xl">
           Hi, {firstName}.
         </h1>
@@ -75,7 +77,10 @@ export default async function MentorHomePage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
+      <div
+        data-tour="mentor-home-stats"
+        className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6"
+      >
         <StatCard
           icon={<UsersRoundIcon className="text-fellowship-navy size-5" />}
           label="Fellows assigned"
@@ -100,7 +105,10 @@ export default async function MentorHomePage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 md:gap-6">
-        <section className="lg:col-span-2 rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
+        <section
+          data-tour="mentor-home-awaiting"
+          className="lg:col-span-2 rounded-2xl border border-gray-200 bg-white p-5 md:p-6"
+        >
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-800">
               Awaiting your reply
