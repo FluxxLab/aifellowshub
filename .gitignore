@@ -10,8 +10,10 @@
 # testing
 /coverage
 
-# next.js
-/.next/
+# next.js — match nested .next/ too. The leading-slash rule alone
+# missed a dev-server `.next/` that landed inside a misnamed
+# directory at repo root, which then committed turbopack artifacts.
+.next/
 /out/
 
 # production
