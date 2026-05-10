@@ -4,6 +4,7 @@ import { Modal } from "@/components/ui/modal";
 import SelectField from "@/components/form/SelectField";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
+import Spinner from "@/components/ui/loader/Spinner";
 import { ChevronRightIcon } from "@/icons";
 import { apiFetch } from "@/lib/api/client";
 import { useRouter } from "next/navigation";
@@ -81,7 +82,10 @@ export default function CreateAssessmentModal({
  <div className="space-y-5">
  <div>
  <Label>
+ <span className="inline-flex items-center gap-2">
  Module <span className="text-error-500">*</span>
+ {loading && <Spinner size="sm" label="Loading modules…" />}
+ </span>
  </Label>
  <SelectField
  value={moduleId}

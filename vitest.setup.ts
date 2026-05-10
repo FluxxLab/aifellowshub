@@ -35,6 +35,13 @@ beforeEach(() => {
       })),
     });
   }
+
+  // jsdom doesn't implement Element.scrollTo. Several components
+  // (AiBuddyChat's auto-scroll-to-latest, ForumChat's similar) call
+  // it inside an effect and crash without this no-op shim.
+  if (!Element.prototype.scrollTo) {
+    Element.prototype.scrollTo = vi.fn() as unknown as typeof Element.prototype.scrollTo;
+  }
 });
 
 afterEach(() => {

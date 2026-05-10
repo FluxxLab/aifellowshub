@@ -6,6 +6,7 @@ import SelectField from "@/components/form/SelectField";
 import TextArea from "@/components/form/input/TextArea";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
+import Spinner from "@/components/ui/loader/Spinner";
 import { CheckCircleIcon } from "@/icons";
 import { apiFetch } from "@/lib/api/client";
 import { toast } from "@/lib/toast";
@@ -217,7 +218,10 @@ export default function AddResourceModal({
  </div>
  <div>
  <Label>
+ <span className="inline-flex items-center gap-2">
  Module <span className="text-error-500">*</span>
+ {loadingModules && <Spinner size="sm" label="Loading modules…" />}
+ </span>
  </Label>
  <SelectField
  value={moduleId}

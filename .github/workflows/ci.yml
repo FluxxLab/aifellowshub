@@ -49,10 +49,46 @@ jobs:
       # `next build` below runs Next's own typecheck pass with the
       # right module resolution; real type errors still fail CI there.
 
+      - name: Unit tests (Vitest)
+        run: pnpm test
+
       - name: Build
         env:
           NEXT_TELEMETRY_DISABLED: "1"
         run: pnpm build
+
+  storybook-a11y:
+    # Builds Storybook, serves it locally, and runs the test-runner
+    # against every story to catch render errors + axe-core violations.
+    # Same WCAG tag set as the Playwright a11y helper (`e2e/helpers/axe.ts`)
+    # so design-system primitives and pages clear the same bar.
+    name: Storybook a11y
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Build Storybook
+        run: pnpm storybook:build
+
+      - name: Run Storybook test-runner
+        run: pnpm storybook:test
 
   docker:
     name: Build Docker image

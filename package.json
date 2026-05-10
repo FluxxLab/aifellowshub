@@ -15,7 +15,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:install": "playwright install --with-deps chromium",
     "storybook": "storybook dev -p 6006",
-    "storybook:build": "storybook build -o storybook-static"
+    "storybook:build": "storybook build -o storybook-static",
+    "storybook:test": "concurrently --kill-others --success first --names \"sb,test\" --prefix-colors \"cyan,magenta\" \"http-server storybook-static --port 6006 --silent\" \"wait-on tcp:6006 && test-storybook --url http://127.0.0.1:6006\""
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.19",
@@ -57,6 +58,7 @@
     "@storybook/addon-docs": "^10.3.6",
     "@storybook/nextjs": "^10.3.6",
     "@storybook/react": "^10.3.6",
+    "@storybook/test-runner": "^0.24.3",
     "@svgr/webpack": "^8.1.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -67,14 +69,18 @@
     "@types/react-transition-group": "^4.4.12",
     "@vitejs/plugin-react": "^6.0.1",
     "@vitest/ui": "^4.1.5",
+    "axe-playwright": "^2.2.2",
+    "concurrently": "^9.2.1",
     "eslint": "^9.39.1",
     "eslint-config-next": "^14.2.35",
+    "http-server": "^14.1.1",
     "jsdom": "^29.1.1",
     "postcss": "^8.5.6",
     "storybook": "^10.3.6",
     "tailwindcss": "^4.1.17",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.5"
+    "vitest": "^4.1.5",
+    "wait-on": "^9.0.5"
   },
   "overrides": {
     "@react-jvectormap/core": {

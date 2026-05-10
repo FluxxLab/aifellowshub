@@ -1,4 +1,5 @@
 import ChangePasswordForm from "@/components/auth/ChangePasswordForm";
+import PageSkeleton from "@/components/ui/loader/PageSkeleton";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
@@ -10,11 +11,13 @@ export const metadata: Metadata = {
 
 export default function ChangePasswordPage() {
   // ChangePasswordForm uses `useSearchParams` to read `?forced=1&next=…`.
-  // Next 16 requires that to be inside a Suspense boundary so prerender
+  // Next requires that to be inside a Suspense boundary so prerender
   // can bail out to CSR cleanly. Without this, `next build` errors at
   // the `/change-password` static-export step.
   return (
-    <Suspense fallback={null}>
+    <Suspense
+      fallback={<PageSkeleton variant="detail" label="Loading password form…" />}
+    >
       <ChangePasswordForm />
     </Suspense>
   );

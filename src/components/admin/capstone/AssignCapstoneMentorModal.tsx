@@ -5,6 +5,7 @@ import { Modal } from "@/components/ui/modal";
 import Button from "@/components/ui/button/Button";
 import AvatarText from "@/components/ui/avatar/AvatarText";
 import Badge from "@/components/ui/badge/Badge";
+import Spinner from "@/components/ui/loader/Spinner";
 import { apiFetch } from "@/lib/api/client";
 import { toast } from "@/lib/toast";
 
@@ -116,7 +117,10 @@ export default function AssignCapstoneMentorModal({
       )}
 
       {!sortedMentors && !error && (
-        <p className="mt-5 text-sm text-gray-500">Loading mentors…</p>
+        <div className="mt-5 flex items-center gap-2 text-sm text-gray-500">
+          <Spinner size="sm" label="Loading mentors…" />
+          <span aria-hidden>Loading mentors…</span>
+        </div>
       )}
 
       {sortedMentors && sortedMentors.length === 0 && (
