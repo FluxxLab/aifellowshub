@@ -43,6 +43,7 @@ export default function ScheduleSessionModal({
  const [loadingModules, setLoadingModules] = useState(true);
  const [faculty, setFaculty] = useState<FacultyOption[]>([]);
  const [loadingFaculty, setLoadingFaculty] = useState(true);
+ const [facultyFetchFailed, setFacultyFetchFailed] = useState(false);
 
  useEffect(() => {
    if (!isOpen) return;
@@ -64,7 +65,12 @@ export default function ScheduleSessionModal({
        setLoadingFaculty(false);
      })
      .catch(() => {
-       if (!cancelled) setLoadingFaculty(false);
+       // Distinguish "endpoint missing/down" from "no faculty exist"
+       // so the empty-state copy below can guide the admin to the
+       // right action (redeploy backend vs. invite a faculty user).
+       if (cancelled) return;
+       setFacultyFetchFailed(true);
+       setLoadingFaculty(false);
      });
    return () => {
      cancelled = true;
@@ -187,17 +193,38 @@ export default function ScheduleSessionModal({
  placeholder={
    loadingFaculty
      ? "Loading faculty…"
-     : faculty.length === 0
-       ? "No faculty available — admin will run this one"
-       : "No teacher (admin runs the session)"
+     : facultyFetchFailed
+       ? "Couldn't load faculty list"
+       : faculty.length === 0
+         ? "No faculty yet — admin will run this one"
+         : "No teacher (admin runs the session)"
  }
  options={faculty.map((f) => ({ value: f.id, label: f.fullName }))}
  />
+ {facultyFetchFailed ? (
+ <p className="mt-1 text-xs text-error-600">
+   Couldn&apos;t reach <code>/admin/faculty</code>. The backend may
+   need to be redeployed since the teacher endpoint shipped.
+ </p>
+ ) : faculty.length === 0 && !loadingFaculty ? (
+ <p className="mt-1 text-xs text-gray-500">
+   No faculty members on the platform yet — invite one from{" "}
+   <a
+     href="/participants"
+     className="font-medium text-fellowship-navy underline"
+   >
+     Participants
+   </a>{" "}
+   to assign as a teacher. For now this session will run under
+   admin only.
+ </p>
+ ) : (
  <p className="mt-1 text-xs text-gray-500">
    Faculty teacher gets a Zoom Start link so they can run the
    meeting without admin needing to be online. Leave blank for
    sessions admin runs themselves.
  </p>
+ )}
  </div>
 
  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
