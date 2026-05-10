@@ -302,16 +302,28 @@ function MessageRow({
         : message.author.role === "mentor"
           ? "Mentor"
           : null;
+
+  // Own messages render right-aligned in a dark navy bubble; everyone
+  // else lands left-aligned in a light grey bubble. The avatar moves
+  // with the bubble so eye-flow stays consistent for each side.
   return (
-    <div className="flex items-start gap-3">
+    <div
+      className={`flex items-start gap-3 ${
+        isMine ? "flex-row-reverse" : "flex-row"
+      }`}
+    >
       {showHeader ? (
         <AvatarText name={message.author.fullName} className="h-9 w-9" />
       ) : (
         <div className="h-9 w-9 shrink-0" />
       )}
-      <div className="min-w-0 flex-1">
+      <div className="flex min-w-0 max-w-[80%] flex-col">
         {showHeader && (
-          <div className="flex flex-wrap items-baseline gap-2">
+          <div
+            className={`flex flex-wrap items-baseline gap-2 ${
+              isMine ? "justify-end" : "justify-start"
+            }`}
+          >
             <span className="text-sm font-semibold text-gray-800">
               {message.author.fullName}
               {isMine && (
@@ -328,9 +340,15 @@ function MessageRow({
             <span className="text-xs text-gray-400">{time}</span>
           </div>
         )}
-        <p className="whitespace-pre-wrap break-words text-sm text-gray-700">
+        <div
+          className={`mt-1 inline-block rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap wrap-break-word ${
+            isMine
+              ? "self-end bg-fellowship-navy text-white"
+              : "self-start bg-gray-100 text-gray-800"
+          }`}
+        >
           {message.body}
-        </p>
+        </div>
       </div>
     </div>
   );
