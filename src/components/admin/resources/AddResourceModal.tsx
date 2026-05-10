@@ -28,6 +28,39 @@ type AdminModule = {
  weekNumber: number;
 };
 
+/**
+ * Returns true when the string parses as an http(s) URL with a
+ * recognisable host. We try the input as-is first (catches users who
+ * paste a fully-qualified URL), then fall back to prefixing
+ * `https://` (catches `example.org`, `aiegfellowship.org/forum`, etc.).
+ *
+ * The host check is "any non-empty hostname containing a dot" — that's
+ * looser than `validator.js` defaults but matches what an admin pasting
+ * from email/Slack/PDFs reasonably expects. Single-label hosts like
+ * `localhost` aren't accepted because the resource library is for
+ * shareable links, not internal URLs.
+ */
+function isHttpUrlLike(raw: string): boolean {
+ if (raw.length === 0) return false;
+ const candidates = /^https?:\/\//i.test(raw)
+ ? [raw]
+ : [`https://${raw}`];
+ for (const candidate of candidates) {
+ try {
+ const parsed = new URL(candidate);
+ if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+ continue;
+ }
+ if (parsed.hostname.length > 0 && parsed.hostname.includes(".")) {
+ return true;
+ }
+ } catch {
+ // not a URL — try the next candidate (or fall through to false)
+ }
+ }
+ return false;
+}
+
 type AddResourceModalProps = {
  isOpen: boolean;
  onClose: () => void;
@@ -89,15 +122,15 @@ export default function AddResourceModal({
  // can show inline feedback against the offending field — a disabled
  // submit button without explanation is a UX trap.
  //
- // URL rule: domain-shaped (one+ dot, no whitespace). We accept both
- // `https://example.com/x` and bare `example.com/x` because admins
- // pasting from anywhere shouldn't have to remember the protocol.
- // `normaliseUrl` (used at submit) prepends `https://` when missing,
- // so the data stored is always a fully-qualified URL.
+ // URL rule: parse with the WHATWG `URL` constructor (the same code
+ // browsers use). We accept any TLD (`.com`, `.org`, `.io`, country
+ // codes, …) and any path/query/fragment. Bare domains like
+ // `example.org` are accepted too — `normaliseUrl` prepends `https://`
+ // before parsing so the stored value is always fully-qualified.
  const titleValid = title.trim().length > 1;
  const urlTrimmed = url.trim();
- const urlValid = /^(https?:\/\/)?\S+\.\S+$/.test(urlTrimmed);
  const urlTouched = urlTrimmed.length > 0;
+ const urlValid = isHttpUrlLike(urlTrimmed);
  const moduleValid = moduleId.length > 0;
  const canSubmit = titleValid && urlValid && moduleValid && !submitting;
 
@@ -256,17 +289,18 @@ export default function AddResourceModal({
  URL <span className="text-error-500">*</span>
  </Label>
  <Input
- type="url" placeholder="example.com/article" defaultValue={url}
+ type="url" placeholder="aiegfellowship.org/resources/foo" defaultValue={url}
  onChange={(e) => setUrl(e.target.value)}
  />
  {urlTouched && !urlValid ? (
  <p className="mt-1 text-xs text-error-600">
- That doesn&apos;t look like a URL — needs at least one dot
- (e.g. <code>example.com</code>).
+ Doesn&apos;t look like a URL — needs a hostname with a dot
+ (any TLD: <code>.com</code>, <code>.org</code>, <code>.io</code>,
+ country codes, etc.).
  </p>
  ) : (
  <p className="mt-1 text-xs text-gray-500">
- We&apos;ll add <code>https://</code> for you if you don&apos;t.
+ Any hostname with a dot works. We&apos;ll prepend <code>https://</code> if you don&apos;t.
  </p>
  )}
  </div>
