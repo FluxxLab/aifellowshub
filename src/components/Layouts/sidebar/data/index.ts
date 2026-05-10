@@ -15,6 +15,7 @@ import type { Role } from "@/lib/auth/users";
 import {
   BoltIcon,
   BoxCubeIcon,
+  CalenderIcon,
   ChatIcon,
   CheckCircleIcon,
   CheckLineIcon,
@@ -131,6 +132,7 @@ const FACULTY_NAV: NavSection[] = [
     items: [
       { title: "Home", icon: GridIcon as SvgComponent, url: "/faculty", items: [] },
       { title: "My modules", icon: BoxCubeIcon as SvgComponent, url: "/faculty/modules", items: [] },
+      { title: "Sessions", icon: CalenderIcon as SvgComponent, url: "/faculty/sessions", items: [] },
       { title: "Grading", icon: CheckCircleIcon as SvgComponent, url: "/faculty/grading", items: [] },
     ],
   },
