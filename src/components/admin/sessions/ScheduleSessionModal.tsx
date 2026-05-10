@@ -34,7 +34,7 @@ export default function ScheduleSessionModal({
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [moduleId, setModuleId] = useState("");
-  const [teacherId, setTeacherId] = useState("");
+  const [teacherIds, setTeacherIds] = useState<string[]>([]);
   const [startsAt, setStartsAt] = useState("");
   const [duration, setDuration] = useState(90);
   const [submitting, setSubmitting] = useState(false);
@@ -87,7 +87,7 @@ export default function ScheduleSessionModal({
   const reset = () => {
     setTitle("");
     setModuleId(modules[0]?.id ?? "");
-    setTeacherId("");
+    setTeacherIds([]);
     setStartsAt("");
     setDuration(90);
     setSubmitted(false);
@@ -109,9 +109,9 @@ export default function ScheduleSessionModal({
           title: title.trim(),
           startsAt: new Date(startsAt).toISOString(),
           durationMinutes: duration,
-          // Optional — falls back to "no teacher" when admin runs the
-          // session themselves (orientation, summit, etc.).
-          teacherId: teacherId || undefined,
+          // Optional — empty when admin runs the session themselves
+          // (orientation, summit). Multiple ids for panel discussions.
+          teacherIds: teacherIds.length > 0 ? teacherIds : undefined,
         },
       });
       setSubmitted(true);
@@ -186,19 +186,49 @@ export default function ScheduleSessionModal({
             </div>
 
             <div>
-              <Label>Teacher</Label>
-              <SelectField
-                value={teacherId}
-                onChange={setTeacherId}
-                placeholder={
-                  loadingFaculty
-                    ? "Loading faculty…"
-                    : faculty.length === 0
-                      ? "No faculty available — admin will run this one"
-                      : "No teacher (admin runs the session)"
-                }
-                options={faculty.map((f) => ({ value: f.id, label: f.fullName }))}
-              />
+              <Label>
+                Teachers{" "}
+                <span className="text-xs font-normal text-gray-400">
+                  (optional · pick one or many for a panel)
+                </span>
+              </Label>
+              {loadingFaculty ? (
+                <p className="text-sm text-gray-500">Loading faculty…</p>
+              ) : faculty.length === 0 ? (
+                <p className="text-sm text-gray-500">
+                  No faculty available — admin will run this one.
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {faculty.map((f) => {
+                    const checked = teacherIds.includes(f.id);
+                    return (
+                      <label
+                        key={f.id}
+                        className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors ${
+                          checked
+                            ? "border-fellowship-navy bg-fellowship-navy text-white"
+                            : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="sr-only"
+                          checked={checked}
+                          onChange={() => {
+                            setTeacherIds((prev) =>
+                              prev.includes(f.id)
+                                ? prev.filter((id) => id !== f.id)
+                                : [...prev, f.id],
+                            );
+                          }}
+                        />
+                        {f.fullName}
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

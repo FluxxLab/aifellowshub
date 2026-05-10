@@ -76,10 +76,13 @@ export default function SessionDetailHeader({
  <AvatarText name={session.hostName} className="h-6 w-6 text-xs"/>
  Hosted by {session.hostName}
  </span>
- {session.teacherName && (
+ {session.teachers.length > 0 && (
  <span className="inline-flex items-center gap-2">
- <AvatarText name={session.teacherName} className="h-6 w-6 text-xs"/>
- Taught by {session.teacherName}
+ <AvatarText
+ name={session.teachers[0].fullName}
+ className="h-6 w-6 text-xs"
+ />
+ Taught by {session.teachers.map((t) => t.fullName).join(", ")}
  </span>
  )}
  <SessionStatusBadge status={session.status} />
