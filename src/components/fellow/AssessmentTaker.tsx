@@ -5,7 +5,7 @@ import AnswerFileUpload from "@/components/fellow/AnswerFileUpload";
 import Button from "@/components/ui/button/Button";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { toast } from "@/lib/toast";
-import { CheckCircleIcon, TimeIcon } from "@/icons";
+import { CheckCircleIcon } from "@/icons";
 import {
   submitAttempt,
   type FellowAnswer,
@@ -46,43 +46,19 @@ export default function AssessmentTaker({
   const [answers, setAnswers] = useState<Record<string, AnswerState>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [secondsLeft, setSecondsLeft] = useState(
-    assessment.timeLimitMinutes * 60,
-  );
-  const startedAt = useRef<number>(Date.now());
 
-  // Refs so the timer interval can read the latest values without depending
-  // on them — otherwise every keystroke would tear down and recreate the
-  // interval, and a fellow typing fast would freeze the clock entirely.
-  const answersRef = useRef(answers);
-  useEffect(() => {
-    answersRef.current = answers;
-  }, [answers]);
+  // `assessment.timeLimitMinutes` stays on the data model (admins can
+  // set it on the assessment) but is intentionally NOT enforced
+  // client-side any more. The visible countdown chip + auto-submit
+  // were creating exam-anxiety with no upside — fellows weren't
+  // gaming the limit, they were just stressed by watching the clock.
+  // If we ever need to enforce again, the backend can compare
+  // `attempt.startedAt → attempt.submittedAt` against the limit.
+
   const submittingRef = useRef(false);
   useEffect(() => {
     submittingRef.current = submitting;
   }, [submitting]);
-
-  // Tick every second; auto-submit when time runs out. Effect runs once on
-  // mount (until `submitted` flips true) — does not depend on `answers`.
-  useEffect(() => {
-    if (submitted) return;
-    const id = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - startedAt.current) / 1000);
-      const remaining = assessment.timeLimitMinutes * 60 - elapsed;
-      setSecondsLeft(Math.max(0, remaining));
-      if (remaining <= 0) {
-        clearInterval(id);
-        if (!submittingRef.current) {
-          void runSubmit({ auto: true, snapshot: answersRef.current });
-        }
-      }
-    }, 1000);
-    return () => clearInterval(id);
-    // runSubmit is stable enough — it reads the snapshot we pass in and
-    // refs for everything else. We intentionally exclude it from deps.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [assessment.timeLimitMinutes, submitted]);
 
   const setAnswer = (qid: string, patch: AnswerState) =>
     setAnswers((prev) => ({ ...prev, [qid]: { ...prev[qid], ...patch } }));
@@ -92,13 +68,7 @@ export default function AssessmentTaker({
     [assessment.questions, answers],
   );
 
-  async function runSubmit({
-    auto,
-    snapshot,
-  }: {
-    auto: boolean;
-    snapshot: Record<string, AnswerState>;
-  }) {
+  async function runSubmit(snapshot: Record<string, AnswerState>) {
     if (submitted || submittingRef.current) return;
     submittingRef.current = true;
     setSubmitting(true);
@@ -109,8 +79,7 @@ export default function AssessmentTaker({
     try {
       const attempt = await submitAttempt(assessment.moduleId, payload);
       setSubmitted(true);
-      const headline = auto ? "Time's up — answers submitted" : "Answers submitted";
-      toast.success(headline, describeResult(attempt));
+      toast.success("Answers submitted", describeResult(attempt));
       router.push(`/attempts/${encodeURIComponent(attempt.id)}`);
     } catch (err) {
       toast.errorFromException("Couldn't submit your answers", err);
@@ -129,7 +98,7 @@ export default function AssessmentTaker({
       confirmLabel: "Submit",
     });
     if (!ok) return;
-    await runSubmit({ auto: false, snapshot: answers });
+    await runSubmit(answers);
   }
 
   return (
@@ -145,16 +114,6 @@ export default function AssessmentTaker({
               {assessment.questions.length === 1 ? "" : "s"} · pass mark{" "}
               {assessment.passingScore}%
             </p>
-          </div>
-          <div
-            className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold ${
-              secondsLeft < 60
-                ? "bg-error-50 text-error-700"
-                : "bg-warning-50 text-fellowship-navy"
-            }`}
-          >
-            <TimeIcon className="h-4 w-4" />
-            {formatClock(secondsLeft)}
           </div>
         </div>
       </header>
@@ -347,11 +306,6 @@ function kindLabel(kind: FellowQuestion["kind"]): string {
   }
 }
 
-function formatClock(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${String(s).padStart(2, "0")}`;
-}
 
 function describeResult(attempt: {
   status: "passed" | "failed" | "pending_review";
