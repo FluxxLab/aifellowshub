@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Archivo } from 'next/font/google';
+import * as Sentry from "@sentry/nextjs";
 import { Toaster } from "sonner";
 import './globals.css';
 import "flatpickr/dist/flatpickr.css";
@@ -10,16 +11,31 @@ const archivo = Archivo({
   variable: "--font-archivo-src",
 });
 
-// Wired through metadata.icons (rather than a colocated app/icon.svg
-// or app/favicon.ico) so we sidestep the @vercel/og Windows path bug
-// the metadata-image-loader hit on earlier builds.
-export const metadata: Metadata = {
-  icons: {
-    icon: "/images/LMS_FavIcon.ico",
-    shortcut: "/images/LMS_FavIcon.ico",
-    apple: "/images/LMS_FavIcon.ico",
-  },
-};
+/**
+ * Root metadata + Sentry trace context.
+ *
+ * `generateMetadata` (dynamic) replaces the static `metadata` export
+ * so we can inject Sentry trace headers via `<meta>` tags on every
+ * server-rendered page. That lets the browser SDK stitch its session
+ * to the same trace as the server request, giving end-to-end traces.
+ *
+ * Icons are still wired through metadata.icons (rather than a
+ * colocated app/icon.svg or app/favicon.ico) so we sidestep the
+ * @vercel/og Windows path bug the metadata-image-loader hit on
+ * earlier builds.
+ */
+export function generateMetadata(): Metadata {
+  return {
+    icons: {
+      icon: "/images/LMS_FavIcon.ico",
+      shortcut: "/images/LMS_FavIcon.ico",
+      apple: "/images/LMS_FavIcon.ico",
+    },
+    other: {
+      ...Sentry.getTraceData(),
+    },
+  };
+}
 
 export default function RootLayout({
   children,

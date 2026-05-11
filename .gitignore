@@ -91,3 +91,6 @@ test-results/
 *.xlsx
 *.pptx
 storybook-static/
+
+# Sentry Config File
+.env.sentry-build-plugin

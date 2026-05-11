@@ -3,6 +3,24 @@ import { afterEach, beforeEach, vi } from "vitest";
 import { cleanup } from "@testing-library/react";
 
 /**
+ * Stub `@sentry/nextjs` for all tests. The real module wires into
+ * Next's runtime + browser globals and explodes inside jsdom; we
+ * don't want every component test to fail just because it touches a
+ * file that re-exports a Sentry helper (e.g. `app/layout.tsx`'s
+ * `Sentry.getTraceData`). Tests don't assert on Sentry behaviour —
+ * production builds use the real module via `next build`.
+ */
+vi.mock("@sentry/nextjs", () => ({
+  getTraceData: () => ({}),
+  captureException: vi.fn(),
+  captureMessage: vi.fn(),
+  captureRouterTransitionStart: vi.fn(),
+  init: vi.fn(),
+  replayIntegration: () => ({}),
+  withSentryConfig: <T>(config: T) => config,
+}));
+
+/**
  * Global test setup.
  *
  *  - `@testing-library/jest-dom/vitest` adds matchers like
