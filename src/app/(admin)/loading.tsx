@@ -1,12 +1,12 @@
 import PageSkeleton from "@/components/ui/loader/PageSkeleton";
 
 /**
- * Admin route-segment loader. Dashboard variant covers /dashboard,
- * /participants, /courses, /sessions, /capstone, /certificates, and
- * /settings. List-heavy pages (audit-log, mentorship-bookings) get
- * close enough — a per-page override is cheap if a specific page
- * benefits from a list-shaped skeleton.
+ * Admin route-segment loader. Catch-all for the admin pages that
+ * don't have a bespoke `loading.tsx` of their own (audit-log,
+ * forum-groups, mentorship-bookings, certificates, capstone, etc.) —
+ * those are list-shaped. Pages with dedicated loaders (dashboard,
+ * participants, courses, sessions, settings) override this.
  */
 export default function AdminLoading() {
-  return <PageSkeleton variant="dashboard" />;
+  return <PageSkeleton variant="list" />;
 }

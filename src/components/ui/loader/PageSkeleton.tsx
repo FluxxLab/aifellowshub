@@ -114,9 +114,16 @@ function DetailBody() {
   );
 }
 
-/* ---------- internal pieces ---------- */
+/* ---------- composable atoms ---------- */
+/*
+ * Exported so per-page `loading.tsx` files can compose page-shaped
+ * skeletons without rebuilding the same shimmer-card-with-circle-and-
+ * two-bars pattern. Keep these small + structural — anything more
+ * bespoke (full sidebars, calendars, chat panels) is hand-rolled in
+ * the per-page loading file.
+ */
 
-function StatTileSkeleton() {
+export function StatTileSkeleton() {
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
       <Skeleton shape="circle" className="h-9 w-9" />
@@ -126,7 +133,7 @@ function StatTileSkeleton() {
   );
 }
 
-function ContentCardSkeleton({
+export function ContentCardSkeleton({
   rows,
   className = "",
 }: {
@@ -143,6 +150,54 @@ function ContentCardSkeleton({
           <Skeleton key={i} className="h-3 w-full" />
         ))}
       </div>
+    </div>
+  );
+}
+
+/** Page heading + one-sentence subtitle. Mirrors the `<h1>…</h1><p>…</p>`
+ *  pattern most pages open with. */
+export function HeadingSkeleton({
+  titleWidth = "w-72",
+  subtitleWidth = "w-96",
+}: {
+  titleWidth?: string;
+  subtitleWidth?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <Skeleton className={`h-9 ${titleWidth} max-w-full`} />
+      <Skeleton className={`h-4 ${subtitleWidth} max-w-full`} />
+    </div>
+  );
+}
+
+/** A row in a list-style page (`learning` modules, `participants`, etc.). */
+export function ListRowSkeleton({ className = "" }: { className?: string }) {
+  return <Skeleton className={`h-20 w-full ${className}`} />;
+}
+
+/** A row in a real table — avatar + two cells + trailing chip. */
+export function TableRowSkeleton() {
+  return (
+    <div className="flex items-center gap-4 border-b border-gray-100 px-5 py-4 last:border-b-0">
+      <Skeleton shape="circle" className="h-9 w-9 shrink-0" />
+      <div className="flex flex-1 flex-col gap-1">
+        <Skeleton className="h-4 w-40 max-w-full" />
+        <Skeleton className="h-3 w-56 max-w-full" />
+      </div>
+      <Skeleton className="hidden h-3 w-24 sm:block" />
+      <Skeleton className="h-6 w-16 rounded-full" />
+    </div>
+  );
+}
+
+/** Used for the dashboard's stat-tile row. Defaults to 4 tiles. */
+export function StatTilesRowSkeleton({ count = 4 }: { count?: number }) {
+  return (
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
+      {Array.from({ length: count }).map((_, i) => (
+        <StatTileSkeleton key={i} />
+      ))}
     </div>
   );
 }
