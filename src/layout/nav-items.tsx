@@ -64,6 +64,7 @@ export const ADMIN_NAV: NavItem[] = [
   { icon: <CheckLineIcon />, name: "Module reviews", path: "/module-reviews" },
   { icon: <ShootingStarIcon />, name: "Capstone", path: "/capstone" },
   { icon: <CheckCircleIcon />, name: "Certificates", path: "/certificates" },
+  { icon: <ChatIcon />, name: "Forum", path: "/forum" },
 
   // System — operator / less-frequent surfaces. Analytics belongs
   // here because admins consult it weekly, not daily, like the
@@ -94,12 +95,14 @@ export const MENTOR_NAV: NavItem[] = [
   { icon: <GridIcon />, name: "Home", path: "/mentor" },
   { icon: <ShootingStarIcon />, name: "Capstones", path: "/mentor/queue" },
   { icon: <CheckCircleIcon />, name: "Grading", path: "/mentor/grading" },
+  { icon: <ChatIcon />, name: "Forum", path: "/forum" },
 ];
 
 export const FACULTY_NAV: NavItem[] = [
   { icon: <GridIcon />, name: "Home", path: "/faculty" },
   { icon: <BoxCubeIcon />, name: "My modules", path: "/faculty/modules" },
   { icon: <CheckCircleIcon />, name: "Grading", path: "/faculty/grading" },
+  { icon: <ChatIcon />, name: "Forum", path: "/forum" },
 ];
 
 const FELLOW_PATH_PREFIXES = [
