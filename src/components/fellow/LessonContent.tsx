@@ -55,6 +55,13 @@ export default function LessonContent({
           src={contentUrl}
           poster={posterUrl ?? undefined}
           controls
+          // `crossorigin="anonymous"` is required because the page
+          // sets `Cross-Origin-Embedder-Policy: require-corp` (for
+          // the Zoom Meeting SDK's SharedArrayBuffer) — without it,
+          // the browser refuses to fetch the cross-origin Spaces URL.
+          // Spaces' bucket CORS already allows GET from this origin,
+          // so the CORS path succeeds and playback works.
+          crossOrigin="anonymous"
           // `preload="metadata"` fetches duration + first frame only —
           // saves bandwidth for fellows who scroll past the lesson
           // without playing it. Range requests fill in the rest.
@@ -99,6 +106,11 @@ export default function LessonContent({
           width={1200}
           height={800}
           className="h-auto w-full"
+          // Same COEP `require-corp` rule that affects <video>: the
+          // page is cross-origin isolated for Zoom's SharedArrayBuffer,
+          // so cross-origin images need the CORS fetch path. Spaces
+          // CORS already permits GET from this origin.
+          crossOrigin="anonymous"
           // The image is on a third-party host (Spaces CDN). Next's
           // image optimisation is opt-in for remote URLs via
           // `images.remotePatterns`; we don't add the Spaces domain
