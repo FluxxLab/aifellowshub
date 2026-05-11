@@ -92,7 +92,7 @@ export const FELLOW_NAV: NavItem[] = [
 
 export const MENTOR_NAV: NavItem[] = [
   { icon: <GridIcon />, name: "Home", path: "/mentor" },
-  { icon: <ShootingStarIcon />, name: "Queue", path: "/mentor/queue" },
+  { icon: <ShootingStarIcon />, name: "Capstones", path: "/mentor/queue" },
   { icon: <CheckCircleIcon />, name: "Grading", path: "/mentor/grading" },
 ];
 
