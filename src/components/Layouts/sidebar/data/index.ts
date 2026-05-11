@@ -119,9 +119,10 @@ const MENTOR_NAV: NavSection[] = [
     label: "MENTOR",
     items: [
       { title: "Home", icon: GridIcon as SvgComponent, url: "/mentor", items: [] },
-      { title: "Queue", icon: ShootingStarIcon as SvgComponent, url: "/mentor/queue", items: [] },
-      { title: "Mentorship sessions", icon: ChatIcon as SvgComponent, url: "/mentor/requests", items: [] },
+      { title: "Capstones", icon: ShootingStarIcon as SvgComponent, url: "/mentor/queue", items: [] },
+      { title: "Mentorship sessions", icon: UsersRoundIcon as SvgComponent, url: "/mentor/requests", items: [] },
       { title: "Grading", icon: CheckCircleIcon as SvgComponent, url: "/mentor/grading", items: [] },
+      { title: "Forum", icon: ChatIcon as SvgComponent, url: "/forum", items: [] },
     ],
   },
 ];
@@ -134,6 +135,7 @@ const FACULTY_NAV: NavSection[] = [
       { title: "My modules", icon: BoxCubeIcon as SvgComponent, url: "/faculty/modules", items: [] },
       { title: "Sessions", icon: CalenderIcon as SvgComponent, url: "/faculty/sessions", items: [] },
       { title: "Grading", icon: CheckCircleIcon as SvgComponent, url: "/faculty/grading", items: [] },
+      { title: "Forum", icon: ChatIcon as SvgComponent, url: "/forum", items: [] },
     ],
   },
 ];
