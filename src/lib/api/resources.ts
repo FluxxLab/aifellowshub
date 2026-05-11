@@ -61,6 +61,8 @@ export type UpdateResourcePayload = {
   kind?: "pdf" | "link" | "video";
   description?: string;
   tags?: string[];
+  /** Move the resource to a different module (admin-only). */
+  moduleId?: string;
 };
 
 /**

@@ -165,16 +165,18 @@ export default function AddResourceModal({
         .map((t) => t.trim().toLowerCase())
         .filter(Boolean);
       if (isEditing && editing) {
-        // PATCH the existing row. Note: we don't allow moving a resource
-        // to a different module here — the backend's PATCH /resources/:id
-        // doesn't accept a moduleId field. Switching modules is rare;
-        // delete + recreate covers it for now.
+        // PATCH the existing row. `moduleId` is included so an admin
+        // can move a resource from one week to another in-place. The
+        // backend validates the destination module exists + the admin
+        // can edit its course; passing the SAME id is harmless (the
+        // service short-circuits when nothing changed).
         await updateResource(editing.id, {
           title: title.trim(),
           url: normaliseUrl(url),
           kind: toBackendKind(type),
           description: description.trim(),
           tags,
+          moduleId,
         });
         toast.success(
           "Resource updated",
