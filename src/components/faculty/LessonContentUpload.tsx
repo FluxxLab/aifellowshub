@@ -89,20 +89,9 @@ export default function LessonContentUpload({
 
   const removeContent = async () => {
     try {
-      // Detach by PATCHing nulls. The backend deletes the Space
-      // object lazily (or via a cleanup job) — we don't block the UI.
       const res = await fetch(
         `/api/lessons/${encodeURIComponent(lesson.id)}/content`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            contentUrl: null,
-            contentMimeType: null,
-            contentBytes: null,
-          }),
-        },
+        { method: "DELETE", credentials: "include" },
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as { lesson: FacultyLesson };
