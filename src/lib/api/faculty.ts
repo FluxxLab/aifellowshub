@@ -11,6 +11,7 @@
 import { apiFetch } from "./client";
 import {
   uploadFileToSignedUrl,
+  uploadFileViaMultipartPost,
   type SignedUploadResponse,
 } from "./uploads";
 
@@ -515,9 +516,23 @@ export async function attachLessonContent(
 }
 
 /**
- * Convenience wrapper — mints the URL, uploads the bytes, attaches
- * the result. The single function the lesson editor UI actually
- * calls; pieces are exported separately for tests / advanced use.
+ * Convenience wrapper — uploads a lesson's content file and returns
+ * the updated lesson. The single function the lesson editor UI calls.
+ *
+ * Routes the bytes browser → backend → Spaces (server-side stream)
+ * instead of browser → Spaces (presigned PUT). Background:
+ *   - Presigned-PUT direct path was flaky across browsers + bucket
+ *     CORS + AWS SDK flexible-checksum middleware. Diagnosing each
+ *     failure mode burned hours per incident.
+ *   - BFF-proxied (browser → Vercel BFF → backend) is capped at
+ *     Vercel's 4.5 MB body limit, which rules out most lesson videos.
+ *   - Backend-direct sidesteps both: DO App Platform accepts the
+ *     500 MB cap, CORS is configured for the frontend origin, and
+ *     auth uses the same JWT the rest of the API does.
+ *
+ * The token is fetched fresh per upload (short-lived exposure to JS
+ * via `/api/auth/upload-token`) so the session cookie stays
+ * httpOnly for every other interaction.
  */
 export async function uploadLessonContent(
   lessonId: string,
@@ -534,17 +549,32 @@ export async function uploadLessonContent(
       `File is too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Max is 500 MB.`,
     );
   }
-  const signed = await getLessonUploadUrl(lessonId, {
-    mimeType: file.type,
-    bytes: file.size,
-    filename: file.name,
+
+  const tokenRes = await fetch("/api/auth/upload-token", {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
   });
-  await uploadFileToSignedUrl(signed.uploadUrl, file, options);
-  return attachLessonContent(lessonId, {
-    contentUrl: signed.publicUrl,
-    contentMimeType: file.type,
-    contentBytes: file.size,
-  });
+  if (!tokenRes.ok) {
+    const data = (await tokenRes.json().catch(() => ({}))) as {
+      message?: string;
+    };
+    throw new Error(
+      data.message ?? "Couldn't authorise upload. Sign in and try again.",
+    );
+  }
+  const { token, backendOrigin } = (await tokenRes.json()) as {
+    token: string;
+    backendOrigin: string;
+  };
+
+  const result = await uploadFileViaMultipartPost<{ lesson: BackendLesson }>(
+    `${backendOrigin}/api/lessons/${encodeURIComponent(lessonId)}/upload-direct`,
+    file,
+    { token, onProgress: options.onProgress },
+  );
+
+  return backendToFacultyLesson(result.lesson);
 }
 
 export async function reorderLesson(

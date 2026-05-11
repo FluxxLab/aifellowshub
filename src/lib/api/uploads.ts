@@ -41,6 +41,66 @@ export function uploadFileToSignedUrl(
   });
 }
 
+/**
+ * POST a File as multipart/form-data straight to the backend (cross-
+ * origin from the browser). Returns the parsed JSON response. Used
+ * by the lesson-content upload flow as a fallback when direct-to-
+ * Spaces is blocked / mis-CORS'd — the backend then streams the
+ * bytes onward to Spaces server-side.
+ *
+ * Same XHR-with-progress wiring as `uploadFileToSignedUrl`; the
+ * caller supplies the absolute backend URL, the auth token, and the
+ * form field name (defaults to `"file"` which matches the NestJS
+ * `FileInterceptor("file")` config).
+ */
+export function uploadFileViaMultipartPost<T = unknown>(
+  url: string,
+  file: File,
+  options: {
+    token: string;
+    fieldName?: string;
+    onProgress?: (loaded: number, total: number) => void;
+  },
+): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", url, true);
+    xhr.setRequestHeader("Authorization", `Bearer ${options.token}`);
+    // Deliberately omit `Content-Type` — the browser sets it to
+    // `multipart/form-data; boundary=...` for us, and overriding
+    // strips the boundary, breaking multer's parser.
+    if (options.onProgress) {
+      xhr.upload.addEventListener("progress", (e) => {
+        if (e.lengthComputable) options.onProgress?.(e.loaded, e.total);
+      });
+    }
+    xhr.addEventListener("load", () => {
+      let data: unknown = null;
+      try {
+        data = xhr.responseText ? JSON.parse(xhr.responseText) : null;
+      } catch {
+        /* non-JSON; surface the raw status below */
+      }
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(data as T);
+      } else {
+        const message =
+          (data as { message?: string } | null)?.message ??
+          `Upload failed with status ${xhr.status}`;
+        reject(new Error(message));
+      }
+    });
+    xhr.addEventListener("error", () =>
+      reject(new Error("Upload network error")),
+    );
+    xhr.addEventListener("abort", () => reject(new Error("Upload aborted")));
+
+    const form = new FormData();
+    form.append(options.fieldName ?? "file", file, file.name);
+    xhr.send(form);
+  });
+}
+
 /** Standardised shape backend signature endpoints return. */
 export type SignedUploadResponse = {
   /** Presigned PUT URL the browser uploads bytes to. Expires shortly. */

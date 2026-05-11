@@ -44,7 +44,16 @@ const nextConfig = {
    */
   async headers() {
     const backendOrigin = (() => {
-      const url = process.env.BACKEND_API_URL ?? "http://localhost:4000/api";
+      // `NEXT_PUBLIC_BACKEND_URL` is the browser-visible backend host
+      // (used by lesson-upload direct-POST). `BACKEND_API_URL` is the
+      // server-only equivalent the BFF uses for outbound fetches —
+      // both usually point at the same origin, but in dev one might
+      // be the docker hostname and the other localhost. Fall back to
+      // either so CSP doesn't block the browser-direct POST.
+      const url =
+        process.env.NEXT_PUBLIC_BACKEND_URL ??
+        process.env.BACKEND_API_URL ??
+        "http://localhost:4000/api";
       try {
         return new URL(url).origin;
       } catch {
