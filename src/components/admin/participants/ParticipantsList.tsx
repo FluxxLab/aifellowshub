@@ -598,7 +598,7 @@ function FacultyTable({ faculty }: { faculty: Faculty[] }) {
  <TableHeader className="border-b border-gray-100">
  <TableRow>
  <HeaderCell>Faculty</HeaderCell>
- <HeaderCell>Expertise</HeaderCell>
+ <HeaderCell>Sector</HeaderCell>
  <HeaderCell>Modules owned</HeaderCell>
  <HeaderCell>In draft</HeaderCell>
  <HeaderCell>Status</HeaderCell>
@@ -738,7 +738,7 @@ function MentorsTable({ mentors }: { mentors: Mentor[] }) {
  <TableHeader className="border-b border-gray-100">
  <TableRow>
  <HeaderCell>Mentor</HeaderCell>
- <HeaderCell>Expertise</HeaderCell>
+ <HeaderCell>Sector</HeaderCell>
  <HeaderCell>Fellows</HeaderCell>
  <HeaderCell>Pending reviews</HeaderCell>
  <HeaderCell>Status</HeaderCell>

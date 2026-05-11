@@ -169,7 +169,7 @@ export default function InviteModal({ isOpen, onClose }: InviteModalProps) {
 
  {(role ==="mentor"|| role ==="faculty") && (
  <div>
- <Label>Expertise</Label>
+ <Label>Sector</Label>
  <div className="flex flex-wrap gap-2">
  {ALL_SECTORS.map((s) => (
  <button
