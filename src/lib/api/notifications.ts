@@ -14,7 +14,12 @@ export type LmsNotificationKind =
   | "attempt_submitted"
   | "attempt_graded"
   | "capstone_submitted"
-  | "capstone_reviewed";
+  | "capstone_reviewed"
+  | "session_scheduled"
+  | "session_cancelled"
+  | "session_reminder"
+  | "mentorship_booking_confirmed"
+  | "module_feedback_prompt";
 
 export type LmsNotification = {
   id: string;
@@ -80,13 +85,19 @@ export type AppNotification = {
 function mapKindToType(kind: LmsNotificationKind): NotificationType {
   switch (kind) {
     case "attempt_submitted":
-      return "assessment-pending";
     case "attempt_graded":
       return "assessment-pending";
     case "capstone_submitted":
-      return "capstone-submitted";
     case "capstone_reviewed":
       return "capstone-submitted";
+    case "session_scheduled":
+    case "session_cancelled":
+    case "session_reminder":
+      return "session-reminder";
+    case "mentorship_booking_confirmed":
+      return "application-received";
+    case "module_feedback_prompt":
+      return "assessment-pending";
   }
 }
 
