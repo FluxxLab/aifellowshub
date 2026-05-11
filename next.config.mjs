@@ -58,10 +58,16 @@ const nextConfig = {
       `style-src 'self' 'unsafe-inline' https://source.zoom.us`,
       `img-src 'self' data: blob: https:`,
       `font-src 'self' data:`,
-      `connect-src 'self' ${backendOrigin} https://challenges.cloudflare.com https://source.zoom.us https://zoom.us https://*.zoom.us wss://*.zoom.us https://*.cloudfront.net`,
+      // `*.digitaloceanspaces.com` is added so the lesson-uploads flow
+      // (presigned PUT direct from the browser to DO Spaces) and the
+      // playback flow (signed GET on recordings) aren't blocked by CSP
+      // before the browser even attempts the CORS preflight. Without
+      // this entry the upload XHR fires as `(blocked)` with 0 ms even
+      // though the bucket CORS allows the origin.
+      `connect-src 'self' ${backendOrigin} https://*.digitaloceanspaces.com https://challenges.cloudflare.com https://source.zoom.us https://zoom.us https://*.zoom.us wss://*.zoom.us https://*.cloudfront.net`,
       `frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://challenges.cloudflare.com https://zoom.us https://*.zoom.us`,
       `worker-src 'self' blob:`,
-      `media-src 'self' blob:`,
+      `media-src 'self' blob: https://*.digitaloceanspaces.com`,
       `object-src 'none'`,
       `base-uri 'self'`,
       `form-action 'self'`,
