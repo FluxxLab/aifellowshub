@@ -95,3 +95,18 @@ export async function getAssessment(
 ): Promise<AssessmentDetail | null> {
   return null;
 }
+
+/**
+ * Delete an assessment. Cascades questions + attempts on the backend.
+ * Throws on non-2xx so callers can toast a real error.
+ */
+export async function deleteAssessment(id: string): Promise<void> {
+  const res = await fetch(`/api/assessments/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+  if (!res.ok && res.status !== 204) {
+    const data = (await res.json().catch(() => ({}))) as { message?: string };
+    throw new Error(data.message ?? `Delete failed with status ${res.status}`);
+  }
+}

@@ -8,3 +8,11 @@ export async function GET(
   const { id } = params;
   return proxy(req, `/assessments/${encodeURIComponent(id)}`);
 }
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } },
+) {
+  const { id } = params;
+  return proxy(req, `/assessments/${encodeURIComponent(id)}`);
+}

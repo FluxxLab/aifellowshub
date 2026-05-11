@@ -1,5 +1,6 @@
 "use client";
 import React, { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
  Table,
@@ -15,9 +16,11 @@ import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
+import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { MoreDotIcon, PlusIcon } from "@/icons";
 import { cn } from "@/lib/utils";
-import type { Assessment } from "@/lib/api/assessments";
+import { toast } from "@/lib/toast";
+import { deleteAssessment, type Assessment } from "@/lib/api/assessments";
 import CreateAssessmentModal from "./CreateAssessmentModal";
 
 const FILTERS = [
@@ -346,13 +349,45 @@ function PassRate({
 
 function RowActions({ assessment }: { assessment: Assessment }) {
  const [open, setOpen] = useState(false);
- const actions: { label: string; href?: string; destructive?: boolean }[] = [
- { label:"Open", href:`/assessments/${assessment.id}`},
- { label:"View submissions", href:`/assessments/${assessment.id}#submissions`},
- { label: assessment.isPublished ?"Unpublish":"Publish"},
- { label:"Duplicate"},
- { label:"Delete", destructive: true },
+ const [deleting, setDeleting] = useState(false);
+ const router = useRouter();
+ const { confirm, dialog } = useConfirm();
+
+ // Publish/Unpublish + Duplicate aren't wired to the backend yet; hidden
+ // until the corresponding endpoints exist rather than rendered as no-ops
+ // that look broken when clicked.
+ type Action =
+ | { kind: "link"; label: string; href: string }
+ | { kind: "delete"; label: string };
+ const actions: Action[] = [
+ { kind: "link", label: "Open", href: `/assessments/${assessment.id}` },
+ {
+ kind: "link",
+ label: "View submissions",
+ href: `/assessments/${assessment.id}#submissions`,
+ },
+ { kind: "delete", label: "Delete" },
  ];
+
+ const handleDelete = async () => {
+ const ok = await confirm({
+ title: "Delete assessment?",
+ message: `"${assessment.title}" and all of its questions and submissions will be permanently removed. This can't be undone.`,
+ confirmLabel: "Delete",
+ tone: "danger",
+ });
+ if (!ok) return;
+ setDeleting(true);
+ try {
+ await deleteAssessment(assessment.id);
+ toast.success("Assessment deleted");
+ router.refresh();
+ } catch (err) {
+ toast.errorFromException("Couldn't delete assessment", err);
+ } finally {
+ setDeleting(false);
+ }
+ };
 
  return (
  <div className="relative inline-block text-left">
@@ -369,22 +404,31 @@ function RowActions({ assessment }: { assessment: Assessment }) {
  portal
  className="w-48 p-1">
  <ul role="menu" className="flex flex-col gap-0.5">
- {actions.map((a, i) => (
+ {actions.map((a, i) => {
+ const destructive = a.kind === "delete";
+ return (
  <li key={i} role="none">
  <DropdownItem
- tag={a.href ?"a":"button"}
- href={a.href}
- onItemClick={() => setOpen(false)}
+ tag={a.kind === "link" ? "a" : "button"}
+ href={a.kind === "link" ? a.href : undefined}
+ onItemClick={() => {
+ setOpen(false);
+ if (a.kind === "delete" && !deleting) void handleDelete();
+ }}
  baseClassName="block w-full rounded-md text-left px-3 py-2 text-sm font-medium transition-colors" className={
- a.destructive
- ?"text-error-600 hover:bg-error-50":"text-gray-700 hover:bg-gray-100 hover:text-gray-900"}
+ destructive
+ ? "text-error-600 hover:bg-error-50"
+ : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+ }
  >
- {a.label}
+ {a.kind === "delete" && deleting ? "Deleting…" : a.label}
  </DropdownItem>
  </li>
- ))}
+ );
+ })}
  </ul>
  </Dropdown>
+ {dialog}
  </div>
  );
 }
