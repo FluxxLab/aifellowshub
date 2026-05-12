@@ -33,7 +33,7 @@ export default function CertificatePreview({
  return (
  <div className="relative aspect-[1.414/1] w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-theme-md">
  <Image
- src="/images/certificate-template.png"
+ src="/images/Certificate%20lms.png"
  alt=""
  fill
  priority
@@ -44,7 +44,7 @@ export default function CertificatePreview({
  {/* Fellow name — sits above the orange rule on the template */}
  <div
  className="absolute flex justify-center"
- style={{ top: "55%", left: "20%", right: "8%" }}
+ style={{ top: "53%", left: "20%", right: "8%" }}
  >
  <p
  className="font-signature text-fellowship-navy leading-none"
@@ -55,7 +55,7 @@ export default function CertificatePreview({
  </div>
 
  {/* Signature — above "Authorized Signature" label on the template */}
- <div className="absolute" style={{ bottom: "10%", left: "32%" }}>
+ <div className="absolute" style={{ bottom: "13%", left: "32%" }}>
  {template.signatoryName && (
  <p
  className="font-signature text-fellowship-navy leading-none"
@@ -67,7 +67,7 @@ export default function CertificatePreview({
  </div>
 
  {/* Date — above "Date of Completion" label on the template */}
- <div className="absolute text-right" style={{ bottom: "10%", right: "8%" }}>
+ <div className="absolute text-right" style={{ bottom: "13%", right: "10%" }}>
  {issuedDate && (
  <p
  className="text-fellowship-navy leading-none"

@@ -288,7 +288,7 @@ export function CertificateCanvas({
       aria-label={`${programmeName} certificate for ${fellowName}`}
     >
       <Image
-        src="/images/certificate-template.png"
+        src="/images/Certificate%20lms.png"
         alt=""
         fill
         priority
@@ -296,10 +296,10 @@ export function CertificateCanvas({
         className="object-cover"
       />
 
-      {/* Fellow name — sits above the orange rule on the template */}
+      {/* Fellow name — sits above the orange rule on the template (~60% from top) */}
       <div
         className="absolute flex justify-center"
-        style={{ top: "55%", left: "20%", right: "8%" }}
+        style={{ top: "53%", left: "20%", right: "8%" }}
       >
         <p
           className="font-signature text-fellowship-navy leading-none"
@@ -312,7 +312,7 @@ export function CertificateCanvas({
       {/* Signature — above "Authorized Signature" label on the template */}
       <div
         className="absolute"
-        style={{ bottom: "10%", left: "32%" }}
+        style={{ bottom: "13%", left: "32%" }}
       >
         {primarySig && (
           <p
@@ -327,7 +327,7 @@ export function CertificateCanvas({
       {/* Date — above "Date of Completion" label on the template */}
       <div
         className="absolute text-right"
-        style={{ bottom: "10%", right: "8%" }}
+        style={{ bottom: "13%", right: "10%" }}
       >
         {completedAtLabel && (
           <p
