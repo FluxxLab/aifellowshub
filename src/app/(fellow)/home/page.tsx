@@ -7,6 +7,7 @@ import FirstLoginTour from "@/components/fellow/FirstLoginTour";
 import { ChevronRightIcon } from "@/icons";
 import { getCurrentUser } from "@/lib/auth/getCurrentUser";
 import { getFellowHomeServer } from "@/lib/api/fellow-home.server";
+import { formatCohortDate, formatCohortTime } from "@/lib/datetime";
 
 export const metadata: Metadata = {
   title: "Home · AI Fellows LMS",
@@ -21,16 +22,15 @@ export default async function FellowHomePage() {
   ]);
   const firstName = user.fullName.split(" ")[0];
   const { cohort, metrics, currentModule, nextSession, recentActivity } = home;
-  const sessionStart = nextSession ? new Date(nextSession.startsAt) : null;
-  const sessionDate = sessionStart?.toLocaleDateString(undefined, {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  });
-  const sessionTime = sessionStart?.toLocaleTimeString(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  // Sessions are scheduled in Lagos time (UTC+1) — format with the
+  // cohort timezone so the dashboard time matches what fellows
+  // expect, regardless of where the server-side render runs.
+  const sessionDate = nextSession
+    ? formatCohortDate(nextSession.startsAt)
+    : undefined;
+  const sessionTime = nextSession
+    ? formatCohortTime(nextSession.startsAt)
+    : undefined;
 
   return (
     <div className="flex flex-col gap-4 md:gap-6">
