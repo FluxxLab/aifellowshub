@@ -413,103 +413,116 @@ export function CertificateCanvas({
  *   3. Ribbon tails as a colored div with clip-path V-cut at bottom
  *   4. Rosette as inline SVG with natural square aspect ratio
  */
+// Bigger tile (80px) with the flower centred and ample padding so
+// adjacent tiles don't touch and form cross intersections.
 const FLORAL_TILE = encodeURIComponent(
-  `<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60">` +
-    `<rect width="60" height="60" fill="#eef2ff"/>` +
-    `<ellipse cx="30" cy="14" rx="8" ry="13" fill="#3b4eb0"/>` +
-    `<ellipse cx="30" cy="46" rx="8" ry="13" fill="#3b4eb0"/>` +
-    `<ellipse cx="14" cy="30" rx="13" ry="8" fill="#3b4eb0"/>` +
-    `<ellipse cx="46" cy="30" rx="13" ry="8" fill="#3b4eb0"/>` +
-    `<rect x="22" y="22" width="16" height="16" fill="#1e3a8a" transform="rotate(45 30 30)"/>` +
+  `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">` +
+    `<rect width="80" height="80" fill="#eef2ff"/>` +
+    `<ellipse cx="40" cy="20" rx="7" ry="12" fill="#3b4eb0"/>` +
+    `<ellipse cx="40" cy="60" rx="7" ry="12" fill="#3b4eb0"/>` +
+    `<ellipse cx="20" cy="40" rx="12" ry="7" fill="#3b4eb0"/>` +
+    `<ellipse cx="60" cy="40" rx="12" ry="7" fill="#3b4eb0"/>` +
+    `<rect x="32" y="32" width="16" height="16" fill="#1e3a8a" transform="rotate(45 40 40)"/>` +
     `</svg>`,
 );
 
-const TEETH_TILE = encodeURIComponent(
-  `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="40" viewBox="0 0 30 40">` +
-    `<rect width="30" height="40" fill="#1e3a8a"/>` +
-    `<polygon points="0,0 30,0 15,20" fill="#ffffff"/>` +
-    `<polygon points="0,40 30,40 15,20" fill="#ffffff"/>` +
+// Single inward-pointing triangle per tile. Tiles stack vertically;
+// the navy gap between triangles forms the zigzag.
+const TEETH_TILE_LEFT = encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="22" viewBox="0 0 20 22">` +
+    `<rect width="20" height="22" fill="#1e3a8a"/>` +
+    `<polygon points="0,2 20,11 0,20" fill="#ffffff"/>` +
+    `</svg>`,
+);
+
+const TEETH_TILE_RIGHT = encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="22" viewBox="0 0 20 22">` +
+    `<rect width="20" height="22" fill="#1e3a8a"/>` +
+    `<polygon points="20,2 0,11 20,20" fill="#ffffff"/>` +
     `</svg>`,
 );
 
 function CertLeftBorder() {
   return (
     <div className="absolute inset-y-0 left-0 w-[18%] overflow-hidden">
-      {/* Floral pattern column */}
+      {/* Floral pattern column — wider section, tiles spaced so they don't touch */}
       <div
-        className="absolute inset-y-0 left-0 w-[67%]"
+        className="absolute inset-y-0 left-0 w-[72%]"
         style={{
           backgroundImage: `url("data:image/svg+xml;utf8,${FLORAL_TILE}")`,
-          backgroundSize: "60px 60px",
+          backgroundSize: "80px 80px",
           backgroundRepeat: "repeat",
         }}
       />
-      {/* Triangle teeth strip */}
+      {/* Triangle teeth strip — single triangles pointing inward (toward content) */}
       <div
-        className="absolute inset-y-0 left-[67%] w-[33%]"
+        className="absolute inset-y-0 left-[72%] w-[28%]"
         style={{
-          backgroundImage: `url("data:image/svg+xml;utf8,${TEETH_TILE}")`,
-          backgroundSize: "24px 32px",
-          backgroundRepeat: "repeat",
+          backgroundImage: `url("data:image/svg+xml;utf8,${TEETH_TILE_RIGHT}")`,
+          backgroundSize: "100% 22px",
+          backgroundRepeat: "repeat-y",
         }}
       />
-      {/* Ribbon tails — drapes from the rosette down to the bottom edge */}
+      {/* Ribbon tails — wider tail, deeper V-cut, anchored under the rosette */}
       <div
         className="absolute"
         style={{
-          left: "32%",
-          top: "44%",
+          left: "28%",
+          top: "52%",
           bottom: 0,
-          width: "26%",
+          width: "30%",
           backgroundColor: "#1e3a8a",
           clipPath:
-            "polygon(0% 0%, 100% 0%, 100% calc(100% - 24px), 50% 100%, 0% calc(100% - 24px))",
+            "polygon(0% 0%, 100% 0%, 100% calc(100% - 32px), 50% 100%, 0% calc(100% - 32px))",
         }}
       />
-      {/* Inner ribbon highlight for depth */}
+      {/* Centre highlight stripe on the ribbon */}
       <div
         className="absolute"
         style={{
-          left: "43%",
-          top: "44%",
-          bottom: "4%",
-          width: "4%",
+          left: "42%",
+          top: "52%",
+          bottom: "5%",
+          width: "2%",
           backgroundColor: "#3b4eb0",
         }}
       />
-      {/* Rosette — inline SVG, natural square aspect ratio so no distortion */}
+      {/* Rosette — bigger, anchored above the ribbon */}
       <svg
         aria-hidden
         viewBox="0 0 120 120"
         className="absolute"
         style={{
-          left: "12%",
-          top: "36%",
-          width: "70%",
+          left: "8%",
+          top: "38%",
+          width: "75%",
           height: "auto",
+          filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.15))",
         }}
       >
-        {/* Outer petals — 16 static circles, no dynamic generation */}
-        <circle cx="60" cy="12" r="6" fill="#f5a623" />
-        <circle cx="78.4" cy="15.6" r="6" fill="#f5a623" />
-        <circle cx="93.9" cy="26.1" r="6" fill="#f5a623" />
-        <circle cx="104.4" cy="41.6" r="6" fill="#f5a623" />
-        <circle cx="108" cy="60" r="6" fill="#f5a623" />
-        <circle cx="104.4" cy="78.4" r="6" fill="#f5a623" />
-        <circle cx="93.9" cy="93.9" r="6" fill="#f5a623" />
-        <circle cx="78.4" cy="104.4" r="6" fill="#f5a623" />
-        <circle cx="60" cy="108" r="6" fill="#f5a623" />
-        <circle cx="41.6" cy="104.4" r="6" fill="#f5a623" />
-        <circle cx="26.1" cy="93.9" r="6" fill="#f5a623" />
-        <circle cx="15.6" cy="78.4" r="6" fill="#f5a623" />
-        <circle cx="12" cy="60" r="6" fill="#f5a623" />
-        <circle cx="15.6" cy="41.6" r="6" fill="#f5a623" />
-        <circle cx="26.1" cy="26.1" r="6" fill="#f5a623" />
-        <circle cx="41.6" cy="15.6" r="6" fill="#f5a623" />
+        {/* Outer petals — rounded triangles for sunburst look */}
+        <g fill="#f5a623">
+          <path d="M60,0 L66,18 L54,18 Z" />
+          <path d="M82.3,5.4 L82.7,24.2 L71.2,21.1 Z" />
+          <path d="M102.4,17.6 L96.0,35.2 L86.5,28.2 Z" />
+          <path d="M114.6,37.7 L102.9,52.4 L96.0,41.0 Z" />
+          <path d="M120,60 L102,66 L102,54 Z" />
+          <path d="M114.6,82.3 L96.0,79.0 L102.9,67.6 Z" />
+          <path d="M102.4,102.4 L86.5,91.8 L96.0,84.8 Z" />
+          <path d="M82.3,114.6 L71.2,98.9 L82.7,95.8 Z" />
+          <path d="M60,120 L54,102 L66,102 Z" />
+          <path d="M37.7,114.6 L37.3,95.8 L48.8,98.9 Z" />
+          <path d="M17.6,102.4 L24.0,84.8 L33.5,91.8 Z" />
+          <path d="M5.4,82.3 L17.1,67.6 L24.0,79.0 Z" />
+          <path d="M0,60 L18,54 L18,66 Z" />
+          <path d="M5.4,37.7 L24.0,41.0 L17.1,52.4 Z" />
+          <path d="M17.6,17.6 L33.5,28.2 L24.0,35.2 Z" />
+          <path d="M37.7,5.4 L48.8,21.1 L37.3,24.2 Z" />
+        </g>
         {/* Rosette body */}
-        <circle cx="60" cy="60" r="46" fill="#f5a623" />
-        <circle cx="60" cy="60" r="30" fill="#fbbf24" />
-        <circle cx="60" cy="60" r="25" fill="none" stroke="#f5a623" strokeWidth="2" />
+        <circle cx="60" cy="60" r="42" fill="#f5a623" />
+        <circle cx="60" cy="60" r="32" fill="#fbbf24" />
+        <circle cx="60" cy="60" r="26" fill="none" stroke="#f5a623" strokeWidth="3" />
       </svg>
     </div>
   );
@@ -520,9 +533,9 @@ function CertRightBorder() {
     <div
       className="absolute inset-y-0 right-0 w-[3%]"
       style={{
-        backgroundImage: `url("data:image/svg+xml;utf8,${TEETH_TILE}")`,
-        backgroundSize: "100% 32px",
-        backgroundRepeat: "repeat",
+        backgroundImage: `url("data:image/svg+xml;utf8,${TEETH_TILE_LEFT}")`,
+        backgroundSize: "100% 22px",
+        backgroundRepeat: "repeat-y",
       }}
     />
   );
