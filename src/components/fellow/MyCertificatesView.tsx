@@ -143,7 +143,17 @@ function IssuedView({ certificate: c }: { certificate: Certificate }) {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="outline">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                // Opens a print-only render of this certificate in a
+                // new tab; that page auto-triggers window.print() so
+                // the browser's "Save as PDF" sheet appears. No new
+                // PDF dependency required.
+                window.open(`/certificates/${c.id}/print`, "_blank");
+              }}
+            >
               <DownloadIcon className="h-4 w-4" />
               Download PDF
             </Button>
