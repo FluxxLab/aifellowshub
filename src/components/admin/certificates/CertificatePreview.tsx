@@ -37,6 +37,8 @@ export default function CertificatePreview({
  alt=""
  fill
  priority
+ unoptimized
+ quality={100}
  sizes="(max-width: 1024px) 100vw, 1024px"
  className="object-cover"
  />

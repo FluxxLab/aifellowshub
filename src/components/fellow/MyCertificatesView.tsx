@@ -142,25 +142,26 @@ function IssuedView({ certificate: c }: { certificate: Certificate }) {
         import("jspdf"),
       ]);
       const canvas = await html2canvas(canvasRef.current, {
-        // Scale up for a crisp PDF — html2canvas renders at the DOM
-        // size by default; 2x gives print-quality output without
-        // blowing memory on the device.
-        scale: 2,
+        // 3x scale renders at print quality (~300 DPI when the on-
+        // screen canvas is ~800px wide). Higher than 3x costs memory
+        // without visibly improving the result on most devices.
+        scale: 3,
         backgroundColor: "#ffffff",
         useCORS: true,
         logging: false,
       });
       // A4 landscape: 297mm × 210mm. The canvas aspect ratio is the
       // same (1.414:1), so the image fills the page exactly with no
-      // letterboxing.
+      // letterboxing. PNG keeps the decorative detail lossless — JPEG
+      // smudged the rosette petals and the woven floral border.
       const pdf = new jsPDF({
         orientation: "landscape",
         unit: "mm",
         format: "a4",
         compress: true,
       });
-      const imgData = canvas.toDataURL("image/jpeg", 0.92);
-      pdf.addImage(imgData, "JPEG", 0, 0, 297, 210);
+      const imgData = canvas.toDataURL("image/png");
+      pdf.addImage(imgData, "PNG", 0, 0, 297, 210);
       pdf.save(`${c.fellowName.replace(/\s+/g, "_")}_Certificate_${c.id}.pdf`);
     } catch (err) {
       toast.errorFromException("Couldn't generate PDF", err);
@@ -292,6 +293,12 @@ export function CertificateCanvas({
         alt=""
         fill
         priority
+        // Bypass Next's WebP-resize optimisation so we serve the
+        // original PNG bytes. The certificate has fine decorative
+        // detail (rosette petals, woven floral motif) that softens
+        // badly under transcoding.
+        unoptimized
+        quality={100}
         sizes="(max-width: 1024px) 100vw, 1024px"
         className="object-cover"
       />
