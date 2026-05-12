@@ -253,22 +253,22 @@ function IssuedView({ certificate: c }: { certificate: Certificate }) {
  * PDF generation pipeline so what the fellow sees == what they download.
  */
 /**
- * Fellowship certificate canvas — matches the brand-approved mockup:
- * patterned left/right blue borders, yellow rosette on the left,
- * Luminate wordmark + PIC×AHFID lockup at the top, "Certificate OF
- * COMPLETION" heading, fellow name above an amber rule, body text,
- * and a dual signature/date footer.
+ * Fellowship certificate canvas.
  *
- * Shared between the fellow's own page (`isPreview=true` overlays a
- * watermark) and the public verify page. The admin template-editor
- * uses a parallel component (`CertificatePreview`) with the same
- * visual language but template-driven copy.
+ * Renders the brand-approved template image full-bleed and overlays
+ * the variable fields (fellow name, signature, date) at calibrated
+ * absolute positions. All decorative elements — borders, rosette,
+ * logos, fixed copy ("Certificate of Completion", body paragraph,
+ * field labels) — are baked into the template PNG.
+ *
+ * Template asset lives at `/public/images/certificate-template.png`.
+ * If you change the template, re-calibrate the overlay positions
+ * (top/left percentages) so the name, signature, and date land on
+ * their respective lines.
  */
 export function CertificateCanvas({
   fellowName,
   programmeName,
-  cohortName,
-  capstoneTitle,
   completedAtLabel,
   signatories,
   isPreview,
@@ -287,99 +287,56 @@ export function CertificateCanvas({
       className="relative aspect-[1.414/1] w-full overflow-hidden rounded-2xl bg-white shadow-theme-sm ring-1 ring-fellowship-navy/10"
       aria-label={`${programmeName} certificate for ${fellowName}`}
     >
-      <CertLeftBorder />
-      <CertRightBorder />
+      <Image
+        src="/images/certificate-template.png"
+        alt=""
+        fill
+        priority
+        sizes="(max-width: 1024px) 100vw, 1024px"
+        className="object-cover"
+      />
 
-      <div className="absolute inset-y-0 left-[18%] right-[5%] flex flex-col px-[3%] py-[5%]">
-        {/* Top: Luminate wordmark + PIC × AHFID lockup */}
-        <header className="flex items-start justify-between gap-6">
-          <Image
-            src="/images/luminatewhite.png"
-            alt="Luminate"
-            width={400}
-            height={120}
-            priority
-            className="h-[clamp(1.5rem,3.5vw,2.75rem)] w-auto object-contain"
-          />
-          <Image
-            src="/images/white-logo.png"
-            alt="Policy Innovation Centre × Africa Hub for Innovation & Development"
-            width={600}
-            height={180}
-            priority
-            className="h-[clamp(2rem,4.5vw,3.5rem)] w-auto object-contain"
-          />
-        </header>
-
-        {/* Heading */}
-        <div className="mt-[4%] text-center">
-          <h1 className="font-extrabold text-fellowship-navy tracking-tight leading-[0.95] text-[clamp(2rem,7vw,5rem)]">
-            Certificate
-          </h1>
-          <p className="mt-1 font-bold text-fellowship-navy tracking-[0.18em] text-[clamp(0.75rem,1.6vw,1.1rem)]">
-            OF COMPLETION
-          </p>
-        </div>
-
-        {/* Lead-in + fellow name + divider */}
-        <div className="mt-[3%] flex flex-col items-center text-center">
-          <p className="text-fellowship-navy text-[clamp(0.75rem,1.4vw,1rem)]">
-            This is to certify that
-          </p>
-          <div className="mt-[3%] flex w-[80%] flex-col items-center">
-            <p
-              className="font-signature text-fellowship-navy text-[clamp(1.25rem,3.5vw,2.5rem)] leading-none"
-              style={{ minHeight: "1em" }}
-            >
-              {fellowName}
-            </p>
-            <div className="mt-[2%] h-[2px] w-full bg-warning-500/80" />
-          </div>
-        </div>
-
-        {/* Body paragraph. The cohort name often appears inside
-            programmeName already ("AI Ethics & Governance Fellowship ·
-            Cohort 2026") — only surface the parenthetical when it
-            adds new information. */}
-        <p className="mt-[3%] text-center text-fellowship-navy text-[clamp(0.75rem,1.4vw,1rem)] leading-relaxed">
-          has successfully participated in and completed the {programmeName}
-          {cohortName &&
-          !programmeName.toLowerCase().includes(cohortName.toLowerCase())
-            ? ` (${cohortName})`
-            : ""}
-          .
-          {capstoneTitle && (
-            <span className="mt-2 block text-[clamp(0.65rem,1.2vw,0.9rem)] italic text-gray-600">
-              Capstone: &ldquo;{capstoneTitle}&rdquo;
-            </span>
-          )}
+      {/* Fellow name — sits above the orange rule on the template */}
+      <div
+        className="absolute flex justify-center"
+        style={{ top: "55%", left: "20%", right: "8%" }}
+      >
+        <p
+          className="font-signature text-fellowship-navy leading-none"
+          style={{ fontSize: "clamp(1.5rem, 4vw, 3rem)" }}
+        >
+          {fellowName}
         </p>
+      </div>
 
-        {/* Footer: signature + date lines */}
-        <div className="mt-auto flex items-end justify-between gap-8 pt-[3%]">
-          <div className="flex flex-col items-start">
-            <div className="h-px w-[clamp(8rem,18vw,15rem)] bg-fellowship-navy/70" />
-            <span className="mt-1 text-fellowship-navy text-[clamp(0.65rem,1.1vw,0.85rem)]">
-              Authorized Signature
-            </span>
-            {primarySig && (
-              <span className="mt-0.5 text-[clamp(0.55rem,0.9vw,0.7rem)] text-gray-500">
-                {primarySig.name} · {primarySig.role}
-              </span>
-            )}
-          </div>
-          <div className="flex flex-col items-end">
-            <div className="h-px w-[clamp(8rem,18vw,15rem)] bg-fellowship-navy/70" />
-            <span className="mt-1 text-fellowship-navy text-[clamp(0.65rem,1.1vw,0.85rem)]">
-              Date of Completion
-            </span>
-            {completedAtLabel && (
-              <span className="mt-0.5 text-[clamp(0.55rem,0.9vw,0.7rem)] text-gray-500">
-                {completedAtLabel}
-              </span>
-            )}
-          </div>
-        </div>
+      {/* Signature — above "Authorized Signature" label on the template */}
+      <div
+        className="absolute"
+        style={{ bottom: "10%", left: "32%" }}
+      >
+        {primarySig && (
+          <p
+            className="font-signature text-fellowship-navy leading-none"
+            style={{ fontSize: "clamp(0.9rem, 1.8vw, 1.4rem)" }}
+          >
+            {primarySig.name}
+          </p>
+        )}
+      </div>
+
+      {/* Date — above "Date of Completion" label on the template */}
+      <div
+        className="absolute text-right"
+        style={{ bottom: "10%", right: "8%" }}
+      >
+        {completedAtLabel && (
+          <p
+            className="text-fellowship-navy leading-none"
+            style={{ fontSize: "clamp(0.75rem, 1.4vw, 1rem)" }}
+          >
+            {completedAtLabel}
+          </p>
+        )}
       </div>
 
       {isPreview && (
@@ -388,7 +345,7 @@ export function CertificateCanvas({
           className="pointer-events-none absolute inset-0 flex items-center justify-center"
         >
           <span
-            className="rotate-[-18deg] text-6xl font-bold tracking-widest text-fellowship-navy/[0.06] sm:text-8xl"
+            className="rotate-[-18deg] text-6xl font-bold tracking-widest text-fellowship-navy/8 sm:text-8xl"
             style={{ letterSpacing: "0.3em" }}
           >
             PREVIEW
@@ -400,144 +357,4 @@ export function CertificateCanvas({
 }
 
 /* ---------- Shared decorative pieces (mirrors CertificatePreview) ---------- */
-
-/**
- * Left decoration. Composed from three layers so each preserves its
- * natural aspect ratio regardless of how tall/narrow the column
- * becomes — earlier single-SVG approach with preserveAspectRatio="none"
- * stretched the tiles into ovals.
- *
- *   1. Tiled floral pattern as a CSS background-image (square tiles,
- *      always repeat at fixed pixel size)
- *   2. Tiled teeth strip the same way
- *   3. Ribbon tails as a colored div with clip-path V-cut at bottom
- *   4. Rosette as inline SVG with natural square aspect ratio
- */
-// Bigger tile (80px) with the flower centred and ample padding so
-// adjacent tiles don't touch and form cross intersections.
-const FLORAL_TILE = encodeURIComponent(
-  `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">` +
-    `<rect width="80" height="80" fill="#eef2ff"/>` +
-    `<ellipse cx="40" cy="20" rx="7" ry="12" fill="#3b4eb0"/>` +
-    `<ellipse cx="40" cy="60" rx="7" ry="12" fill="#3b4eb0"/>` +
-    `<ellipse cx="20" cy="40" rx="12" ry="7" fill="#3b4eb0"/>` +
-    `<ellipse cx="60" cy="40" rx="12" ry="7" fill="#3b4eb0"/>` +
-    `<rect x="32" y="32" width="16" height="16" fill="#1e3a8a" transform="rotate(45 40 40)"/>` +
-    `</svg>`,
-);
-
-// Single inward-pointing triangle per tile. Tiles stack vertically;
-// the navy gap between triangles forms the zigzag.
-const TEETH_TILE_LEFT = encodeURIComponent(
-  `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="22" viewBox="0 0 20 22">` +
-    `<rect width="20" height="22" fill="#1e3a8a"/>` +
-    `<polygon points="0,2 20,11 0,20" fill="#ffffff"/>` +
-    `</svg>`,
-);
-
-const TEETH_TILE_RIGHT = encodeURIComponent(
-  `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="22" viewBox="0 0 20 22">` +
-    `<rect width="20" height="22" fill="#1e3a8a"/>` +
-    `<polygon points="20,2 0,11 20,20" fill="#ffffff"/>` +
-    `</svg>`,
-);
-
-function CertLeftBorder() {
-  return (
-    <div className="absolute inset-y-0 left-0 w-[18%] overflow-hidden">
-      {/* Floral pattern column — wider section, tiles spaced so they don't touch */}
-      <div
-        className="absolute inset-y-0 left-0 w-[72%]"
-        style={{
-          backgroundImage: `url("data:image/svg+xml;utf8,${FLORAL_TILE}")`,
-          backgroundSize: "80px 80px",
-          backgroundRepeat: "repeat",
-        }}
-      />
-      {/* Triangle teeth strip — single triangles pointing inward (toward content) */}
-      <div
-        className="absolute inset-y-0 left-[72%] w-[28%]"
-        style={{
-          backgroundImage: `url("data:image/svg+xml;utf8,${TEETH_TILE_RIGHT}")`,
-          backgroundSize: "100% 22px",
-          backgroundRepeat: "repeat-y",
-        }}
-      />
-      {/* Ribbon tails — wider tail, deeper V-cut, anchored under the rosette */}
-      <div
-        className="absolute"
-        style={{
-          left: "28%",
-          top: "52%",
-          bottom: 0,
-          width: "30%",
-          backgroundColor: "#1e3a8a",
-          clipPath:
-            "polygon(0% 0%, 100% 0%, 100% calc(100% - 32px), 50% 100%, 0% calc(100% - 32px))",
-        }}
-      />
-      {/* Centre highlight stripe on the ribbon */}
-      <div
-        className="absolute"
-        style={{
-          left: "42%",
-          top: "52%",
-          bottom: "5%",
-          width: "2%",
-          backgroundColor: "#3b4eb0",
-        }}
-      />
-      {/* Rosette — bigger, anchored above the ribbon */}
-      <svg
-        aria-hidden
-        viewBox="0 0 120 120"
-        className="absolute"
-        style={{
-          left: "8%",
-          top: "38%",
-          width: "75%",
-          height: "auto",
-          filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.15))",
-        }}
-      >
-        {/* Outer petals — rounded triangles for sunburst look */}
-        <g fill="#f5a623">
-          <path d="M60,0 L66,18 L54,18 Z" />
-          <path d="M82.3,5.4 L82.7,24.2 L71.2,21.1 Z" />
-          <path d="M102.4,17.6 L96.0,35.2 L86.5,28.2 Z" />
-          <path d="M114.6,37.7 L102.9,52.4 L96.0,41.0 Z" />
-          <path d="M120,60 L102,66 L102,54 Z" />
-          <path d="M114.6,82.3 L96.0,79.0 L102.9,67.6 Z" />
-          <path d="M102.4,102.4 L86.5,91.8 L96.0,84.8 Z" />
-          <path d="M82.3,114.6 L71.2,98.9 L82.7,95.8 Z" />
-          <path d="M60,120 L54,102 L66,102 Z" />
-          <path d="M37.7,114.6 L37.3,95.8 L48.8,98.9 Z" />
-          <path d="M17.6,102.4 L24.0,84.8 L33.5,91.8 Z" />
-          <path d="M5.4,82.3 L17.1,67.6 L24.0,79.0 Z" />
-          <path d="M0,60 L18,54 L18,66 Z" />
-          <path d="M5.4,37.7 L24.0,41.0 L17.1,52.4 Z" />
-          <path d="M17.6,17.6 L33.5,28.2 L24.0,35.2 Z" />
-          <path d="M37.7,5.4 L48.8,21.1 L37.3,24.2 Z" />
-        </g>
-        {/* Rosette body */}
-        <circle cx="60" cy="60" r="42" fill="#f5a623" />
-        <circle cx="60" cy="60" r="32" fill="#fbbf24" />
-        <circle cx="60" cy="60" r="26" fill="none" stroke="#f5a623" strokeWidth="3" />
-      </svg>
-    </div>
-  );
-}
-
-function CertRightBorder() {
-  return (
-    <div
-      className="absolute inset-y-0 right-0 w-[3%]"
-      style={{
-        backgroundImage: `url("data:image/svg+xml;utf8,${TEETH_TILE_LEFT}")`,
-        backgroundSize: "100% 22px",
-        backgroundRepeat: "repeat-y",
-      }}
-    />
-  );
-}
 
