@@ -47,9 +47,17 @@ type SignatureResponse = {
 export default function ZoomMeetingRoom({
   sessionId,
   onLeave,
+  startFullscreen = false,
 }: {
   sessionId: string;
   onLeave?: () => void;
+  /**
+   * Open the meeting in fullscreen on mount. Used by the admin
+   * session-preview flow so previews get the full viewport
+   * automatically instead of opening as a small inline card the
+   * user has to expand manually.
+   */
+  startFullscreen?: boolean;
 }) {
   const user = useCurrentUser();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -58,7 +66,7 @@ export default function ZoomMeetingRoom({
     "loading" | "joining" | "in-meeting" | "left" | "error"
   >("loading");
   const [error, setError] = useState<string | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(startFullscreen);
   const [isHost, setIsHost] = useState(false);
   const [endingSession, setEndingSession] = useState(false);
   const router = useRouter();

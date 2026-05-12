@@ -156,6 +156,7 @@ export default function SessionDetailHeader({
  <ZoomMeetingRoom
  sessionId={session.id}
  onLeave={() => setMeetingOpen(false)}
+ startFullscreen
  />
  </div>
  )}
