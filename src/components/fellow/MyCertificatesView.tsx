@@ -306,7 +306,7 @@ export function CertificateCanvas({
       {/* Fellow name — sits above the orange rule on the template (~60% from top) */}
       <div
         className="absolute flex justify-center"
-        style={{ top: "53%", left: "20%", right: "8%" }}
+        style={{ top: "48%", left: "20%", right: "8%" }}
       >
         <p
           className="font-signature text-fellowship-navy leading-none"
