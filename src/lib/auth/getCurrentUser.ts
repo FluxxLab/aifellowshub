@@ -32,6 +32,31 @@ function backendToCurrentUser(u: BackendUser): CurrentUser {
   };
 }
 
+async function fetchMe(
+  backendUrl: string,
+  token: string,
+): Promise<Response | null> {
+  try {
+    return await fetch(`${backendUrl}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+  } catch (err) {
+    // Log code + name + message only — no URL, no body, no stack —
+    // so the JWT and internal hostnames don't leak into aggregators.
+    const safe =
+      err instanceof Error
+        ? {
+            name: err.name,
+            message: err.message,
+            code: (err as { code?: string }).code,
+          }
+        : { message: "unknown error" };
+    console.error("[getCurrentUser] backend unreachable:", safe);
+    return null;
+  }
+}
+
 export async function getCurrentUser(): Promise<CurrentUser> {
   const cookieStore = cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
@@ -47,38 +72,24 @@ export async function getCurrentUser(): Promise<CurrentUser> {
     throw new Error("BACKEND_API_URL is not set.");
   }
 
-  // Pull the response in a try/catch so we can distinguish a transport
-  // failure (DNS, connection refused, abort) from a non-2xx status. We do
-  // *not* call `redirect()` inside the catch — `redirect()` works by
-  // throwing a NEXT_REDIRECT error, and Next.js explicitly warns against
-  // calling it inside try/catch (https://nextjs.org/docs/app/api-reference/functions/redirect).
-  // Capture failure into a flag and redirect outside the try/catch.
-  let res: Response | null = null;
-  try {
-    res = await fetch(`${backendUrl}/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-      cache: "no-store",
-    });
-  } catch (err) {
-    // Server-side log so the operator can see why auth fell through.
-    // Only surface code + name + message — no URL, no request body, no
-    // stack — to avoid leaking the JWT or internal hostnames into log
-    // aggregators.
-    const safe =
-      err instanceof Error
-        ? {
-            name: err.name,
-            message: err.message,
-            code: (err as { code?: string }).code,
-          }
-        : { message: "unknown error" };
-    console.error("[getCurrentUser] backend unreachable:", safe);
+  // Try once, then retry once on transient failures (network blip,
+  // 5xx, gateway hiccup). Without the retry, any single hiccup during
+  // a navigation refresh signs the user out mid-session — the bug
+  // fellows experienced as "periodic sign-outs especially after
+  // clicking Restart Tour" (which fires router.refresh()).
+  //
+  // 401 / 403 are NOT retried — they mean the token is genuinely
+  // invalid (revoked, expired, tampered), and immediate signin
+  // is the correct response.
+  let res = await fetchMe(backendUrl, token);
+  const isAuthFailure = res !== null && (res.status === 401 || res.status === 403);
+  const isTransient = !res || (res.status >= 500 && res.status < 600);
+  if (isTransient && !isAuthFailure) {
+    await new Promise((r) => setTimeout(r, 250));
+    res = await fetchMe(backendUrl, token);
   }
 
   if (!res || !res.ok) {
-    // Either a transport error (res is null) or a non-2xx status (most
-    // likely 401 from an expired token). Either way, bounce to signin —
-    // the signin POST will overwrite any stale cookie on success.
     redirect("/signin");
   }
 
