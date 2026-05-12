@@ -422,6 +422,10 @@ function CertLeftBorder() {
       className="absolute inset-y-0 left-0 h-full w-[18%]"
     >
       <defs>
+        {/* 4-petal flower with central diamond — matches the brand
+            mockup's floral motif. Each tile is 60×60 in user space;
+            the SVG itself is stretched to fill the certificate, so
+            tiles render at whatever the physical column width gives. */}
         <pattern
           id="cert-floral"
           x="0"
@@ -431,7 +435,25 @@ function CertLeftBorder() {
           patternUnits="userSpaceOnUse"
         >
           <rect width="60" height="60" fill="#eef2ff" />
-          <circle cx="30" cy="30" r="14" fill="#3b4eb0" />
+          {/* Four petals around the centre */}
+          <ellipse cx="30" cy="14" rx="8" ry="13" fill="#3b4eb0" />
+          <ellipse cx="30" cy="46" rx="8" ry="13" fill="#3b4eb0" />
+          <ellipse cx="14" cy="30" rx="13" ry="8" fill="#3b4eb0" />
+          <ellipse cx="46" cy="30" rx="13" ry="8" fill="#3b4eb0" />
+          {/* Central diamond */}
+          <rect
+            x="22"
+            y="22"
+            width="16"
+            height="16"
+            fill="#1e3a8a"
+            transform="rotate(45 30 30)"
+          />
+          {/* Corner accent dots — form a secondary motif when tiled */}
+          <circle cx="0" cy="0" r="3" fill="#3b4eb0" />
+          <circle cx="60" cy="0" r="3" fill="#3b4eb0" />
+          <circle cx="0" cy="60" r="3" fill="#3b4eb0" />
+          <circle cx="60" cy="60" r="3" fill="#3b4eb0" />
         </pattern>
         <pattern
           id="cert-teeth"
@@ -451,15 +473,18 @@ function CertLeftBorder() {
       <rect x="0" y="0" width="120" height="1000" fill="url(#cert-floral)" />
       {/* Triangle teeth strip */}
       <rect x="120" y="0" width="60" height="1000" fill="url(#cert-teeth)" />
-      {/* Vertical blue accent ribbon */}
+      {/* Vertical blue accent ribbon (anchors the rosette tails) */}
       <rect x="98" y="0" width="14" height="1000" fill="#1d4ed8" />
 
-      {/* Rosette + ribbon tails, anchored mid-height */}
+      {/* Ribbon tails first — extend from rosette down to the bottom
+          edge so the rosette appears to hang from a long ribbon that
+          drapes off the page, matching the mockup. */}
+      <polygon points="42,500 42,1000 60,970 78,1000 78,500" fill="#1e3a8a" />
+      <polygon points="42,500 42,950 50,940 50,500" fill="#3b4eb0" />
+      <polygon points="78,500 78,950 70,940 70,500" fill="#3b4eb0" />
+
+      {/* Rosette anchored mid-height, on top of the ribbon */}
       <g transform="translate(60 500)">
-        {/* Ribbon tails behind the rosette */}
-        <polygon points="-18,0 -18,180 0,160 18,180 18,0" fill="#1e3a8a" />
-        <polygon points="-18,0 -18,150 -10,140 -10,0" fill="#3b4eb0" />
-        <polygon points="18,0 18,150 10,140 10,0" fill="#3b4eb0" />
         {/* Outer petals — 16 explicit circles, no dynamic generation */}
         <circle cx="0" cy="-48" r="6" fill="#f5a623" />
         <circle cx="18.4" cy="-44.4" r="6" fill="#f5a623" />
