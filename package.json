@@ -37,6 +37,8 @@
     "class-variance-authority": "^0.7.1",
     "driver.js": "^1.4.0",
     "flatpickr": "^4.6.13",
+    "html2canvas-pro": "^2.0.2",
+    "jspdf": "^4.2.1",
     "motion": "^12.38.0",
     "next": "^14.2.35",
     "react": "18.2.0",

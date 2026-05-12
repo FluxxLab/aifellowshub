@@ -1,10 +1,11 @@
 "use client";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import Badge from "@/components/ui/badge/Badge";
 import Breadcrumbs from "@/components/common/Breadcrumbs";
 import Button from "@/components/ui/button/Button";
+import { toast } from "@/lib/toast";
 import {
   CopyIcon,
   DownloadIcon,
@@ -116,6 +117,8 @@ function CertificatePreview({ state }: { state: FellowCertificateState }) {
 
 function IssuedView({ certificate: c }: { certificate: Certificate }) {
   const [copied, setCopied] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const canvasRef = useRef<HTMLDivElement | null>(null);
   const verifyPath = `/certificates/${c.id}/verify`;
   const verifyUrl =
     typeof window !== "undefined" ? `${window.location.origin}${verifyPath}` : verifyPath;
@@ -125,6 +128,44 @@ function IssuedView({ certificate: c }: { certificate: Certificate }) {
       navigator.clipboard.writeText(verifyUrl);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1800);
+    }
+  };
+
+  const onDownload = async () => {
+    if (!canvasRef.current || downloading) return;
+    setDownloading(true);
+    try {
+      // Dynamic import keeps these out of the initial bundle — they
+      // only load when the fellow actually clicks Download.
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import("html2canvas-pro"),
+        import("jspdf"),
+      ]);
+      const canvas = await html2canvas(canvasRef.current, {
+        // Scale up for a crisp PDF — html2canvas renders at the DOM
+        // size by default; 2x gives print-quality output without
+        // blowing memory on the device.
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+        logging: false,
+      });
+      // A4 landscape: 297mm × 210mm. The canvas aspect ratio is the
+      // same (1.414:1), so the image fills the page exactly with no
+      // letterboxing.
+      const pdf = new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: "a4",
+        compress: true,
+      });
+      const imgData = canvas.toDataURL("image/jpeg", 0.92);
+      pdf.addImage(imgData, "JPEG", 0, 0, 297, 210);
+      pdf.save(`${c.fellowName.replace(/\s+/g, "_")}_Certificate_${c.id}.pdf`);
+    } catch (err) {
+      toast.errorFromException("Couldn't generate PDF", err);
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -146,16 +187,11 @@ function IssuedView({ certificate: c }: { certificate: Certificate }) {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => {
-                // Opens a print-only render of this certificate in a
-                // new tab; that page auto-triggers window.print() so
-                // the browser's "Save as PDF" sheet appears. No new
-                // PDF dependency required.
-                window.open(`/certificates/${c.id}/print`, "_blank");
-              }}
+              onClick={onDownload}
+              disabled={downloading}
             >
               <DownloadIcon className="h-4 w-4" />
-              Download PDF
+              {downloading ? "Preparing…" : "Download PDF"}
             </Button>
             <Button size="sm" variant="fellowship">
               <PaperPlaneIcon className="h-4 w-4" />
@@ -192,19 +228,21 @@ function IssuedView({ certificate: c }: { certificate: Certificate }) {
         </div>
       </section>
 
-      <CertificateCanvas
-        fellowName={c.fellowName}
-        programmeName={c.programmeName}
-        cohortName={c.cohortName}
-        capstoneTitle={c.capstoneTitle}
-        completedAtLabel={new Date(c.completedAt).toLocaleDateString(undefined, {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        })}
-        signatories={c.signatories}
-        isPreview={false}
-      />
+      <div ref={canvasRef}>
+        <CertificateCanvas
+          fellowName={c.fellowName}
+          programmeName={c.programmeName}
+          cohortName={c.cohortName}
+          capstoneTitle={c.capstoneTitle}
+          completedAtLabel={new Date(c.completedAt).toLocaleDateString(undefined, {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          })}
+          signatories={c.signatories}
+          isPreview={false}
+        />
+      </div>
     </>
   );
 }
