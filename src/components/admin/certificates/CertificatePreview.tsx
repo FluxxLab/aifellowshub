@@ -61,7 +61,7 @@ export default function CertificatePreview({
  {template.signatoryName && (
  <p
  className="font-signature text-fellowship-navy leading-none"
- style={{ fontSize: "clamp(0.9rem, 1.8vw, 1.4rem)" }}
+ style={{ fontSize: "clamp(0.6rem, 1vw, 0.85rem)" }}
  >
  {template.signatoryName}
  </p>

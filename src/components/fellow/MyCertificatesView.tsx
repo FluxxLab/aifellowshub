@@ -168,7 +168,7 @@ function IssuedView({ certificate: c }: { certificate: Certificate }) {
       // Signatory name — italic, above the "Authorized Signature" line.
       if (c.signatories?.[0]?.name) {
         pdf.setFont("helvetica", "italic");
-        pdf.setFontSize(14);
+        pdf.setFontSize(10);
         pdf.text(c.signatories[0].name, 95, 184, { align: "center" });
       }
 
@@ -391,7 +391,7 @@ export function CertificateCanvas({
         {primarySig && (
           <p
             className="font-signature text-fellowship-navy leading-none"
-            style={{ fontSize: "clamp(0.9rem, 1.8vw, 1.4rem)" }}
+            style={{ fontSize: "clamp(0.6rem, 1vw, 0.85rem)" }}
           >
             {primarySig.name}
           </p>
