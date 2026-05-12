@@ -10,91 +10,219 @@ type CertificatePreviewProps = {
  certificateNumber?: string;
 };
 
+/**
+ * AI Ethics & Governance Fellowship completion certificate.
+ *
+ * Visual design is fixed (matches the brand-approved mockup): two
+ * patterned blue side borders, a yellow rosette anchored on the left
+ * column, Luminate wordmark + PIC×AHFID lockup at the top, centred
+ * heading, fellow name above a divider, body text, and the dual
+ * signature / date footer.
+ *
+ * The text bits (`title`, `bodyText`, `signatoryName`, dates) still
+ * come from the editable `CertificateTemplate` so admins can tune
+ * copy without redesigning the canvas.
+ */
 export default function CertificatePreview({
  template,
- fellowName ="Sample Fellow",
- issuedDate ="—",
- certificateNumber ="PIC-AIF-YYYY-NNNN",
+ fellowName = "",
+ issuedDate = "",
+ certificateNumber,
 }: CertificatePreviewProps) {
  const body = template.bodyText
- .replace(/\{\{fellow_name\}\}/g, fellowName)
+ .replace(/\{\{fellow_name\}\}/g, fellowName || "the participant")
  .replace(/\{\{course_title\}\}/g, template.courseTitle)
- .replace(/\{\{issued_date\}\}/g, issuedDate);
+ .replace(/\{\{issued_date\}\}/g, issuedDate || "—");
 
  return (
- <div className="relative aspect-[1.414/1] w-full overflow-hidden rounded-xl border-4 border-fellowship-navy bg-white shadow-theme-lg">
- {/* Decorative inner border */}
- <div className="absolute inset-3 rounded-lg border border-warning-400/60"/>
+ <div className="relative aspect-[1.414/1] w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-theme-md">
+ {/* Decorative left border — wide patterned column with the rosette anchored mid-height */}
+ <LeftBorder />
+ {/* Decorative right border — thin triangular pattern only */}
+ <RightBorder />
 
- {/* Top corner ornaments */}
- <div className="absolute left-6 top-6 h-10 w-10 rounded-tl-lg border-l-4 border-t-4 border-warning-400"/>
- <div className="absolute right-6 top-6 h-10 w-10 rounded-tr-lg border-r-4 border-t-4 border-warning-400"/>
- <div className="absolute bottom-6 left-6 h-10 w-10 rounded-bl-lg border-b-4 border-l-4 border-warning-400"/>
- <div className="absolute bottom-6 right-6 h-10 w-10 rounded-br-lg border-b-4 border-r-4 border-warning-400"/>
-
- <div className="relative flex h-full flex-col items-center justify-between px-8 py-10 text-center sm:px-14 sm:py-14">
- {/* Header */}
- <div className="flex flex-col items-center gap-3">
- {template.logoUrl && (
- <div className="rounded-md bg-white px-3 py-1.5">
+ {/* Content surface */}
+ <div className="absolute inset-y-0 left-[18%] right-[5%] flex flex-col px-[3%] py-[5%]">
+ {/* Top: Luminate wordmark + PIC × AHFID lockup */}
+ <header className="flex items-start justify-between gap-6">
+ <div className="font-bold tracking-tight text-gray-900 text-[clamp(1rem,2.4vw,1.75rem)]">
+ luminate
+ </div>
+ <div className="flex items-center gap-2">
+ {template.logoUrl ? (
  <Image
  src={template.logoUrl}
- alt="Programme logo" width={150}
- height={40}
- className="h-8 w-auto sm:h-10"/>
- </div>
+ alt="Programme logos"
+ width={220}
+ height={60}
+ className="h-[clamp(1.75rem,3.5vw,3rem)] w-auto"
+ />
+ ) : (
+ <LogoLockup />
  )}
- <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-fellowship-navy sm:text-xs">
- AI Ethics &amp; Governance Fellowship
+ </div>
+ </header>
+
+ {/* Heading */}
+ <div className="mt-[4%] text-center">
+ <h1 className="font-extrabold text-fellowship-navy tracking-tight leading-[0.95] text-[clamp(2rem,7vw,5rem)]">
+ {template.title.split(" ")[0] || "Certificate"}
+ </h1>
+ <p className="mt-1 font-bold text-fellowship-navy tracking-[0.18em] text-[clamp(0.75rem,1.6vw,1.1rem)]">
+ OF COMPLETION
  </p>
  </div>
 
- {/* Main content */}
- <div className="flex flex-col items-center gap-3 px-4">
- <h2 className="font-bold text-fellowship-navy text-2xl tracking-tight sm:text-4xl">
- {template.title}
- </h2>
- <p className="text-xs uppercase tracking-widest text-gray-500">
- Awarded to
+ {/* Lead-in + fellow name + divider */}
+ <div className="mt-[3%] flex flex-col items-center text-center">
+ <p className="text-fellowship-navy text-[clamp(0.75rem,1.4vw,1rem)]">
+ This is to certify that
  </p>
+ <div className="mt-[3%] flex w-[80%] flex-col items-center">
  <p
- className="font-bold text-fellowship-navy" style={{ fontSize:" clamp(1.25rem, 4vw, 2.5rem)"}}
+ className="font-signature text-fellowship-navy text-[clamp(1.25rem,3.5vw,2.5rem)] leading-none"
+ style={{ minHeight: "1em" }}
  >
  {fellowName}
  </p>
- <p className="max-w-2xl text-xs leading-relaxed text-gray-700 sm:text-sm">
+ <div className="mt-[2%] h-[2px] w-full bg-warning-500/80" />
+ </div>
+ </div>
+
+ {/* Body paragraph */}
+ <p className="mt-[3%] text-center text-fellowship-navy text-[clamp(0.75rem,1.4vw,1rem)] leading-relaxed">
  {body}
  </p>
- </div>
 
- {/* Footer */}
- <div className="flex w-full items-end justify-between gap-6">
- <div className="flex flex-col items-start text-left">
- <span className="border-b border-fellowship-navy/40 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500 sm:text-xs">
- Issued
+ {/* Footer: signature line + date line */}
+ <div className="mt-auto flex items-end justify-between gap-8 pt-[3%]">
+ <div className="flex flex-col items-start">
+ <div className="h-px w-[clamp(8rem,18vw,15rem)] bg-fellowship-navy/70" />
+ <span className="mt-1 text-fellowship-navy text-[clamp(0.65rem,1.1vw,0.85rem)]">
+ Authorized Signature
  </span>
- <span className="mt-1 text-xs font-semibold text-fellowship-navy sm:text-sm">
+ {template.signatoryName && (
+ <span className="mt-0.5 text-[clamp(0.55rem,0.9vw,0.7rem)] text-gray-500">
+ {template.signatoryName} · {template.signatoryTitle}
+ </span>
+ )}
+ </div>
+ <div className="flex flex-col items-end">
+ <div className="h-px w-[clamp(8rem,18vw,15rem)] bg-fellowship-navy/70" />
+ <span className="mt-1 text-fellowship-navy text-[clamp(0.65rem,1.1vw,0.85rem)]">
+ Date of Completion
+ </span>
+ {issuedDate && (
+ <span className="mt-0.5 text-[clamp(0.55rem,0.9vw,0.7rem)] text-gray-500">
  {issuedDate}
  </span>
- <span className="mt-2 text-[9px] font-mono text-gray-400 sm:text-[10px]">
- {certificateNumber}
- </span>
+ )}
+ </div>
  </div>
 
- <div className="flex flex-col items-center text-center">
- <div className="font-signature text-xl text-fellowship-navy italic sm:text-2xl">
- {template.signatoryName.split(" ").slice(-1)[0]}
+ {certificateNumber && (
+ <p className="absolute bottom-2 left-[18%] right-[5%] text-center font-mono text-[clamp(0.5rem,0.7vw,0.6rem)] text-gray-400">
+ {certificateNumber}
+ </p>
+ )}
  </div>
- <div className="mt-1 w-32 border-t border-fellowship-navy/60 sm:w-48"/>
- <span className="mt-1 text-[10px] font-semibold text-fellowship-navy sm:text-xs">
- {template.signatoryName}
+ </div>
+ );
+}
+
+/* ---------- Decorative pieces ---------- */
+
+/** Wide left border: patterned column + triangle strip + rosette badge. */
+function LeftBorder() {
+ return (
+ <div className="absolute inset-y-0 left-0 w-[18%]">
+ {/* Floral pattern column */}
+ <div
+ className="absolute inset-y-0 left-0 w-[70%] opacity-90"
+ style={{
+ backgroundColor: "#eef2ff",
+ backgroundImage:
+ "radial-gradient(circle at 50% 25%, #3b4eb0 22%, transparent 23%), radial-gradient(circle at 50% 75%, #3b4eb0 22%, transparent 23%)",
+ backgroundSize: "40% 30%",
+ backgroundPosition: "center",
+ backgroundRepeat: "repeat",
+ }}
+ />
+ {/* Triangle/zigzag edge strip */}
+ <div
+ className="absolute inset-y-0 left-[70%] w-[30%]"
+ style={{
+ backgroundColor: "#1e3a8a",
+ backgroundImage:
+ "linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.85) 50%), linear-gradient(45deg, transparent 50%, rgba(255,255,255,0.85) 50%)",
+ backgroundSize: "100% 18px",
+ backgroundPosition: "0 0, 0 9px",
+ backgroundRepeat: "repeat-y",
+ }}
+ />
+ {/* Vertical accent ribbon under the rosette */}
+ <div className="absolute left-[55%] top-0 h-full w-[6%] bg-blue-700" />
+ {/* Rosette */}
+ <Rosette />
+ </div>
+ );
+}
+
+/** Thin right border — triangle strip only, mirrored. */
+function RightBorder() {
+ return (
+ <div
+ className="absolute inset-y-0 right-0 w-[3%]"
+ style={{
+ backgroundColor: "#1e3a8a",
+ backgroundImage:
+ "linear-gradient(225deg, transparent 50%, rgba(255,255,255,0.85) 50%), linear-gradient(315deg, transparent 50%, rgba(255,255,255,0.85) 50%)",
+ backgroundSize: "100% 18px",
+ backgroundPosition: "0 0, 0 9px",
+ backgroundRepeat: "repeat-y",
+ }}
+ />
+ );
+}
+
+function Rosette() {
+ return (
+ <svg
+ aria-hidden
+ viewBox="0 0 120 200"
+ className="absolute left-[35%] top-1/2 h-[35%] w-auto -translate-y-1/2"
+ style={{ filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.15))" }}
+ >
+ {/* Ribbon tails */}
+ <polygon points="42,100 42,190 60,170 78,190 78,100" fill="#1e3a8a" />
+ <polygon points="42,100 42,160 50,150 50,100" fill="#3b4eb0" />
+ <polygon points="78,100 78,160 70,150 70,100" fill="#3b4eb0" />
+ {/* Rosette outer (gear-like petals) */}
+ <circle cx="60" cy="65" r="48" fill="#f5a623" />
+ <g fill="#f5a623">
+ {Array.from({ length: 16 }).map((_, i) => {
+ const a = (i / 16) * 360;
+ const rad = (a * Math.PI) / 180;
+ const cx = 60 + Math.cos(rad) * 48;
+ const cy = 65 + Math.sin(rad) * 48;
+ return <circle key={i} cx={cx} cy={cy} r="6" />;
+ })}
+ </g>
+ {/* Inner medal */}
+ <circle cx="60" cy="65" r="30" fill="#fbbf24" />
+ <circle cx="60" cy="65" r="25" fill="none" stroke="#f5a623" strokeWidth="2" />
+ </svg>
+ );
+}
+
+function LogoLockup() {
+ return (
+ <div className="flex items-center gap-2 text-fellowship-navy">
+ <span className="text-[clamp(0.7rem,1.5vw,1rem)] font-bold tracking-tight">PIC</span>
+ <span className="h-6 w-px bg-fellowship-navy/40" />
+ <span className="text-[clamp(0.55rem,1vw,0.75rem)] font-bold leading-tight tracking-tight text-error-600">
+ AFRICA HUB FOR<br />INNOVATION &amp;<br />DEVELOPMENT
  </span>
- <span className="text-[9px] uppercase tracking-wider text-gray-500 sm:text-[10px]">
- {template.signatoryTitle}
- </span>
- </div>
- </div>
- </div>
  </div>
  );
 }

@@ -8,7 +8,6 @@ import {
   CopyIcon,
   DownloadIcon,
   PaperPlaneIcon,
-  ShootingStarIcon,
 } from "@/icons";
 import type {
   Certificate,
@@ -204,6 +203,18 @@ function IssuedView({ certificate: c }: { certificate: Certificate }) {
  * issuance) and the issued state. Phase 2: same component renders inside the
  * PDF generation pipeline so what the fellow sees == what they download.
  */
+/**
+ * Fellowship certificate canvas — matches the brand-approved mockup:
+ * patterned left/right blue borders, yellow rosette on the left,
+ * Luminate wordmark + PIC×AHFID lockup at the top, "Certificate OF
+ * COMPLETION" heading, fellow name above an amber rule, body text,
+ * and a dual signature/date footer.
+ *
+ * Shared between the fellow's own page (`isPreview=true` overlays a
+ * watermark) and the public verify page. The admin template-editor
+ * uses a parallel component (`CertificatePreview`) with the same
+ * visual language but template-driven copy.
+ */
 export function CertificateCanvas({
   fellowName,
   programmeName,
@@ -221,65 +232,87 @@ export function CertificateCanvas({
   signatories?: { name: string; role: string }[];
   isPreview: boolean;
 }) {
+  const primarySig = signatories?.[0];
   return (
     <article
-      className={`relative overflow-hidden rounded-2xl bg-white shadow-theme-sm ring-1 ring-fellowship-navy/10 ${
-        isPreview ? "" : ""
-      }`}
+      className="relative aspect-[1.414/1] w-full overflow-hidden rounded-2xl bg-white shadow-theme-sm ring-1 ring-fellowship-navy/10"
       aria-label={`${programmeName} certificate for ${fellowName}`}
     >
-      {/* Gold border bands top and bottom */}
-      <div className="h-3 bg-gradient-to-r from-warning-400 via-warning-500 to-warning-400" />
-      <div className="px-8 py-10 sm:px-12 sm:py-14">
-        <div className="text-center">
-          <ShootingStarIcon className="mx-auto h-10 w-10 text-warning-500" />
-          <p className="mt-3 text-xs font-semibold uppercase tracking-[0.28em] text-fellowship-navy">
-            Certificate of Completion
-          </p>
-          <p className="mt-1 text-sm font-medium tracking-wide text-gray-500">
-            {programmeName}
-          </p>
+      <CertLeftBorder />
+      <CertRightBorder />
 
-          <p className="mt-8 text-sm text-gray-500">This is to certify that</p>
-          <h2
-            className="mt-2 font-bold text-fellowship-navy"
-            style={{ fontSize: "clamp(1.75rem, 4vw, 2.5rem)" }}
-          >
-            {fellowName}
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-gray-600">
-            successfully completed all twelve modules of the{" "}
-            <span className="font-semibold text-gray-800">{cohortName}</span>{" "}
-            and produced an approved capstone titled
-          </p>
-          <p className="mt-3 text-base font-semibold italic text-gray-800">
-            &ldquo;{capstoneTitle}&rdquo;
-          </p>
+      <div className="absolute inset-y-0 left-[18%] right-[5%] flex flex-col px-[3%] py-[5%]">
+        {/* Top: Luminate wordmark + PIC × AHFID lockup */}
+        <header className="flex items-start justify-between gap-6">
+          <div className="font-bold tracking-tight text-gray-900 text-[clamp(1rem,2.4vw,1.75rem)]">
+            luminate
+          </div>
+          <CertLogoLockup />
+        </header>
 
-          {completedAtLabel && (
-            <p className="mt-6 text-xs text-gray-500">
-              Completed {completedAtLabel}
-            </p>
-          )}
+        {/* Heading */}
+        <div className="mt-[4%] text-center">
+          <h1 className="font-extrabold text-fellowship-navy tracking-tight leading-[0.95] text-[clamp(2rem,7vw,5rem)]">
+            Certificate
+          </h1>
+          <p className="mt-1 font-bold text-fellowship-navy tracking-[0.18em] text-[clamp(0.75rem,1.6vw,1.1rem)]">
+            OF COMPLETION
+          </p>
         </div>
 
-        {signatories && signatories.length > 0 && (
-          <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2">
-            {signatories.map((s) => (
-              <div key={s.name} className="text-center">
-                <p
-                  className="border-b border-gray-300 pb-2 font-serif text-lg italic text-gray-700"
-                  style={{ fontFamily: "Georgia, serif" }}
-                >
-                  {s.name}
-                </p>
-                <p className="mt-1 text-xs text-gray-500">{s.role}</p>
-              </div>
-            ))}
+        {/* Lead-in + fellow name + divider */}
+        <div className="mt-[3%] flex flex-col items-center text-center">
+          <p className="text-fellowship-navy text-[clamp(0.75rem,1.4vw,1rem)]">
+            This is to certify that
+          </p>
+          <div className="mt-[3%] flex w-[80%] flex-col items-center">
+            <p
+              className="font-signature text-fellowship-navy text-[clamp(1.25rem,3.5vw,2.5rem)] leading-none"
+              style={{ minHeight: "1em" }}
+            >
+              {fellowName}
+            </p>
+            <div className="mt-[2%] h-[2px] w-full bg-warning-500/80" />
           </div>
-        )}
+        </div>
+
+        {/* Body paragraph */}
+        <p className="mt-[3%] text-center text-fellowship-navy text-[clamp(0.75rem,1.4vw,1rem)] leading-relaxed">
+          has successfully participated in and completed the {programmeName}
+          {cohortName && cohortName !== programmeName ? ` (${cohortName})` : ""}.
+          {capstoneTitle && (
+            <span className="mt-2 block text-[clamp(0.65rem,1.2vw,0.9rem)] italic text-gray-600">
+              Capstone: &ldquo;{capstoneTitle}&rdquo;
+            </span>
+          )}
+        </p>
+
+        {/* Footer: signature + date lines */}
+        <div className="mt-auto flex items-end justify-between gap-8 pt-[3%]">
+          <div className="flex flex-col items-start">
+            <div className="h-px w-[clamp(8rem,18vw,15rem)] bg-fellowship-navy/70" />
+            <span className="mt-1 text-fellowship-navy text-[clamp(0.65rem,1.1vw,0.85rem)]">
+              Authorized Signature
+            </span>
+            {primarySig && (
+              <span className="mt-0.5 text-[clamp(0.55rem,0.9vw,0.7rem)] text-gray-500">
+                {primarySig.name} · {primarySig.role}
+              </span>
+            )}
+          </div>
+          <div className="flex flex-col items-end">
+            <div className="h-px w-[clamp(8rem,18vw,15rem)] bg-fellowship-navy/70" />
+            <span className="mt-1 text-fellowship-navy text-[clamp(0.65rem,1.1vw,0.85rem)]">
+              Date of Completion
+            </span>
+            {completedAtLabel && (
+              <span className="mt-0.5 text-[clamp(0.55rem,0.9vw,0.7rem)] text-gray-500">
+                {completedAtLabel}
+              </span>
+            )}
+          </div>
+        </div>
       </div>
-      <div className="h-3 bg-gradient-to-r from-warning-400 via-warning-500 to-warning-400" />
 
       {isPreview && (
         <div
@@ -287,7 +320,7 @@ export function CertificateCanvas({
           className="pointer-events-none absolute inset-0 flex items-center justify-center"
         >
           <span
-            className="rotate-[-18deg] text-6xl font-bold tracking-widest text-fellowship-navy/8 sm:text-8xl"
+            className="rotate-[-18deg] text-6xl font-bold tracking-widest text-fellowship-navy/[0.06] sm:text-8xl"
             style={{ letterSpacing: "0.3em" }}
           >
             PREVIEW
@@ -295,5 +328,99 @@ export function CertificateCanvas({
         </div>
       )}
     </article>
+  );
+}
+
+/* ---------- Shared decorative pieces (mirrors CertificatePreview) ---------- */
+
+function CertLeftBorder() {
+  return (
+    <div className="absolute inset-y-0 left-0 w-[18%]">
+      <div
+        className="absolute inset-y-0 left-0 w-[70%] opacity-90"
+        style={{
+          backgroundColor: "#eef2ff",
+          backgroundImage:
+            "radial-gradient(circle at 50% 25%, #3b4eb0 22%, transparent 23%), radial-gradient(circle at 50% 75%, #3b4eb0 22%, transparent 23%)",
+          backgroundSize: "40% 30%",
+          backgroundPosition: "center",
+          backgroundRepeat: "repeat",
+        }}
+      />
+      <div
+        className="absolute inset-y-0 left-[70%] w-[30%]"
+        style={{
+          backgroundColor: "#1e3a8a",
+          backgroundImage:
+            "linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.85) 50%), linear-gradient(45deg, transparent 50%, rgba(255,255,255,0.85) 50%)",
+          backgroundSize: "100% 18px",
+          backgroundPosition: "0 0, 0 9px",
+          backgroundRepeat: "repeat-y",
+        }}
+      />
+      <div className="absolute left-[55%] top-0 h-full w-[6%] bg-blue-700" />
+      <CertRosette />
+    </div>
+  );
+}
+
+function CertRightBorder() {
+  return (
+    <div
+      className="absolute inset-y-0 right-0 w-[3%]"
+      style={{
+        backgroundColor: "#1e3a8a",
+        backgroundImage:
+          "linear-gradient(225deg, transparent 50%, rgba(255,255,255,0.85) 50%), linear-gradient(315deg, transparent 50%, rgba(255,255,255,0.85) 50%)",
+        backgroundSize: "100% 18px",
+        backgroundPosition: "0 0, 0 9px",
+        backgroundRepeat: "repeat-y",
+      }}
+    />
+  );
+}
+
+function CertRosette() {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 120 200"
+      className="absolute left-[35%] top-1/2 h-[35%] w-auto -translate-y-1/2"
+      style={{ filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.15))" }}
+    >
+      <polygon points="42,100 42,190 60,170 78,190 78,100" fill="#1e3a8a" />
+      <polygon points="42,100 42,160 50,150 50,100" fill="#3b4eb0" />
+      <polygon points="78,100 78,160 70,150 70,100" fill="#3b4eb0" />
+      <circle cx="60" cy="65" r="48" fill="#f5a623" />
+      <g fill="#f5a623">
+        {Array.from({ length: 16 }).map((_, i) => {
+          const a = (i / 16) * 360;
+          const rad = (a * Math.PI) / 180;
+          const cx = 60 + Math.cos(rad) * 48;
+          const cy = 65 + Math.sin(rad) * 48;
+          return <circle key={i} cx={cx} cy={cy} r="6" />;
+        })}
+      </g>
+      <circle cx="60" cy="65" r="30" fill="#fbbf24" />
+      <circle cx="60" cy="65" r="25" fill="none" stroke="#f5a623" strokeWidth="2" />
+    </svg>
+  );
+}
+
+function CertLogoLockup() {
+  return (
+    <div className="flex items-center gap-2 text-fellowship-navy">
+      <span className="text-[clamp(0.7rem,1.5vw,1rem)] font-bold tracking-tight">
+        PIC
+      </span>
+      <span className="h-6 w-px bg-fellowship-navy/40" />
+      <span className="text-[clamp(0.55rem,1vw,0.75rem)] font-bold leading-tight tracking-tight text-error-600">
+        AFRICA HUB FOR
+        <br />
+        INNOVATION &amp;
+        <br />
+        DEVELOPMENT
+      </span>
+    </div>
   );
 }
