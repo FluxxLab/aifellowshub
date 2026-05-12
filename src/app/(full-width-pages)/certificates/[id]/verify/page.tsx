@@ -14,9 +14,33 @@ export async function generateMetadata({
   const { id } = params;
   const result = await getPublicCertificateServer(id);
   if (!result) return { title: "Certificate not found · AI Fellows" };
+  const title = `${result.certificate.fellowName} · ${result.certificate.cohortName} · AI Fellows`;
+  const description = `${result.certificate.fellowName} has completed the ${result.certificate.programmeName}. Public verification.`;
   return {
-    title: `${result.certificate.fellowName} · ${result.certificate.cohortName} · AI Fellows`,
-    description: `Public verification for ${result.certificate.fellowName}'s ${result.certificate.programmeName} certificate.`,
+    title,
+    description,
+    // LinkedIn / Facebook / Slack pull from these to build rich
+    // share cards. The brand template stands in as the social image
+    // until a per-certificate render exists.
+    openGraph: {
+      title,
+      description,
+      type: "article",
+      images: [
+        {
+          url: "/images/Certificate%20lms.png",
+          width: 2000,
+          height: 1414,
+          alt: `${result.certificate.fellowName}'s Fellowship certificate`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ["/images/Certificate%20lms.png"],
+    },
   };
 }
 

@@ -215,7 +215,29 @@ function IssuedView({ certificate: c }: { certificate: Certificate }) {
               <DownloadIcon className="h-4 w-4" />
               {downloading ? "Preparing…" : "Download PDF"}
             </Button>
-            <Button size="sm" variant="fellowship">
+            <Button
+              size="sm"
+              variant="fellowship"
+              onClick={() => {
+                // LinkedIn's share-offsite endpoint reads the OG meta
+                // tags off the verify page and builds the preview card
+                // itself. Open in a popup so the fellow can write a
+                // post on top of the auto-card without losing this tab.
+                const origin =
+                  typeof window !== "undefined"
+                    ? window.location.origin
+                    : "https://aifellowshub.vercel.app";
+                const target = `${origin}${verifyPath}`;
+                const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
+                  target,
+                )}`;
+                window.open(
+                  shareUrl,
+                  "linkedin-share",
+                  "width=720,height=640,noopener,noreferrer",
+                );
+              }}
+            >
               <PaperPlaneIcon className="h-4 w-4" />
               Share to LinkedIn
             </Button>
