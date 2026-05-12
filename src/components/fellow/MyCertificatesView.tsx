@@ -337,10 +337,17 @@ export function CertificateCanvas({
           </div>
         </div>
 
-        {/* Body paragraph */}
+        {/* Body paragraph. The cohort name often appears inside
+            programmeName already ("AI Ethics & Governance Fellowship ·
+            Cohort 2026") — only surface the parenthetical when it
+            adds new information. */}
         <p className="mt-[3%] text-center text-fellowship-navy text-[clamp(0.75rem,1.4vw,1rem)] leading-relaxed">
           has successfully participated in and completed the {programmeName}
-          {cohortName && cohortName !== programmeName ? ` (${cohortName})` : ""}.
+          {cohortName &&
+          !programmeName.toLowerCase().includes(cohortName.toLowerCase())
+            ? ` (${cohortName})`
+            : ""}
+          .
           {capstoneTitle && (
             <span className="mt-2 block text-[clamp(0.65rem,1.2vw,0.9rem)] italic text-gray-600">
               Capstone: &ldquo;{capstoneTitle}&rdquo;
@@ -394,76 +401,114 @@ export function CertificateCanvas({
 
 /* ---------- Shared decorative pieces (mirrors CertificatePreview) ---------- */
 
+/**
+ * Whole left decoration as a single SVG — pattern column, triangle
+ * strip, vertical ribbon, and rosette all baked into one file. Single
+ * SVG rasterises cleanly under html2canvas-pro; the earlier CSS-only
+ * variant produced a half-empty column in the downloaded PDF because
+ * radial-gradient tiling + nested absolute children don't round-trip
+ * reliably through DOM-to-canvas capture.
+ *
+ * preserveAspectRatio="none" stretches the SVG to fill the certificate
+ * height regardless of canvas size, so the design stays consistent
+ * across previews, screen-renders, and the PDF output.
+ */
 function CertLeftBorder() {
   return (
-    <div className="absolute inset-y-0 left-0 w-[18%]">
-      <div
-        className="absolute inset-y-0 left-0 w-[70%] opacity-90"
-        style={{
-          backgroundColor: "#eef2ff",
-          backgroundImage:
-            "radial-gradient(circle at 50% 25%, #3b4eb0 22%, transparent 23%), radial-gradient(circle at 50% 75%, #3b4eb0 22%, transparent 23%)",
-          backgroundSize: "40% 30%",
-          backgroundPosition: "center",
-          backgroundRepeat: "repeat",
-        }}
-      />
-      <div
-        className="absolute inset-y-0 left-[70%] w-[30%]"
-        style={{
-          backgroundColor: "#1e3a8a",
-          backgroundImage:
-            "linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.85) 50%), linear-gradient(45deg, transparent 50%, rgba(255,255,255,0.85) 50%)",
-          backgroundSize: "100% 18px",
-          backgroundPosition: "0 0, 0 9px",
-          backgroundRepeat: "repeat-y",
-        }}
-      />
-      <div className="absolute left-[55%] top-0 h-full w-[6%] bg-blue-700" />
-      <CertRosette />
-    </div>
+    <svg
+      aria-hidden
+      viewBox="0 0 180 1000"
+      preserveAspectRatio="none"
+      className="absolute inset-y-0 left-0 h-full w-[18%]"
+    >
+      <defs>
+        <pattern
+          id="cert-floral"
+          x="0"
+          y="0"
+          width="60"
+          height="60"
+          patternUnits="userSpaceOnUse"
+        >
+          <rect width="60" height="60" fill="#eef2ff" />
+          <circle cx="30" cy="30" r="14" fill="#3b4eb0" />
+        </pattern>
+        <pattern
+          id="cert-teeth"
+          x="0"
+          y="0"
+          width="36"
+          height="36"
+          patternUnits="userSpaceOnUse"
+        >
+          <rect width="36" height="36" fill="#1e3a8a" />
+          <polygon points="0,0 36,0 18,18" fill="#ffffff" />
+          <polygon points="0,36 36,36 18,18" fill="#ffffff" />
+        </pattern>
+      </defs>
+
+      {/* Pattern column (floral tile) */}
+      <rect x="0" y="0" width="120" height="1000" fill="url(#cert-floral)" />
+      {/* Triangle teeth strip */}
+      <rect x="120" y="0" width="60" height="1000" fill="url(#cert-teeth)" />
+      {/* Vertical blue accent ribbon */}
+      <rect x="98" y="0" width="14" height="1000" fill="#1d4ed8" />
+
+      {/* Rosette + ribbon tails, anchored mid-height */}
+      <g transform="translate(60 500)">
+        {/* Ribbon tails behind the rosette */}
+        <polygon points="-18,0 -18,180 0,160 18,180 18,0" fill="#1e3a8a" />
+        <polygon points="-18,0 -18,150 -10,140 -10,0" fill="#3b4eb0" />
+        <polygon points="18,0 18,150 10,140 10,0" fill="#3b4eb0" />
+        {/* Outer petals — 16 explicit circles, no dynamic generation */}
+        <circle cx="0" cy="-48" r="6" fill="#f5a623" />
+        <circle cx="18.4" cy="-44.4" r="6" fill="#f5a623" />
+        <circle cx="33.9" cy="-33.9" r="6" fill="#f5a623" />
+        <circle cx="44.4" cy="-18.4" r="6" fill="#f5a623" />
+        <circle cx="48" cy="0" r="6" fill="#f5a623" />
+        <circle cx="44.4" cy="18.4" r="6" fill="#f5a623" />
+        <circle cx="33.9" cy="33.9" r="6" fill="#f5a623" />
+        <circle cx="18.4" cy="44.4" r="6" fill="#f5a623" />
+        <circle cx="0" cy="48" r="6" fill="#f5a623" />
+        <circle cx="-18.4" cy="44.4" r="6" fill="#f5a623" />
+        <circle cx="-33.9" cy="33.9" r="6" fill="#f5a623" />
+        <circle cx="-44.4" cy="18.4" r="6" fill="#f5a623" />
+        <circle cx="-48" cy="0" r="6" fill="#f5a623" />
+        <circle cx="-44.4" cy="-18.4" r="6" fill="#f5a623" />
+        <circle cx="-33.9" cy="-33.9" r="6" fill="#f5a623" />
+        <circle cx="-18.4" cy="-44.4" r="6" fill="#f5a623" />
+        {/* Rosette body */}
+        <circle cx="0" cy="0" r="46" fill="#f5a623" />
+        <circle cx="0" cy="0" r="30" fill="#fbbf24" />
+        <circle cx="0" cy="0" r="25" fill="none" stroke="#f5a623" strokeWidth="2" />
+      </g>
+    </svg>
   );
 }
 
 function CertRightBorder() {
   return (
-    <div
-      className="absolute inset-y-0 right-0 w-[3%]"
-      style={{
-        backgroundColor: "#1e3a8a",
-        backgroundImage:
-          "linear-gradient(225deg, transparent 50%, rgba(255,255,255,0.85) 50%), linear-gradient(315deg, transparent 50%, rgba(255,255,255,0.85) 50%)",
-        backgroundSize: "100% 18px",
-        backgroundPosition: "0 0, 0 9px",
-        backgroundRepeat: "repeat-y",
-      }}
-    />
-  );
-}
-
-function CertRosette() {
-  return (
     <svg
       aria-hidden
-      viewBox="0 0 120 200"
-      className="absolute left-[35%] top-1/2 h-[35%] w-auto -translate-y-1/2"
-      style={{ filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.15))" }}
+      viewBox="0 0 30 1000"
+      preserveAspectRatio="none"
+      className="absolute inset-y-0 right-0 h-full w-[3%]"
     >
-      <polygon points="42,100 42,190 60,170 78,190 78,100" fill="#1e3a8a" />
-      <polygon points="42,100 42,160 50,150 50,100" fill="#3b4eb0" />
-      <polygon points="78,100 78,160 70,150 70,100" fill="#3b4eb0" />
-      <circle cx="60" cy="65" r="48" fill="#f5a623" />
-      <g fill="#f5a623">
-        {Array.from({ length: 16 }).map((_, i) => {
-          const a = (i / 16) * 360;
-          const rad = (a * Math.PI) / 180;
-          const cx = 60 + Math.cos(rad) * 48;
-          const cy = 65 + Math.sin(rad) * 48;
-          return <circle key={i} cx={cx} cy={cy} r="6" />;
-        })}
-      </g>
-      <circle cx="60" cy="65" r="30" fill="#fbbf24" />
-      <circle cx="60" cy="65" r="25" fill="none" stroke="#f5a623" strokeWidth="2" />
+      <defs>
+        <pattern
+          id="cert-teeth-right"
+          x="0"
+          y="0"
+          width="30"
+          height="36"
+          patternUnits="userSpaceOnUse"
+        >
+          <rect width="30" height="36" fill="#1e3a8a" />
+          <polygon points="0,0 30,0 15,18" fill="#ffffff" />
+          <polygon points="0,36 30,36 15,18" fill="#ffffff" />
+        </pattern>
+      </defs>
+      <rect x="0" y="0" width="30" height="1000" fill="url(#cert-teeth-right)" />
     </svg>
   );
 }
