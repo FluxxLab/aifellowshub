@@ -191,21 +191,113 @@ function IssuedView({ certificate: c }: { certificate: Certificate }) {
     }
   };
 
+  const onShareLinkedIn = () => {
+    // LinkedIn's share-offsite endpoint reads the OG meta tags off
+    // the verify page and builds the preview card itself. Open in a
+    // popup so the fellow can write a post on top of the auto-card
+    // without losing this tab.
+    const origin =
+      typeof window !== "undefined"
+        ? window.location.origin
+        : "https://aifellowshub.vercel.app";
+    const target = `${origin}${verifyPath}`;
+    const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
+      target,
+    )}`;
+    window.open(
+      shareUrl,
+      "linkedin-share",
+      "width=720,height=640,noopener,noreferrer",
+    );
+  };
+
   return (
-    <>
-      <section className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+    <section className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,520px)] lg:gap-8">
+        {/* Left column — completion details + verify URL */}
+        <div className="flex flex-col gap-4">
           <div>
             <Badge color="success">Issued</Badge>
-            <h2 className="mt-2 text-xl font-semibold text-gray-800">
-              Your Fellowship certificate
+            <h2 className="mt-2 text-2xl font-bold text-gray-800">
+              Completed by {c.fellowName}
             </h2>
-            <p className="mt-1 text-sm text-gray-600">
-              Issued {new Date(c.issuedAt).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })} ·{" "}
-              ID <span className="font-mono">{c.id}</span>
+            <p className="mt-3 text-base font-semibold text-gray-700">
+              {new Date(c.completedAt).toLocaleDateString(undefined, {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+            </p>
+            <p className="mt-4 text-sm leading-relaxed text-gray-600">
+              <span className="font-semibold text-gray-800">{c.fellowName}</span>
+              &apos;s account is verified. The Policy Innovation Centre certifies
+              their successful completion of{" "}
+              <Link
+                href={verifyPath}
+                className="font-semibold text-fellowship-navy hover:underline"
+              >
+                {c.programmeName}
+              </Link>
+              .
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+
+          <div className="mt-2 rounded-lg border border-gray-100 bg-gray-50 p-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+              Public verification URL
+            </p>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <Link
+                href={verifyPath}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="break-all font-mono text-xs text-fellowship-navy hover:underline sm:text-sm"
+              >
+                {verifyUrl}
+              </Link>
+              <button
+                type="button"
+                onClick={onCopy}
+                className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100"
+              >
+                <CopyIcon className="h-3.5 w-3.5" />
+                {copied ? "Copied" : "Copy"}
+              </button>
+            </div>
+            <p className="mt-2 text-xs text-gray-500">
+              Anyone with this link can verify your certificate — no login
+              required.
+            </p>
+          </div>
+
+          <p className="text-xs text-gray-500">
+            Certificate ID <span className="font-mono">{c.id}</span>
+          </p>
+        </div>
+
+        {/* Right column — compact certificate preview + actions */}
+        <div className="flex flex-col gap-3">
+          <CertificateCanvas
+            fellowName={c.fellowName}
+            programmeName={c.programmeName}
+            cohortName={c.cohortName}
+            capstoneTitle={c.capstoneTitle}
+            completedAtLabel={new Date(c.completedAt).toLocaleDateString(
+              undefined,
+              { day: "numeric", month: "long", year: "numeric" },
+            )}
+            signatories={c.signatories}
+            isPreview={false}
+          />
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              size="sm"
+              variant="fellowship"
+              onClick={onShareLinkedIn}
+            >
+              <PaperPlaneIcon className="h-4 w-4" />
+              Share to LinkedIn
+            </Button>
             <Button
               size="sm"
               variant="outline"
@@ -215,77 +307,10 @@ function IssuedView({ certificate: c }: { certificate: Certificate }) {
               <DownloadIcon className="h-4 w-4" />
               {downloading ? "Preparing…" : "Download PDF"}
             </Button>
-            <Button
-              size="sm"
-              variant="fellowship"
-              onClick={() => {
-                // LinkedIn's share-offsite endpoint reads the OG meta
-                // tags off the verify page and builds the preview card
-                // itself. Open in a popup so the fellow can write a
-                // post on top of the auto-card without losing this tab.
-                const origin =
-                  typeof window !== "undefined"
-                    ? window.location.origin
-                    : "https://aifellowshub.vercel.app";
-                const target = `${origin}${verifyPath}`;
-                const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
-                  target,
-                )}`;
-                window.open(
-                  shareUrl,
-                  "linkedin-share",
-                  "width=720,height=640,noopener,noreferrer",
-                );
-              }}
-            >
-              <PaperPlaneIcon className="h-4 w-4" />
-              Share to LinkedIn
-            </Button>
           </div>
         </div>
-
-        <div className="mt-5 rounded-lg border border-gray-100 bg-gray-50 p-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-            Public verification URL
-          </p>
-          <div className="mt-1 flex flex-wrap items-center gap-2">
-            <Link
-              href={verifyPath}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-mono text-sm text-fellowship-navy hover:underline"
-            >
-              {verifyUrl}
-            </Link>
-            <button
-              type="button"
-              onClick={onCopy}
-              className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100"
-            >
-              <CopyIcon className="h-3.5 w-3.5" />
-              {copied ? "Copied" : "Copy"}
-            </button>
-          </div>
-          <p className="mt-2 text-xs text-gray-500">
-            Anyone with this link can verify your certificate — no login required.
-          </p>
-        </div>
-      </section>
-
-      <CertificateCanvas
-        fellowName={c.fellowName}
-        programmeName={c.programmeName}
-        cohortName={c.cohortName}
-        capstoneTitle={c.capstoneTitle}
-        completedAtLabel={new Date(c.completedAt).toLocaleDateString(undefined, {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        })}
-        signatories={c.signatories}
-        isPreview={false}
-      />
-    </>
+      </div>
+    </section>
   );
 }
 
