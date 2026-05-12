@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import Badge from "@/components/ui/badge/Badge";
@@ -118,7 +118,6 @@ function CertificatePreview({ state }: { state: FellowCertificateState }) {
 function IssuedView({ certificate: c }: { certificate: Certificate }) {
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  const canvasRef = useRef<HTMLDivElement | null>(null);
   const verifyPath = `/certificates/${c.id}/verify`;
   const verifyUrl =
     typeof window !== "undefined" ? `${window.location.origin}${verifyPath}` : verifyPath;
@@ -132,36 +131,58 @@ function IssuedView({ certificate: c }: { certificate: Certificate }) {
   };
 
   const onDownload = async () => {
-    if (!canvasRef.current || downloading) return;
+    if (downloading) return;
     setDownloading(true);
     try {
-      // Dynamic import keeps these out of the initial bundle — they
-      // only load when the fellow actually clicks Download.
-      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-        import("html2canvas-pro"),
-        import("jspdf"),
-      ]);
-      const canvas = await html2canvas(canvasRef.current, {
-        // 3x scale renders at print quality (~300 DPI when the on-
-        // screen canvas is ~800px wide). Higher than 3x costs memory
-        // without visibly improving the result on most devices.
-        scale: 3,
-        backgroundColor: "#ffffff",
-        useCORS: true,
-        logging: false,
-      });
-      // A4 landscape: 297mm × 210mm. The canvas aspect ratio is the
-      // same (1.414:1), so the image fills the page exactly with no
-      // letterboxing. PNG keeps the decorative detail lossless — JPEG
-      // smudged the rosette petals and the woven floral border.
+      // Compose the PDF directly with jsPDF — embed the brand template
+      // as a background image, then add the name/signature/date as
+      // real PDF text. Much sharper and smaller than rasterising the
+      // DOM via html2canvas, and the resulting PDF text is selectable.
+      const { default: jsPDF } = await import("jspdf");
+
+      // A4 landscape in mm.
+      const PAGE_W = 297;
+      const PAGE_H = 210;
+
+      // Load the template PNG and get a data URL for jsPDF.
+      const templateUrl = "/images/Certificate%20lms.png";
+      const dataUrl = await loadImageAsDataUrl(templateUrl);
+
       const pdf = new jsPDF({
         orientation: "landscape",
         unit: "mm",
         format: "a4",
         compress: true,
       });
-      const imgData = canvas.toDataURL("image/png");
-      pdf.addImage(imgData, "PNG", 0, 0, 297, 210);
+      pdf.addImage(dataUrl, "PNG", 0, 0, PAGE_W, PAGE_H);
+
+      // Fellow name — large, navy, above the orange rule.
+      // The rule is at roughly 60% of the page height = 126mm; we
+      // baseline the text at 122mm so it sits just above it.
+      pdf.setTextColor(30, 58, 138);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(32);
+      pdf.text(c.fellowName, PAGE_W / 2 + 26, 122, { align: "center" });
+
+      // Signatory name — italic, above the "Authorized Signature" line.
+      if (c.signatories?.[0]?.name) {
+        pdf.setFont("helvetica", "italic");
+        pdf.setFontSize(14);
+        pdf.text(c.signatories[0].name, 95, 184, { align: "center" });
+      }
+
+      // Date — plain, above the "Date of Completion" line.
+      if (c.completedAt) {
+        const dateLabel = new Date(c.completedAt).toLocaleDateString(undefined, {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(11);
+        pdf.text(dateLabel, 252, 184, { align: "center" });
+      }
+
       pdf.save(`${c.fellowName.replace(/\s+/g, "_")}_Certificate_${c.id}.pdf`);
     } catch (err) {
       toast.errorFromException("Couldn't generate PDF", err);
@@ -229,21 +250,19 @@ function IssuedView({ certificate: c }: { certificate: Certificate }) {
         </div>
       </section>
 
-      <div ref={canvasRef}>
-        <CertificateCanvas
-          fellowName={c.fellowName}
-          programmeName={c.programmeName}
-          cohortName={c.cohortName}
-          capstoneTitle={c.capstoneTitle}
-          completedAtLabel={new Date(c.completedAt).toLocaleDateString(undefined, {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          })}
-          signatories={c.signatories}
-          isPreview={false}
-        />
-      </div>
+      <CertificateCanvas
+        fellowName={c.fellowName}
+        programmeName={c.programmeName}
+        cohortName={c.cohortName}
+        capstoneTitle={c.capstoneTitle}
+        completedAtLabel={new Date(c.completedAt).toLocaleDateString(undefined, {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        })}
+        signatories={c.signatories}
+        isPreview={false}
+      />
     </>
   );
 }
@@ -363,5 +382,32 @@ export function CertificateCanvas({
   );
 }
 
-/* ---------- Shared decorative pieces (mirrors CertificatePreview) ---------- */
+/**
+ * Fetch an image URL and return its bytes as a base64 data URL so
+ * jsPDF can embed it. Goes through a hidden <canvas> rather than a
+ * fetch() so that browser caching honours the same path the on-page
+ * <Image> already loaded, and the crossOrigin attribute is set to
+ * keep the canvas un-tainted in case anyone ever swaps the asset
+ * for a remote URL.
+ */
+async function loadImageAsDataUrl(src: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("Couldn't get 2D context"));
+        return;
+      }
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL("image/png"));
+    };
+    img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
+    img.src = src;
+  });
+}
 
