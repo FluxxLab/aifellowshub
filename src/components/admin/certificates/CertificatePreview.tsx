@@ -128,90 +128,115 @@ export default function CertificatePreview({
  );
 }
 
-/* ---------- Decorative pieces ---------- */
-
-/**
- * Whole left decoration as a single SVG — pattern, triangle strip,
- * vertical ribbon, and rosette all baked into one element. Mirrors
- * the fellow's CertificateCanvas so admin + fellow + verify all show
- * the same visual treatment.
+/* ---------- Decorative pieces ----------
+ *
+ * Mirrors the fellow's CertificateCanvas decorations. Implemented with
+ * tiled CSS background-image SVGs (no preserveAspectRatio="none"
+ * stretching) plus an inline rosette SVG with natural aspect ratio,
+ * so tiles stay square at any column width and the rosette doesn't
+ * distort under html2canvas-pro capture.
  */
+
+const FLORAL_TILE_ADMIN = encodeURIComponent(
+ `<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60">` +
+ `<rect width="60" height="60" fill="#eef2ff"/>` +
+ `<ellipse cx="30" cy="14" rx="8" ry="13" fill="#3b4eb0"/>` +
+ `<ellipse cx="30" cy="46" rx="8" ry="13" fill="#3b4eb0"/>` +
+ `<ellipse cx="14" cy="30" rx="13" ry="8" fill="#3b4eb0"/>` +
+ `<ellipse cx="46" cy="30" rx="13" ry="8" fill="#3b4eb0"/>` +
+ `<rect x="22" y="22" width="16" height="16" fill="#1e3a8a" transform="rotate(45 30 30)"/>` +
+ `</svg>`,
+);
+
+const TEETH_TILE_ADMIN = encodeURIComponent(
+ `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="40" viewBox="0 0 30 40">` +
+ `<rect width="30" height="40" fill="#1e3a8a"/>` +
+ `<polygon points="0,0 30,0 15,20" fill="#ffffff"/>` +
+ `<polygon points="0,40 30,40 15,20" fill="#ffffff"/>` +
+ `</svg>`,
+);
+
 function LeftBorder() {
  return (
+ <div className="absolute inset-y-0 left-0 w-[18%] overflow-hidden">
+ <div
+ className="absolute inset-y-0 left-0 w-[67%]"
+ style={{
+ backgroundImage: `url("data:image/svg+xml;utf8,${FLORAL_TILE_ADMIN}")`,
+ backgroundSize: "60px 60px",
+ backgroundRepeat: "repeat",
+ }}
+ />
+ <div
+ className="absolute inset-y-0 left-[67%] w-[33%]"
+ style={{
+ backgroundImage: `url("data:image/svg+xml;utf8,${TEETH_TILE_ADMIN}")`,
+ backgroundSize: "24px 32px",
+ backgroundRepeat: "repeat",
+ }}
+ />
+ <div
+ className="absolute"
+ style={{
+ left: "32%",
+ top: "44%",
+ bottom: 0,
+ width: "26%",
+ backgroundColor: "#1e3a8a",
+ clipPath:
+ "polygon(0% 0%, 100% 0%, 100% calc(100% - 24px), 50% 100%, 0% calc(100% - 24px))",
+ }}
+ />
+ <div
+ className="absolute"
+ style={{
+ left: "43%",
+ top: "44%",
+ bottom: "4%",
+ width: "4%",
+ backgroundColor: "#3b4eb0",
+ }}
+ />
  <svg
  aria-hidden
- viewBox="0 0 180 1000"
- preserveAspectRatio="none"
- className="absolute inset-y-0 left-0 h-full w-[18%]"
+ viewBox="0 0 120 120"
+ className="absolute"
+ style={{ left: "12%", top: "36%", width: "70%", height: "auto" }}
  >
- <defs>
- <pattern id="cert-floral-admin" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
- <rect width="60" height="60" fill="#eef2ff" />
- <ellipse cx="30" cy="14" rx="8" ry="13" fill="#3b4eb0" />
- <ellipse cx="30" cy="46" rx="8" ry="13" fill="#3b4eb0" />
- <ellipse cx="14" cy="30" rx="13" ry="8" fill="#3b4eb0" />
- <ellipse cx="46" cy="30" rx="13" ry="8" fill="#3b4eb0" />
- <rect x="22" y="22" width="16" height="16" fill="#1e3a8a" transform="rotate(45 30 30)" />
- <circle cx="0" cy="0" r="3" fill="#3b4eb0" />
- <circle cx="60" cy="0" r="3" fill="#3b4eb0" />
- <circle cx="0" cy="60" r="3" fill="#3b4eb0" />
- <circle cx="60" cy="60" r="3" fill="#3b4eb0" />
- </pattern>
- <pattern id="cert-teeth-admin" x="0" y="0" width="36" height="36" patternUnits="userSpaceOnUse">
- <rect width="36" height="36" fill="#1e3a8a" />
- <polygon points="0,0 36,0 18,18" fill="#ffffff" />
- <polygon points="0,36 36,36 18,18" fill="#ffffff" />
- </pattern>
- </defs>
- <rect x="0" y="0" width="120" height="1000" fill="url(#cert-floral-admin)" />
- <rect x="120" y="0" width="60" height="1000" fill="url(#cert-teeth-admin)" />
- <rect x="98" y="0" width="14" height="1000" fill="#1d4ed8" />
- {/* Long ribbon tails — rosette appears to hang on a draped ribbon */}
- <polygon points="42,500 42,1000 60,970 78,1000 78,500" fill="#1e3a8a" />
- <polygon points="42,500 42,950 50,940 50,500" fill="#3b4eb0" />
- <polygon points="78,500 78,950 70,940 70,500" fill="#3b4eb0" />
- <g transform="translate(60 500)">
- <circle cx="0" cy="-48" r="6" fill="#f5a623" />
- <circle cx="18.4" cy="-44.4" r="6" fill="#f5a623" />
- <circle cx="33.9" cy="-33.9" r="6" fill="#f5a623" />
- <circle cx="44.4" cy="-18.4" r="6" fill="#f5a623" />
- <circle cx="48" cy="0" r="6" fill="#f5a623" />
- <circle cx="44.4" cy="18.4" r="6" fill="#f5a623" />
- <circle cx="33.9" cy="33.9" r="6" fill="#f5a623" />
- <circle cx="18.4" cy="44.4" r="6" fill="#f5a623" />
- <circle cx="0" cy="48" r="6" fill="#f5a623" />
- <circle cx="-18.4" cy="44.4" r="6" fill="#f5a623" />
- <circle cx="-33.9" cy="33.9" r="6" fill="#f5a623" />
- <circle cx="-44.4" cy="18.4" r="6" fill="#f5a623" />
- <circle cx="-48" cy="0" r="6" fill="#f5a623" />
- <circle cx="-44.4" cy="-18.4" r="6" fill="#f5a623" />
- <circle cx="-33.9" cy="-33.9" r="6" fill="#f5a623" />
- <circle cx="-18.4" cy="-44.4" r="6" fill="#f5a623" />
- <circle cx="0" cy="0" r="46" fill="#f5a623" />
- <circle cx="0" cy="0" r="30" fill="#fbbf24" />
- <circle cx="0" cy="0" r="25" fill="none" stroke="#f5a623" strokeWidth="2" />
- </g>
+ <circle cx="60" cy="12" r="6" fill="#f5a623" />
+ <circle cx="78.4" cy="15.6" r="6" fill="#f5a623" />
+ <circle cx="93.9" cy="26.1" r="6" fill="#f5a623" />
+ <circle cx="104.4" cy="41.6" r="6" fill="#f5a623" />
+ <circle cx="108" cy="60" r="6" fill="#f5a623" />
+ <circle cx="104.4" cy="78.4" r="6" fill="#f5a623" />
+ <circle cx="93.9" cy="93.9" r="6" fill="#f5a623" />
+ <circle cx="78.4" cy="104.4" r="6" fill="#f5a623" />
+ <circle cx="60" cy="108" r="6" fill="#f5a623" />
+ <circle cx="41.6" cy="104.4" r="6" fill="#f5a623" />
+ <circle cx="26.1" cy="93.9" r="6" fill="#f5a623" />
+ <circle cx="15.6" cy="78.4" r="6" fill="#f5a623" />
+ <circle cx="12" cy="60" r="6" fill="#f5a623" />
+ <circle cx="15.6" cy="41.6" r="6" fill="#f5a623" />
+ <circle cx="26.1" cy="26.1" r="6" fill="#f5a623" />
+ <circle cx="41.6" cy="15.6" r="6" fill="#f5a623" />
+ <circle cx="60" cy="60" r="46" fill="#f5a623" />
+ <circle cx="60" cy="60" r="30" fill="#fbbf24" />
+ <circle cx="60" cy="60" r="25" fill="none" stroke="#f5a623" strokeWidth="2" />
  </svg>
+ </div>
  );
 }
 
 function RightBorder() {
  return (
- <svg
- aria-hidden
- viewBox="0 0 30 1000"
- preserveAspectRatio="none"
- className="absolute inset-y-0 right-0 h-full w-[3%]"
- >
- <defs>
- <pattern id="cert-teeth-right-admin" x="0" y="0" width="30" height="36" patternUnits="userSpaceOnUse">
- <rect width="30" height="36" fill="#1e3a8a" />
- <polygon points="0,0 30,0 15,18" fill="#ffffff" />
- <polygon points="0,36 30,36 15,18" fill="#ffffff" />
- </pattern>
- </defs>
- <rect x="0" y="0" width="30" height="1000" fill="url(#cert-teeth-right-admin)" />
- </svg>
+ <div
+ className="absolute inset-y-0 right-0 w-[3%]"
+ style={{
+ backgroundImage: `url("data:image/svg+xml;utf8,${TEETH_TILE_ADMIN}")`,
+ backgroundSize: "100% 32px",
+ backgroundRepeat: "repeat",
+ }}
+ />
  );
 }
 

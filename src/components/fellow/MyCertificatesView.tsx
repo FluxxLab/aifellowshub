@@ -402,139 +402,129 @@ export function CertificateCanvas({
 /* ---------- Shared decorative pieces (mirrors CertificatePreview) ---------- */
 
 /**
- * Whole left decoration as a single SVG — pattern column, triangle
- * strip, vertical ribbon, and rosette all baked into one file. Single
- * SVG rasterises cleanly under html2canvas-pro; the earlier CSS-only
- * variant produced a half-empty column in the downloaded PDF because
- * radial-gradient tiling + nested absolute children don't round-trip
- * reliably through DOM-to-canvas capture.
+ * Left decoration. Composed from three layers so each preserves its
+ * natural aspect ratio regardless of how tall/narrow the column
+ * becomes — earlier single-SVG approach with preserveAspectRatio="none"
+ * stretched the tiles into ovals.
  *
- * preserveAspectRatio="none" stretches the SVG to fill the certificate
- * height regardless of canvas size, so the design stays consistent
- * across previews, screen-renders, and the PDF output.
+ *   1. Tiled floral pattern as a CSS background-image (square tiles,
+ *      always repeat at fixed pixel size)
+ *   2. Tiled teeth strip the same way
+ *   3. Ribbon tails as a colored div with clip-path V-cut at bottom
+ *   4. Rosette as inline SVG with natural square aspect ratio
  */
+const FLORAL_TILE = encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60">` +
+    `<rect width="60" height="60" fill="#eef2ff"/>` +
+    `<ellipse cx="30" cy="14" rx="8" ry="13" fill="#3b4eb0"/>` +
+    `<ellipse cx="30" cy="46" rx="8" ry="13" fill="#3b4eb0"/>` +
+    `<ellipse cx="14" cy="30" rx="13" ry="8" fill="#3b4eb0"/>` +
+    `<ellipse cx="46" cy="30" rx="13" ry="8" fill="#3b4eb0"/>` +
+    `<rect x="22" y="22" width="16" height="16" fill="#1e3a8a" transform="rotate(45 30 30)"/>` +
+    `</svg>`,
+);
+
+const TEETH_TILE = encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="40" viewBox="0 0 30 40">` +
+    `<rect width="30" height="40" fill="#1e3a8a"/>` +
+    `<polygon points="0,0 30,0 15,20" fill="#ffffff"/>` +
+    `<polygon points="0,40 30,40 15,20" fill="#ffffff"/>` +
+    `</svg>`,
+);
+
 function CertLeftBorder() {
   return (
-    <svg
-      aria-hidden
-      viewBox="0 0 180 1000"
-      preserveAspectRatio="none"
-      className="absolute inset-y-0 left-0 h-full w-[18%]"
-    >
-      <defs>
-        {/* 4-petal flower with central diamond — matches the brand
-            mockup's floral motif. Each tile is 60×60 in user space;
-            the SVG itself is stretched to fill the certificate, so
-            tiles render at whatever the physical column width gives. */}
-        <pattern
-          id="cert-floral"
-          x="0"
-          y="0"
-          width="60"
-          height="60"
-          patternUnits="userSpaceOnUse"
-        >
-          <rect width="60" height="60" fill="#eef2ff" />
-          {/* Four petals around the centre */}
-          <ellipse cx="30" cy="14" rx="8" ry="13" fill="#3b4eb0" />
-          <ellipse cx="30" cy="46" rx="8" ry="13" fill="#3b4eb0" />
-          <ellipse cx="14" cy="30" rx="13" ry="8" fill="#3b4eb0" />
-          <ellipse cx="46" cy="30" rx="13" ry="8" fill="#3b4eb0" />
-          {/* Central diamond */}
-          <rect
-            x="22"
-            y="22"
-            width="16"
-            height="16"
-            fill="#1e3a8a"
-            transform="rotate(45 30 30)"
-          />
-          {/* Corner accent dots — form a secondary motif when tiled */}
-          <circle cx="0" cy="0" r="3" fill="#3b4eb0" />
-          <circle cx="60" cy="0" r="3" fill="#3b4eb0" />
-          <circle cx="0" cy="60" r="3" fill="#3b4eb0" />
-          <circle cx="60" cy="60" r="3" fill="#3b4eb0" />
-        </pattern>
-        <pattern
-          id="cert-teeth"
-          x="0"
-          y="0"
-          width="36"
-          height="36"
-          patternUnits="userSpaceOnUse"
-        >
-          <rect width="36" height="36" fill="#1e3a8a" />
-          <polygon points="0,0 36,0 18,18" fill="#ffffff" />
-          <polygon points="0,36 36,36 18,18" fill="#ffffff" />
-        </pattern>
-      </defs>
-
-      {/* Pattern column (floral tile) */}
-      <rect x="0" y="0" width="120" height="1000" fill="url(#cert-floral)" />
+    <div className="absolute inset-y-0 left-0 w-[18%] overflow-hidden">
+      {/* Floral pattern column */}
+      <div
+        className="absolute inset-y-0 left-0 w-[67%]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml;utf8,${FLORAL_TILE}")`,
+          backgroundSize: "60px 60px",
+          backgroundRepeat: "repeat",
+        }}
+      />
       {/* Triangle teeth strip */}
-      <rect x="120" y="0" width="60" height="1000" fill="url(#cert-teeth)" />
-      {/* Vertical blue accent ribbon (anchors the rosette tails) */}
-      <rect x="98" y="0" width="14" height="1000" fill="#1d4ed8" />
-
-      {/* Ribbon tails first — extend from rosette down to the bottom
-          edge so the rosette appears to hang from a long ribbon that
-          drapes off the page, matching the mockup. */}
-      <polygon points="42,500 42,1000 60,970 78,1000 78,500" fill="#1e3a8a" />
-      <polygon points="42,500 42,950 50,940 50,500" fill="#3b4eb0" />
-      <polygon points="78,500 78,950 70,940 70,500" fill="#3b4eb0" />
-
-      {/* Rosette anchored mid-height, on top of the ribbon */}
-      <g transform="translate(60 500)">
-        {/* Outer petals — 16 explicit circles, no dynamic generation */}
-        <circle cx="0" cy="-48" r="6" fill="#f5a623" />
-        <circle cx="18.4" cy="-44.4" r="6" fill="#f5a623" />
-        <circle cx="33.9" cy="-33.9" r="6" fill="#f5a623" />
-        <circle cx="44.4" cy="-18.4" r="6" fill="#f5a623" />
-        <circle cx="48" cy="0" r="6" fill="#f5a623" />
-        <circle cx="44.4" cy="18.4" r="6" fill="#f5a623" />
-        <circle cx="33.9" cy="33.9" r="6" fill="#f5a623" />
-        <circle cx="18.4" cy="44.4" r="6" fill="#f5a623" />
-        <circle cx="0" cy="48" r="6" fill="#f5a623" />
-        <circle cx="-18.4" cy="44.4" r="6" fill="#f5a623" />
-        <circle cx="-33.9" cy="33.9" r="6" fill="#f5a623" />
-        <circle cx="-44.4" cy="18.4" r="6" fill="#f5a623" />
-        <circle cx="-48" cy="0" r="6" fill="#f5a623" />
-        <circle cx="-44.4" cy="-18.4" r="6" fill="#f5a623" />
-        <circle cx="-33.9" cy="-33.9" r="6" fill="#f5a623" />
-        <circle cx="-18.4" cy="-44.4" r="6" fill="#f5a623" />
+      <div
+        className="absolute inset-y-0 left-[67%] w-[33%]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml;utf8,${TEETH_TILE}")`,
+          backgroundSize: "24px 32px",
+          backgroundRepeat: "repeat",
+        }}
+      />
+      {/* Ribbon tails — drapes from the rosette down to the bottom edge */}
+      <div
+        className="absolute"
+        style={{
+          left: "32%",
+          top: "44%",
+          bottom: 0,
+          width: "26%",
+          backgroundColor: "#1e3a8a",
+          clipPath:
+            "polygon(0% 0%, 100% 0%, 100% calc(100% - 24px), 50% 100%, 0% calc(100% - 24px))",
+        }}
+      />
+      {/* Inner ribbon highlight for depth */}
+      <div
+        className="absolute"
+        style={{
+          left: "43%",
+          top: "44%",
+          bottom: "4%",
+          width: "4%",
+          backgroundColor: "#3b4eb0",
+        }}
+      />
+      {/* Rosette — inline SVG, natural square aspect ratio so no distortion */}
+      <svg
+        aria-hidden
+        viewBox="0 0 120 120"
+        className="absolute"
+        style={{
+          left: "12%",
+          top: "36%",
+          width: "70%",
+          height: "auto",
+        }}
+      >
+        {/* Outer petals — 16 static circles, no dynamic generation */}
+        <circle cx="60" cy="12" r="6" fill="#f5a623" />
+        <circle cx="78.4" cy="15.6" r="6" fill="#f5a623" />
+        <circle cx="93.9" cy="26.1" r="6" fill="#f5a623" />
+        <circle cx="104.4" cy="41.6" r="6" fill="#f5a623" />
+        <circle cx="108" cy="60" r="6" fill="#f5a623" />
+        <circle cx="104.4" cy="78.4" r="6" fill="#f5a623" />
+        <circle cx="93.9" cy="93.9" r="6" fill="#f5a623" />
+        <circle cx="78.4" cy="104.4" r="6" fill="#f5a623" />
+        <circle cx="60" cy="108" r="6" fill="#f5a623" />
+        <circle cx="41.6" cy="104.4" r="6" fill="#f5a623" />
+        <circle cx="26.1" cy="93.9" r="6" fill="#f5a623" />
+        <circle cx="15.6" cy="78.4" r="6" fill="#f5a623" />
+        <circle cx="12" cy="60" r="6" fill="#f5a623" />
+        <circle cx="15.6" cy="41.6" r="6" fill="#f5a623" />
+        <circle cx="26.1" cy="26.1" r="6" fill="#f5a623" />
+        <circle cx="41.6" cy="15.6" r="6" fill="#f5a623" />
         {/* Rosette body */}
-        <circle cx="0" cy="0" r="46" fill="#f5a623" />
-        <circle cx="0" cy="0" r="30" fill="#fbbf24" />
-        <circle cx="0" cy="0" r="25" fill="none" stroke="#f5a623" strokeWidth="2" />
-      </g>
-    </svg>
+        <circle cx="60" cy="60" r="46" fill="#f5a623" />
+        <circle cx="60" cy="60" r="30" fill="#fbbf24" />
+        <circle cx="60" cy="60" r="25" fill="none" stroke="#f5a623" strokeWidth="2" />
+      </svg>
+    </div>
   );
 }
 
 function CertRightBorder() {
   return (
-    <svg
-      aria-hidden
-      viewBox="0 0 30 1000"
-      preserveAspectRatio="none"
-      className="absolute inset-y-0 right-0 h-full w-[3%]"
-    >
-      <defs>
-        <pattern
-          id="cert-teeth-right"
-          x="0"
-          y="0"
-          width="30"
-          height="36"
-          patternUnits="userSpaceOnUse"
-        >
-          <rect width="30" height="36" fill="#1e3a8a" />
-          <polygon points="0,0 30,0 15,18" fill="#ffffff" />
-          <polygon points="0,36 30,36 15,18" fill="#ffffff" />
-        </pattern>
-      </defs>
-      <rect x="0" y="0" width="30" height="1000" fill="url(#cert-teeth-right)" />
-    </svg>
+    <div
+      className="absolute inset-y-0 right-0 w-[3%]"
+      style={{
+        backgroundImage: `url("data:image/svg+xml;utf8,${TEETH_TILE}")`,
+        backgroundSize: "100% 32px",
+        backgroundRepeat: "repeat",
+      }}
+    />
   );
 }
 
