@@ -156,12 +156,13 @@ function IssuedView({ certificate: c }: { certificate: Certificate }) {
       });
       pdf.addImage(dataUrl, "PNG", 0, 0, PAGE_W, PAGE_H);
 
-      // Fellow name — large, navy, above the orange rule.
-      // The rule is at roughly 60% of the page height = 126mm; we
-      // baseline the text at 122mm so it sits just above it.
+      // Fellow name — navy, above the orange rule. The rule sits at
+      // roughly 60% of the page height = 126mm; baseline the text
+      // a touch above so it doesn't overlap. Size kept modest so
+      // even long names fit between the template's side flourishes.
       pdf.setTextColor(30, 58, 138);
       pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(32);
+      pdf.setFontSize(22);
       pdf.text(c.fellowName, PAGE_W / 2 + 26, 122, { align: "center" });
 
       // Signatory name — italic, above the "Authorized Signature" line.
@@ -376,7 +377,7 @@ export function CertificateCanvas({
       >
         <p
           className="font-signature text-fellowship-navy leading-none"
-          style={{ fontSize: "clamp(1.5rem, 4vw, 3rem)" }}
+          style={{ fontSize: "clamp(0.875rem, 2.2vw, 1.75rem)" }}
         >
           {fellowName}
         </p>

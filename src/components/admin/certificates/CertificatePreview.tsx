@@ -50,7 +50,7 @@ export default function CertificatePreview({
  >
  <p
  className="font-signature text-fellowship-navy leading-none"
- style={{ fontSize: "clamp(1.5rem, 4vw, 3rem)" }}
+ style={{ fontSize: "clamp(0.875rem, 2.2vw, 1.75rem)" }}
  >
  {fellowName}
  </p>
