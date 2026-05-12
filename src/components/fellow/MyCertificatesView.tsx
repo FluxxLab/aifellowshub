@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import Badge from "@/components/ui/badge/Badge";
 import Breadcrumbs from "@/components/common/Breadcrumbs";
@@ -244,10 +245,22 @@ export function CertificateCanvas({
       <div className="absolute inset-y-0 left-[18%] right-[5%] flex flex-col px-[3%] py-[5%]">
         {/* Top: Luminate wordmark + PIC × AHFID lockup */}
         <header className="flex items-start justify-between gap-6">
-          <div className="font-bold tracking-tight text-gray-900 text-[clamp(1rem,2.4vw,1.75rem)]">
-            luminate
-          </div>
-          <CertLogoLockup />
+          <Image
+            src="/images/luminatewhite.png"
+            alt="Luminate"
+            width={400}
+            height={120}
+            priority
+            className="h-[clamp(1.5rem,3.5vw,2.75rem)] w-auto object-contain"
+          />
+          <Image
+            src="/images/white-logo.png"
+            alt="Policy Innovation Centre × Africa Hub for Innovation & Development"
+            width={600}
+            height={180}
+            priority
+            className="h-[clamp(2rem,4.5vw,3.5rem)] w-auto object-contain"
+          />
         </header>
 
         {/* Heading */}
@@ -407,20 +420,3 @@ function CertRosette() {
   );
 }
 
-function CertLogoLockup() {
-  return (
-    <div className="flex items-center gap-2 text-fellowship-navy">
-      <span className="text-[clamp(0.7rem,1.5vw,1rem)] font-bold tracking-tight">
-        PIC
-      </span>
-      <span className="h-6 w-px bg-fellowship-navy/40" />
-      <span className="text-[clamp(0.55rem,1vw,0.75rem)] font-bold leading-tight tracking-tight text-error-600">
-        AFRICA HUB FOR
-        <br />
-        INNOVATION &amp;
-        <br />
-        DEVELOPMENT
-      </span>
-    </div>
-  );
-}
