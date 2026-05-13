@@ -16,20 +16,22 @@ import {
   type CapstoneStatus,
 } from "@/lib/api/fellow-capstone";
 import { getMentorQueueServer } from "@/lib/api/mentor-capstone.server";
+import { listMentorBookingsServer } from "@/lib/api/mentorship.server";
 import { getCurrentUser } from "@/lib/auth/getCurrentUser";
 import MentorHomeTour from "@/components/mentor/tours/MentorHomeTour";
 
 export const metadata: Metadata = {
   title: "Mentor home · AI Fellows LMS",
   description:
-    "Your assigned fellows, capstones awaiting your reply, and upcoming office hours (BRD §6.10).",
+    "Your assigned fellows, capstones awaiting your reply, and upcoming coaching sessions (BRD §6.10).",
 };
 
 export default async function MentorHomePage() {
-  const [user, home, queue] = await Promise.all([
+  const [user, home, queue, bookings] = await Promise.all([
     getCurrentUser(),
     getMentorHome(),
     getMentorQueueServer(),
+    listMentorBookingsServer(),
   ]);
   const firstName = user.fullName.split(" ")[0];
 
@@ -42,17 +44,24 @@ export default async function MentorHomePage() {
     )
     .slice(0, 3);
 
-  const office = home.nextOfficeHours;
-  const officeStart = new Date(office.startsAt);
-  const officeDate = officeStart.toLocaleDateString(undefined, {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  });
-  const officeTime = officeStart.toLocaleTimeString(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  // Confirmed mentorship bookings yet to take place — soonest first.
+  const now = Date.now();
+  const upcomingBookings = bookings
+    .filter(
+      (b) =>
+        b.status === "confirmed" &&
+        +new Date(b.requestedStartsAt) > now,
+    )
+    .sort(
+      (a, b) =>
+        +new Date(a.requestedStartsAt) - +new Date(b.requestedStartsAt),
+    )
+    .slice(0, 3);
+
+  const nextBooking = upcomingBookings[0] ?? null;
+  const nextBookingLabel = nextBooking
+    ? `Next coaching session: ${formatBookingWhen(nextBooking.requestedStartsAt)}`
+    : null;
 
   return (
     <div className="flex flex-col gap-4 md:gap-6">
@@ -73,7 +82,7 @@ export default async function MentorHomePage() {
           >
             {home.awaitingReply} awaiting your reply
           </Link>
-          . Office hours: {officeDate} at {officeTime}.
+          {nextBookingLabel ? ` . ${nextBookingLabel}.` : "."}
         </p>
       </div>
 
@@ -173,28 +182,61 @@ export default async function MentorHomePage() {
 
         <aside className="flex flex-col gap-4 md:gap-6">
           <section className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
-            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-              Next office hours
-            </p>
-            <div className="mt-3 flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-warning-100 text-fellowship-navy">
-                <CalenderIcon className="h-5 w-5" />
-              </span>
-              <div>
-                <p className="text-sm font-semibold text-gray-800">
-                  {office.topic}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {officeDate} · {officeTime} · {office.durationMinutes} min
-                </p>
-              </div>
+            <div className="flex items-baseline justify-between gap-2">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                Confirmed coaching sessions
+              </p>
+              <Link
+                href="/mentor/requests"
+                className="text-xs font-medium text-fellowship-navy hover:underline"
+              >
+                All
+              </Link>
             </div>
-            <p className="mt-3 text-xs text-gray-500">
-              {office.rsvpCount} fellows registered so far.
-            </p>
-            <Button size="sm" variant="outline" className="mt-3 w-full">
-              Add to calendar
-            </Button>
+
+            {upcomingBookings.length === 0 ? (
+              <p className="mt-3 text-sm text-gray-500">
+                No upcoming sessions. Confirmed bookings will appear here as
+                fellows schedule and admins approve them.
+              </p>
+            ) : (
+              <ul className="mt-3 flex flex-col gap-3">
+                {upcomingBookings.map((b) => (
+                  <li
+                    key={b.id}
+                    className="flex items-start gap-3 rounded-lg border border-gray-100 p-3"
+                  >
+                    <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-warning-100 text-fellowship-navy">
+                      <CalenderIcon className="h-5 w-5" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-gray-800">
+                        {b.fellow?.fullName ?? "Fellow"}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {formatBookingWhen(b.requestedStartsAt)} ·{" "}
+                        {b.requestedDurationMinutes} min
+                      </p>
+                      {b.topic && (
+                        <p className="mt-1 line-clamp-2 text-xs text-gray-600">
+                          {b.topic}
+                        </p>
+                      )}
+                    </div>
+                    {b.zoomJoinUrl && (
+                      <a
+                        href={b.zoomJoinUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0 text-xs font-semibold text-fellowship-navy hover:underline"
+                      >
+                        Join
+                      </a>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
 
           <section className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
@@ -310,4 +352,16 @@ function relativeTime(iso: string): string {
   if (days < 7) return `${days} days ago`;
   if (days < 30) return `${Math.round(days / 7)} weeks ago`;
   return `${Math.round(days / 30)} months ago`;
+}
+
+function formatBookingWhen(iso: string): string {
+  const d = new Date(iso);
+  return `${d.toLocaleDateString(undefined, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  })} · ${d.toLocaleTimeString(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+  })}`;
 }
