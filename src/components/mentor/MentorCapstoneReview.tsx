@@ -5,11 +5,7 @@ import AvatarText from "@/components/ui/avatar/AvatarText";
 import Badge from "@/components/ui/badge/Badge";
 import Breadcrumbs from "@/components/common/Breadcrumbs";
 import Button from "@/components/ui/button/Button";
-import {
-  CheckLineIcon,
-  CloseLineIcon,
-  PaperPlaneIcon,
-} from "@/icons";
+import { PaperPlaneIcon } from "@/icons";
 import { toast } from "@/lib/toast";
 import { useCurrentUser } from "@/lib/auth/useCurrentUser";
 import {
@@ -48,7 +44,6 @@ export default function MentorCapstoneReview({
   const [reply, setReply] = useState("");
   const [outcome, setOutcome] = useState<ReviewOutcome>("comments");
   const [postingReview, setPostingReview] = useState(false);
-  const [decisionState, setDecisionState] = useState<"idle" | "saved">("idle");
 
   const onPostReply = async () => {
     const trimmed = reply.trim();
@@ -90,13 +85,6 @@ export default function MentorCapstoneReview({
     setOutcome("comments");
   };
 
-  const setDecision = (next: CapstoneStatus) => {
-    // Phase 2: PATCH /capstone/:fellowId/status.
-    setStatus(next);
-    setDecisionState("saved");
-    window.setTimeout(() => setDecisionState("idle"), 1800);
-  };
-
   const draftEmpty = capstone.draft.problem === "—";
   const draftWords = countWords(
     [
@@ -127,44 +115,25 @@ export default function MentorCapstoneReview({
         lastSavedAt={capstone.draft.lastSavedAt}
       />
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 md:gap-6">
-        <div className="lg:col-span-2 flex flex-col gap-4 md:gap-6">
-          {draftEmpty ? (
-            <EmptyDraftCard />
-          ) : (
-            <>
-              <TitleCard
-                title={capstone.title}
-                oneliner={capstone.oneliner}
-                sector={capstone.sector}
-              />
-              <ReadOnlySection
-                label="Problem statement"
-                value={capstone.draft.problem}
-              />
-              {/* Approach / Deliverables / Risks are stored as one
-                  combined markdown blob server-side and arrive on the
-                  `approach` field. Render once as the full draft body
-                  rather than three near-empty Read-only cards. */}
-              <ReadOnlySection
-                label="Draft"
-                value={capstone.draft.approach}
-              />
-            </>
-          )}
-        </div>
-
-        <aside className="flex flex-col gap-4 md:gap-6">
-          <DecisionCard
-            status={status}
-            onApprove={() => setDecision("approved")}
-            onReturn={() => setDecision("returned")}
-            onMarkUnderReview={() => setDecision("under-review")}
-            decisionState={decisionState}
-            disabled={draftEmpty}
+      {draftEmpty ? (
+        <EmptyDraftCard />
+      ) : (
+        <>
+          <TitleCard
+            title={capstone.title}
+            oneliner={capstone.oneliner}
+            sector={capstone.sector}
           />
-        </aside>
-      </div>
+          <ReadOnlySection
+            label="Problem statement"
+            value={capstone.draft.problem}
+          />
+          {/* Approach / Deliverables / Risks are stored as one combined
+              markdown blob server-side and arrive on the `approach`
+              field. Render once as the full draft body. */}
+          <ReadOnlySection label="Draft" value={capstone.draft.approach} />
+        </>
+      )}
 
       <FeedbackThread
         feedback={feedback}
@@ -289,74 +258,6 @@ function EmptyDraftCard() {
   );
 }
 
-function DecisionCard({
-  status,
-  onApprove,
-  onReturn,
-  onMarkUnderReview,
-  decisionState,
-  disabled,
-}: {
-  status: CapstoneStatus;
-  onApprove: () => void;
-  onReturn: () => void;
-  onMarkUnderReview: () => void;
-  decisionState: "idle" | "saved";
-  disabled: boolean;
-}) {
-  return (
-    <section className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
-      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-        Mentor decision
-      </p>
-      <p className="mt-1 text-sm text-gray-600">
-        Approve sends the capstone to graduation eligibility. Return sends it
-        back to the fellow with your last comment as the reason.
-      </p>
-
-      <div className="mt-4 flex flex-col gap-2">
-        {status === "submitted" && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={onMarkUnderReview}
-            disabled={disabled}
-            className="w-full"
-          >
-            Start review
-          </Button>
-        )}
-        <Button
-          size="sm"
-          variant="fellowship"
-          onClick={onApprove}
-          disabled={disabled || status === "approved"}
-          className="w-full"
-        >
-          <CheckLineIcon className="h-4 w-4" />
-          {status === "approved" ? "Approved ✓" : "Approve"}
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={onReturn}
-          disabled={disabled || status === "not-started"}
-          className="w-full"
-        >
-          <CloseLineIcon className="h-4 w-4" />
-          {status === "returned" ? "Returned ✓" : "Return for revision"}
-        </Button>
-      </div>
-
-      {decisionState === "saved" && (
-        <p className="mt-3 text-xs text-success-700">
-          Decision saved. The fellow will see this on their capstone page.
-        </p>
-      )}
-    </section>
-  );
-}
-
 function FeedbackThread({
   feedback,
   userName,
@@ -451,6 +352,12 @@ function FeedbackThread({
             {posting ? "Posting…" : "Post review"}
           </Button>
         </div>
+        {outcome === "needs_revision" && !reply.trim() && (
+          <p className="mt-2 text-xs text-error-600">
+            Add feedback before sending this back — the fellow needs to know
+            what to change.
+          </p>
+        )}
       </div>
     </section>
   );
