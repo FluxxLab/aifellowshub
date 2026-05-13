@@ -351,31 +351,60 @@ export default function ZoomMeetingRoom({
       >
         <div ref={containerRef} className="absolute inset-0" />
         {phase === "in-meeting" && (
-          <div className="absolute right-3 top-3 z-10 flex gap-2">
-            {isHost && (
-              <button
-                type="button"
-                onClick={endSession}
-                disabled={endingSession}
-                className="rounded-md bg-error-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-error-700 disabled:opacity-60"
-              >
-                {endingSession ? "Ending…" : "End session"}
-              </button>
-            )}
+          <>
+            {/*
+              Fullscreen toggle pinned top-LEFT — Zoom's Component View
+              parks its grid-view / minimise / record badges along the
+              top-right of the embed, so anchoring our button there
+              made it disappear under Zoom's chrome on mobile. Top-left
+              is empty in every Zoom layout, so the control is always
+              tappable. z-20 keeps it above Zoom's own overlays.
+            */}
             <button
               type="button"
               onClick={() => {
                 if (isFullscreen) void exitFullscreen();
                 else void enterFullscreen();
               }}
-              className="rounded-md bg-black/60 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-black/80"
+              className="absolute left-3 top-3 z-20 inline-flex items-center gap-1.5 rounded-lg bg-fellowship-navy px-3 py-2 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-fellowship-navy-dark"
               aria-label={
                 isFullscreen ? "Exit fullscreen" : "Expand to fullscreen"
               }
             >
-              {isFullscreen ? "Exit fullscreen (Esc)" : "Expand"}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                className="h-4 w-4"
+                aria-hidden="true"
+              >
+                {isFullscreen ? (
+                  <path
+                    fillRule="evenodd"
+                    d="M4 9h3a1 1 0 001-1V5a1 1 0 112 0v3a3 3 0 01-3 3H4a1 1 0 110-2zm9-4a1 1 0 011 1v3a1 1 0 001 1h3a1 1 0 110 2h-3a3 3 0 01-3-3V6a1 1 0 011-1zm-9 6a1 1 0 011 1v3a1 1 0 001 1h3a1 1 0 110 2H6a3 3 0 01-3-3v-3a1 1 0 011-1zm13 0a1 1 0 011 1v3a3 3 0 01-3 3h-3a1 1 0 110-2h3a1 1 0 001-1v-3a1 1 0 011-1z"
+                    clipRule="evenodd"
+                  />
+                ) : (
+                  <path
+                    fillRule="evenodd"
+                    d="M3 5a2 2 0 012-2h3a1 1 0 010 2H5v3a1 1 0 11-2 0V5zm14 0v3a1 1 0 11-2 0V5h-3a1 1 0 110-2h3a2 2 0 012 2zM5 17h3a1 1 0 110 2H5a2 2 0 01-2-2v-3a1 1 0 112 0v3zm10 0v-3a1 1 0 112 0v3a2 2 0 01-2 2h-3a1 1 0 110-2h3z"
+                    clipRule="evenodd"
+                  />
+                )}
+              </svg>
+              {isFullscreen ? "Exit fullscreen" : "Fullscreen"}
             </button>
-          </div>
+            {isHost && (
+              <button
+                type="button"
+                onClick={endSession}
+                disabled={endingSession}
+                className="absolute right-3 top-3 z-20 rounded-lg bg-error-600 px-3 py-2 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-error-700 disabled:opacity-60"
+              >
+                {endingSession ? "Ending…" : "End session"}
+              </button>
+            )}
+          </>
         )}
       </div>
 
