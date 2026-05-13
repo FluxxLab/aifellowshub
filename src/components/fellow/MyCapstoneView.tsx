@@ -443,13 +443,15 @@ function MilestonesCard({ milestones }: { milestones: CapstoneMilestone[] }) {
               >
                 {m.title}
               </p>
-              <p className="text-xs text-gray-500">
-                Week {m.weekNumber} ·{" "}
-                {new Date(m.dueAt).toLocaleDateString(undefined, {
-                  day: "numeric",
-                  month: "short",
-                })}
-              </p>
+              {m.dueAt && (
+                <p className="text-xs text-gray-500">
+                  {m.weekNumber ? `Week ${m.weekNumber} · ` : ""}
+                  {new Date(m.dueAt).toLocaleDateString(undefined, {
+                    day: "numeric",
+                    month: "short",
+                  })}
+                </p>
+              )}
             </div>
           </li>
         ))}

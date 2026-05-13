@@ -48,9 +48,11 @@ export type CapstoneMilestoneStatus = "complete" | "in-progress" | "pending" | "
 export type CapstoneMilestone = {
   id: string;
   title: string;
-  weekNumber: number;
-  dueAt: string;
   status: CapstoneMilestoneStatus;
+  /** Optional — backend doesn't yet emit a per-cohort deadline. */
+  weekNumber?: number;
+  /** Optional — same as weekNumber. */
+  dueAt?: string;
 };
 
 export type StakeholderConsultation = {
@@ -265,23 +267,45 @@ export type MentorHomeSummary = {
 };
 
 /**
- * Mentor home metrics — backend doesn't aggregate this surface yet, so
- * the page renders a zero-state until a `/me/mentor-home` endpoint lands.
+ * Mentor home metrics. Falls back to a zero-state envelope when the
+ * backend is unreachable so the page can still render.
  */
 export async function getMentorHome(): Promise<MentorHomeSummary> {
-  return {
-    fellowsAssigned: 0,
-    awaitingReply: 0,
-    submittedOrUnderReview: 0,
-    hoursMentoredThisWeek: 0,
-    averageFellowProgressPercent: 0,
-    averageFellowAttendancePercent: 0,
-    nextOfficeHours: {
-      startsAt: new Date().toISOString(),
-      durationMinutes: 60,
-      rsvpCount: 0,
-      topic: "—",
-    },
-    recentActivity: [],
-  };
+  try {
+    const data = await apiFetch<Omit<MentorHomeSummary, "nextOfficeHours">>(
+      "/me/mentor-home",
+    );
+    return {
+      ...data,
+      // Office hours card was retired in favour of the confirmed-bookings
+      // list — backend doesn't emit this field. Synthesise a sentinel
+      // value so existing typings keep compiling until the prop is
+      // removed from MentorHomeSummary itself.
+      nextOfficeHours: {
+        startsAt: new Date().toISOString(),
+        durationMinutes: 0,
+        rsvpCount: 0,
+        topic: "",
+      },
+    };
+  } catch {
+    return EMPTY_MENTOR_HOME;
+  }
 }
+
+const EMPTY_MENTOR_HOME: MentorHomeSummary = {
+  fellowsAssigned: 0,
+  awaitingReply: 0,
+  submittedOrUnderReview: 0,
+  hoursMentoredThisWeek: 0,
+  averageFellowProgressPercent: 0,
+  averageFellowAttendancePercent: 0,
+  nextOfficeHours: {
+    startsAt: new Date().toISOString(),
+    durationMinutes: 0,
+    rsvpCount: 0,
+    topic: "",
+  },
+  recentActivity: [],
+};
+

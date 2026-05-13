@@ -11,10 +11,8 @@ import {
   TimeIcon,
   UsersRoundIcon,
 } from "@/icons";
-import {
-  getMentorHome,
-  type CapstoneStatus,
-} from "@/lib/api/fellow-capstone";
+import { type CapstoneStatus } from "@/lib/api/fellow-capstone";
+import { getMentorHomeServer } from "@/lib/api/fellow-capstone.server";
 import { getMentorQueueServer } from "@/lib/api/mentor-capstone.server";
 import { listMentorBookingsServer } from "@/lib/api/mentorship.server";
 import { getCurrentUser } from "@/lib/auth/getCurrentUser";
@@ -29,7 +27,7 @@ export const metadata: Metadata = {
 export default async function MentorHomePage() {
   const [user, home, queue, bookings] = await Promise.all([
     getCurrentUser(),
-    getMentorHome(),
+    getMentorHomeServer(),
     getMentorQueueServer(),
     listMentorBookingsServer(),
   ]);

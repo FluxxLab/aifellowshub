@@ -13,6 +13,40 @@ import type {
   FellowCapstone,
 } from "./fellow-capstone";
 
+/**
+ * Server-side mentor home aggregator. Hits the backend's
+ * `/me/mentor-home` directly so the mentor page (a server component)
+ * gets real data without trying to call the BFF from Node land.
+ * Returns a zero-state envelope on transport failures so the page
+ * still renders.
+ */
+export async function getMentorHomeServer(): Promise<{
+  fellowsAssigned: number;
+  awaitingReply: number;
+  submittedOrUnderReview: number;
+  hoursMentoredThisWeek: number;
+  averageFellowProgressPercent: number;
+  averageFellowAttendancePercent: number;
+  recentActivity: { id: string; fellowName: string; message: string; at: string }[];
+}> {
+  const fallback = {
+    fellowsAssigned: 0,
+    awaitingReply: 0,
+    submittedOrUnderReview: 0,
+    hoursMentoredThisWeek: 0,
+    averageFellowProgressPercent: 0,
+    averageFellowAttendancePercent: 0,
+    recentActivity: [],
+  };
+  try {
+    const res = await backendFetch("/me/mentor-home", { method: "GET" });
+    if (!res.ok) return fallback;
+    return (await res.json()) as typeof fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export type BackendCapstone = {
   id: string;
   title: string;
@@ -23,6 +57,11 @@ export type BackendCapstone = {
   artifactUrl: string | null;
   stage: "scoping" | "design" | "consultation" | "final";
   status: "draft" | "under_review" | "needs_revision" | "approved";
+  milestones?: {
+    id: string;
+    title: string;
+    status: "complete" | "in-progress" | "pending" | "overdue";
+  }[];
   lastSubmittedAt: string | null;
   finalApprovedAt: string | null;
   fellow: {
@@ -119,7 +158,7 @@ function mapBackendCapstone(b: BackendCapstone): FellowCapstone {
       risks: "",
       lastSavedAt: b.updatedAt,
     },
-    milestones: [],
+    milestones: b.milestones ?? [],
     consultations: [],
     feedback: b.feedback.map(mapFeedback),
     assignments: [],
