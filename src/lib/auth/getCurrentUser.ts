@@ -57,6 +57,29 @@ async function fetchMe(
   }
 }
 
+/**
+ * Best-effort current user — returns null instead of redirecting when
+ * the request is unauthenticated. For public pages that want to
+ * personalise content if a session happens to be present (e.g. the
+ * "sample" certificate verify view) without forcing a signin.
+ */
+export async function getOptionalCurrentUser(): Promise<CurrentUser | null> {
+  const cookieStore = cookies();
+  const token = cookieStore.get(SESSION_COOKIE)?.value;
+  if (!token) return null;
+  const backendUrl =
+    process.env.BACKEND_API_URL ?? process.env.NEXT_PUBLIC_API_URL;
+  if (!backendUrl) return null;
+  const res = await fetchMe(backendUrl, token);
+  if (!res || !res.ok) return null;
+  try {
+    const { user } = (await res.json()) as { user: BackendUser };
+    return backendToCurrentUser(user);
+  } catch {
+    return null;
+  }
+}
+
 export async function getCurrentUser(): Promise<CurrentUser> {
   const cookieStore = cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;

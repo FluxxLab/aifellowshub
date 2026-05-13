@@ -4,35 +4,60 @@ import Link from "next/link";
 import Badge from "@/components/ui/badge/Badge";
 import { CertificateCanvas } from "@/components/fellow/MyCertificatesView";
 import { CheckLineIcon, CloseLineIcon } from "@/icons";
+import { getOptionalCurrentUser } from "@/lib/auth/getCurrentUser";
+import { getFellowCapstoneServer } from "@/lib/api/fellow-capstone.server";
 import { getPublicCertificateServer } from "@/lib/api/fellow-certificates.server";
 
-/**
- * Demo payload rendered when the route param is `sample`. Lets fellows
- * (and recruiters) preview what a real verification page looks like
- * without an issued certificate to point at. The banner makes it clear
- * the page isn't a real verification.
- */
-const SAMPLE_VERIFY: NonNullable<
+type VerifyResult = NonNullable<
   Awaited<ReturnType<typeof getPublicCertificateServer>>
-> = {
-  certificate: {
-    id: "PIC-AIE-2026-SAMPLE",
-    fellowName: "Adaeze Okafor",
-    programmeName: "AI Ethics & Governance Fellowship",
-    cohortName: "Cohort 2026",
-    completedAt: "2026-04-30T00:00:00.000Z",
-    issuedAt: "2026-05-01T00:00:00.000Z",
-    capstoneTitle: "Auditing algorithmic decisions in Lagos health screening",
-    modulesCompleted: 12,
-    totalModules: 12,
-    signatories: [
-      { name: "Ngozi Okonkwo", role: "Director, Policy Innovation Centre" },
-      { name: "Sara Adekunle", role: "Programme Manager" },
-    ],
-  },
-  verifiedAt: new Date().toISOString(),
-  valid: true,
-};
+>;
+
+/**
+ * Build the sample/demo verification payload. When a fellow is signed
+ * in, swap in their real name and (if they have one) their capstone
+ * title — so the preview reflects what their actual public page will
+ * look like, not a stranger's. Unauthenticated visitors and non-fellow
+ * roles see the generic illustrative payload.
+ */
+async function buildSampleVerify(): Promise<VerifyResult> {
+  const SIGNATORIES = [
+    { name: "Ngozi Okonkwo", role: "Director, Policy Innovation Centre" },
+    { name: "Sara Adekunle", role: "Programme Manager" },
+  ];
+
+  let fellowName = "Adaeze Okafor";
+  let capstoneTitle = "Auditing algorithmic decisions in Lagos health screening";
+
+  const user = await getOptionalCurrentUser();
+  if (user && user.role === "fellow") {
+    fellowName = user.fullName;
+    try {
+      const capstone = await getFellowCapstoneServer();
+      if (capstone.title && capstone.title !== "Untitled capstone") {
+        capstoneTitle = capstone.title;
+      }
+    } catch {
+      // Best-effort — fall back to the demo capstone title.
+    }
+  }
+
+  return {
+    certificate: {
+      id: "PIC-AIE-2026-SAMPLE",
+      fellowName,
+      programmeName: "AI Ethics & Governance Fellowship",
+      cohortName: "Cohort 2026",
+      completedAt: "2026-04-30T00:00:00.000Z",
+      issuedAt: "2026-05-01T00:00:00.000Z",
+      capstoneTitle,
+      modulesCompleted: 12,
+      totalModules: 12,
+      signatories: SIGNATORIES,
+    },
+    verifiedAt: new Date().toISOString(),
+    valid: true,
+  };
+}
 
 export async function generateMetadata({
   params,
@@ -85,7 +110,9 @@ export default async function VerifyCertificatePage({
 }) {
   const { id } = params;
   const isSample = id === "sample";
-  const result = isSample ? SAMPLE_VERIFY : await getPublicCertificateServer(id);
+  const result = isSample
+    ? await buildSampleVerify()
+    : await getPublicCertificateServer(id);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -113,9 +140,11 @@ export default async function VerifyCertificatePage({
           <div className="mb-6 rounded-2xl border border-warning-200 bg-warning-50 p-4 text-sm text-warning-700 md:p-5">
             <p className="font-semibold">This is a sample verification page.</p>
             <p className="mt-1 text-warning-700/90">
-              The details below are illustrative — not a real certificate. Your
-              own verification page will look just like this once your
-              certificate is issued.
+              This isn&apos;t a real, issued certificate yet — it&apos;s a
+              preview of what your own public verification page will look like
+              once you complete the programme. Your name and capstone title are
+              filled in where available; the certificate ID and dates are
+              placeholders.
             </p>
           </div>
         )}
