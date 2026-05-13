@@ -33,14 +33,17 @@ const STATUS_COPY: Record<
 };
 
 /**
- * Mentor's coaching-request inbox. Replaces the old availability-slot
- * publishing page. Three actions: accept, decline (with optional reason),
- * or no-op for rows that aren't waiting on the mentor.
+ * Mentor's coaching-request inbox. Three actions on inbound rows
+ * (accept / decline / past-delete). The "Schedule session" button
+ * lets the mentor proactively initiate a 1-on-1 or group session
+ * — those rows skip mentor-accept and go straight to pending_admin.
  */
 export default function MentorRequestsView({
   initialBookings,
+  fellows,
 }: {
   initialBookings: MentorBooking[];
+  fellows: { id: string; fullName: string }[];
 }) {
   const router = useRouter();
   const { confirm, dialog } = useConfirm();
@@ -48,6 +51,7 @@ export default function MentorRequestsView({
   const [filter, setFilter] = useState<(typeof STATUS_FILTERS)[number]["id"]>(
     "pending_mentor",
   );
+  const [scheduleOpen, setScheduleOpen] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
@@ -155,15 +159,42 @@ export default function MentorRequestsView({
       <Breadcrumbs
         items={[{ label: "Home", href: "/mentor" }, { label: "Coaching requests" }]}
       />
-      <div>
-        <h1 className="text-3xl font-bold text-gray-800 sm:text-4xl">
-          Coaching requests
-        </h1>
-        <p className="mt-2 max-w-2xl text-gray-600">
-          Review the proposed time from your fellows. Accept if it fits
-          your schedule, or decline with a comment.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800 sm:text-4xl">
+            Coaching requests
+          </h1>
+          <p className="mt-2 max-w-2xl text-gray-600">
+            Review the proposed time from your fellows, or schedule a session
+            yourself with one or more fellows.
+          </p>
+        </div>
+        <Button
+          size="sm"
+          variant="fellowship"
+          onClick={() => setScheduleOpen(true)}
+          disabled={fellows.length === 0}
+        >
+          + Schedule session
+        </Button>
       </div>
+
+      <ScheduleSessionModal
+        isOpen={scheduleOpen}
+        onClose={() => setScheduleOpen(false)}
+        fellows={fellows}
+        onScheduled={(rows) => {
+          setBookings((prev) => [...rows, ...prev]);
+          toast.success(
+            rows.length > 1
+              ? `Group session scheduled with ${rows.length} fellows.`
+              : "Session scheduled.",
+            "An admin will confirm and create the Zoom meeting shortly.",
+          );
+          setScheduleOpen(false);
+          router.refresh();
+        }}
+      />
 
       <div className="flex flex-wrap gap-2">
         {STATUS_FILTERS.map((f) => (
@@ -293,6 +324,204 @@ export default function MentorRequestsView({
           })}
         </ul>
       )}
+    </div>
+  );
+}
+
+/**
+ * Modal for the mentor to schedule a new coaching session with one
+ * or more fellows. Submits to POST /me/mentor/bookings.
+ */
+function ScheduleSessionModal({
+  isOpen,
+  onClose,
+  fellows,
+  onScheduled,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  fellows: { id: string; fullName: string }[];
+  onScheduled: (rows: MentorBooking[]) => void;
+}) {
+  const [pickedIds, setPickedIds] = useState<string[]>([]);
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+  const [durationMinutes, setDurationMinutes] = useState(30);
+  const [topic, setTopic] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  if (!isOpen) return null;
+
+  const toggleFellow = (id: string) => {
+    setPickedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  };
+
+  const canSubmit = pickedIds.length > 0 && date !== "" && time !== "" && !busy;
+
+  const submit = async () => {
+    if (!canSubmit) return;
+    const isoLocal = new Date(`${date}T${time}:00`);
+    if (Number.isNaN(isoLocal.getTime()) || isoLocal.getTime() <= Date.now()) {
+      toast.error("Pick a future date and time");
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await apiFetch<{ bookings: MentorBooking[] }>(
+        "/me/mentor/bookings",
+        {
+          method: "POST",
+          body: {
+            fellowIds: pickedIds,
+            requestedStartsAt: isoLocal.toISOString(),
+            requestedDurationMinutes: durationMinutes,
+            topic: topic.trim() || undefined,
+          },
+        },
+      );
+      onScheduled(res.bookings);
+      // Reset for next open.
+      setPickedIds([]);
+      setDate("");
+      setTime("");
+      setDurationMinutes(30);
+      setTopic("");
+    } catch (err) {
+      toast.errorFromException("Couldn't schedule the session", err);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      role="dialog"
+      aria-modal="true"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-theme-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-xl font-bold text-gray-800">
+          Schedule a coaching session
+        </h2>
+        <p className="mt-1 text-sm text-gray-600">
+          Pick one or more fellows and a time. An admin will confirm and
+          create the Zoom meeting — group sessions share a single meeting.
+        </p>
+
+        <div className="mt-5 space-y-4">
+          <div>
+            <label className="text-xs font-medium uppercase tracking-wide text-gray-500">
+              Fellows
+            </label>
+            <div className="mt-1 max-h-40 overflow-y-auto rounded-lg border border-gray-200 p-2">
+              {fellows.length === 0 ? (
+                <p className="px-2 py-3 text-sm text-gray-500">
+                  No fellows assigned to you yet.
+                </p>
+              ) : (
+                fellows.map((f) => {
+                  const selected = pickedIds.includes(f.id);
+                  return (
+                    <label
+                      key={f.id}
+                      className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selected}
+                        onChange={() => toggleFellow(f.id)}
+                      />
+                      <span className="text-gray-800">{f.fullName}</span>
+                    </label>
+                  );
+                })
+              )}
+            </div>
+            {pickedIds.length > 1 && (
+              <p className="mt-1 text-xs text-gray-500">
+                Group session — all {pickedIds.length} fellows join the
+                same meeting.
+              </p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                Date
+              </label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="mt-1 h-10 w-full rounded-lg border border-gray-300 px-3 text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                Time
+              </label>
+              <input
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                className="mt-1 h-10 w-full rounded-lg border border-gray-300 px-3 text-sm"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-medium uppercase tracking-wide text-gray-500">
+              Duration
+            </label>
+            <select
+              value={durationMinutes}
+              onChange={(e) => setDurationMinutes(Number(e.target.value))}
+              className="mt-1 h-10 w-full rounded-lg border border-gray-300 px-3 text-sm"
+            >
+              <option value={15}>15 min</option>
+              <option value={30}>30 min</option>
+              <option value={45}>45 min</option>
+              <option value={60}>60 min</option>
+              <option value={90}>90 min</option>
+              <option value={120}>120 min</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="text-xs font-medium uppercase tracking-wide text-gray-500">
+              Agenda (optional)
+            </label>
+            <textarea
+              rows={3}
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              placeholder="What you'll discuss"
+              className="mt-1 w-full resize-y rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            />
+          </div>
+        </div>
+
+        <div className="mt-6 flex justify-end gap-2">
+          <Button size="sm" variant="outline" onClick={onClose} disabled={busy}>
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            variant="fellowship"
+            onClick={submit}
+            disabled={!canSubmit}
+          >
+            {busy ? "Scheduling…" : "Schedule"}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
