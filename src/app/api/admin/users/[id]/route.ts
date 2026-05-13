@@ -10,3 +10,15 @@ export async function GET(
   const { id } = params;
   return proxy(req, `/admin/users/${encodeURIComponent(id)}`);
 }
+
+/** Admin edit of any non-fellow profile (mentor / faculty / admin).
+ *  Forwards to the same path on the backend, which enforces the
+ *  admin/super_admin role and the no-self-demote / no-self-deactivate
+ *  guards. */
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { id: string } },
+) {
+  const { id } = params;
+  return proxy(req, `/admin/users/${encodeURIComponent(id)}`);
+}
