@@ -101,7 +101,7 @@ export default async function MentorQueuePage() {
                           )}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {q.fellowCountry} · {q.sector}
+                          {q.fellowCountry} · {q.sector ?? "—"}
                         </div>
                       </div>
                     </div>

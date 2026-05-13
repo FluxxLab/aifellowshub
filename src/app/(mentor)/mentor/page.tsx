@@ -163,7 +163,7 @@ export default async function MentorHomePage() {
                     </p>
                     <p className="mt-1 text-xs text-gray-500">
                       Last activity {relativeTime(q.lastActivityAt)} ·{" "}
-                      {q.fellowCountry} · {q.sector}
+                      {q.fellowCountry} · {q.sector ?? "—"}
                     </p>
                   </div>
                   <Link
@@ -240,19 +240,44 @@ export default async function MentorHomePage() {
           </section>
 
           <section className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
-            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-              Cohort health (your fellows)
-            </p>
-            <dl className="mt-3 space-y-3 text-sm">
-              <ProgressLine
-                label="Avg module progress"
-                value={home.averageFellowProgressPercent}
-              />
-              <ProgressLine
-                label="Avg attendance"
-                value={home.averageFellowAttendancePercent}
-              />
-            </dl>
+            <div className="flex items-baseline justify-between gap-2">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                Your fellows
+              </p>
+              <Link
+                href="/mentor/queue"
+                className="text-xs font-medium text-fellowship-navy hover:underline"
+              >
+                All
+              </Link>
+            </div>
+            {queue.length === 0 ? (
+              <p className="mt-3 text-sm text-gray-500">
+                No fellows assigned to you yet.
+              </p>
+            ) : (
+              <ul className="mt-3 flex flex-col gap-2">
+                {queue.slice(0, 6).map((q) => (
+                  <li key={q.fellowId}>
+                    <Link
+                      href={`/mentor/capstones/${encodeURIComponent(q.fellowId)}`}
+                      className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-gray-50"
+                    >
+                      <AvatarText name={q.fellowName} className="h-8 w-8 text-xs" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-gray-800">
+                          {q.fellowName}
+                        </p>
+                        <p className="truncate text-xs text-gray-500">
+                          {q.sector ?? "—"}
+                        </p>
+                      </div>
+                      <CapstoneStatusBadge status={q.status} />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
         </aside>
       </div>
@@ -303,23 +328,6 @@ function StatCard({
       </div>
       <p className="mt-4 text-xs text-gray-500">{label}</p>
       <p className={`mt-1.5 text-2xl font-bold ${valueColour}`}>{value}</p>
-    </div>
-  );
-}
-
-function ProgressLine({ label, value }: { label: string; value: number }) {
-  return (
-    <div>
-      <div className="flex items-center justify-between">
-        <dt className="text-gray-500">{label}</dt>
-        <dd className="font-semibold text-gray-800">{value}%</dd>
-      </div>
-      <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
-        <div
-          className="h-full bg-fellowship-navy"
-          style={{ width: `${value}%` }}
-        />
-      </div>
     </div>
   );
 }

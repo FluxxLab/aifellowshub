@@ -45,7 +45,12 @@ export async function getMentorCapstoneServer(
       title:
         match.title === "Untitled capstone" ? "Untitled capstone" : match.title,
       oneliner: match.problemStatement.split("\n")[0]?.trim() || "",
-      sector: mapSector(match.fellow?.sector ?? match.sector),
+      // FellowCapstone requires a non-null sector — fall back to the
+      // EID sentinel only on this single-capstone surface; the queue
+      // tally below uses the honest nullable result.
+      sector:
+        mapSector(match.fellow?.sector ?? match.sector) ??
+        "Economic Inclusion Development",
       mentor: match.mentor
         ? {
             id: match.mentor.id,
@@ -121,11 +126,23 @@ function mapToQueueEntry(c: BackendCapstone): MentorQueueEntry {
   };
 }
 
-function mapSector(s: string | null | undefined): CapstoneSector {
-  if (!s) return "Economic Inclusion Development";
-  const norm = s.toLowerCase();
-  if (norm.includes("health")) return "Healthcare";
-  if (norm.includes("ed")) return "EdTech";
-  if (norm.includes("agric")) return "Agriculture";
-  return "Economic Inclusion Development";
+function mapSector(s: string | null | undefined): CapstoneSector | null {
+  // Backend stores the canonical lowercase enum tokens. Match them
+  // exactly — the older `.includes("ed")` matched too broadly (any
+  // word containing "ed"), and unset sectors defaulted silently to
+  // "Economic Inclusion Development" which made the queue mis-tally.
+  if (!s) return null;
+  switch (s.trim().toLowerCase()) {
+    case "healthcare":
+      return "Healthcare";
+    case "edtech":
+      return "EdTech";
+    case "agriculture":
+      return "Agriculture";
+    case "economic_inclusion_development":
+    case "economic inclusion development":
+      return "Economic Inclusion Development";
+    default:
+      return null;
+  }
 }

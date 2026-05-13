@@ -211,7 +211,8 @@ export type MentorQueueEntry = {
   fellowName: string;
   fellowEmail: string;
   fellowCountry: string;
-  sector: CapstoneSector;
+  /** Null when the fellow has no sector set yet — UI should render "—". */
+  sector: CapstoneSector | null;
   capstoneTitle: string | null;
   status: CapstoneStatus;
   /** ISO timestamp of the last activity on the thread or draft. */
