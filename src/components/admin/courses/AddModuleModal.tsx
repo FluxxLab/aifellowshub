@@ -12,8 +12,13 @@ import { createModule } from "@/lib/api/faculty";
 
 // Frontend-only categorisation for now — the backend `Module` schema doesn't
 // have a `category` column. If categories become a backend concept, swap this
-// for a fetched list.
-const COMMON_CATEGORIES = ["Foundations","Governance","Ethics","Audit","Communication","Capstone","Workshop","Case Study","Implementation","Other",
+// for a fetched list. Four tracks mirror the AI Fellowship curriculum arc:
+// foundations → core skills → capstone work → showcase.
+const COMMON_CATEGORIES = [
+  "Foundations",
+  "Core Competencies",
+  "Capstone & Implementation",
+  "Completion & Showcase",
 ];
 
 type AddModuleModalProps = {
