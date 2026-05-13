@@ -138,10 +138,18 @@ export default function MentorCapstoneReview({
                 oneliner={capstone.oneliner}
                 sector={capstone.sector}
               />
-              <ReadOnlySection label="Problem statement" value={capstone.draft.problem} />
-              <ReadOnlySection label="Approach" value={capstone.draft.approach} />
-              <ReadOnlySection label="Deliverables" value={capstone.draft.deliverables} />
-              <ReadOnlySection label="Risks & limitations" value={capstone.draft.risks} />
+              <ReadOnlySection
+                label="Problem statement"
+                value={capstone.draft.problem}
+              />
+              {/* Approach / Deliverables / Risks are stored as one
+                  combined markdown blob server-side and arrive on the
+                  `approach` field. Render once as the full draft body
+                  rather than three near-empty Read-only cards. */}
+              <ReadOnlySection
+                label="Draft"
+                value={capstone.draft.approach}
+              />
             </>
           )}
         </div>
