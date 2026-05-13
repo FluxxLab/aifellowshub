@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
 import Breadcrumbs from "@/components/common/Breadcrumbs";
+import DatePicker from "@/components/form/date-picker";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { CalenderIcon, TimeIcon } from "@/icons";
 import { apiFetch } from "@/lib/api/client";
@@ -355,9 +356,19 @@ function ScheduleSessionModal({
 
   const submit = async () => {
     if (!canSubmit) return;
-    const isoLocal = new Date(`${date}T${time}:00`);
-    if (Number.isNaN(isoLocal.getTime()) || isoLocal.getTime() <= Date.now()) {
-      toast.error("Pick a future date and time");
+    // The picker writes plain Y-M-D and H:i strings. Interpret them as
+    // Africa/Lagos time (UTC+1, no DST) so an admin scheduling from any
+    // timezone produces the same UTC instant fellows in Lagos see.
+    // Without this, `new Date("2026-05-15T14:00:00")` parses in the
+    // admin's local zone, which silently shifts the WAT display.
+    const isoUtc = `${date}T${time}:00+01:00`;
+    const isoLocal = new Date(isoUtc);
+    if (Number.isNaN(isoLocal.getTime())) {
+      toast.error("Pick a valid date and time");
+      return;
+    }
+    if (isoLocal.getTime() <= Date.now()) {
+      toast.error("Pick a time in the future");
       return;
     }
     setBusy(true);
@@ -445,28 +456,21 @@ function ScheduleSessionModal({
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                Date
-              </label>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="mt-1 h-10 w-full rounded-lg border border-gray-300 px-3 text-sm"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                Time
-              </label>
-              <input
-                type="time"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-                className="mt-1 h-10 w-full rounded-lg border border-gray-300 px-3 text-sm"
-              />
-            </div>
+            <DatePicker
+              id="schedule-session-date"
+              mode="single"
+              label="Date"
+              placeholder="Select a date"
+              minDate="today"
+              onChange={(_dates, dateStr) => setDate(dateStr)}
+            />
+            <DatePicker
+              id="schedule-session-time"
+              mode="time"
+              label="Time (WAT)"
+              placeholder="Select a time"
+              onChange={(_dates, dateStr) => setTime(dateStr)}
+            />
           </div>
 
           <div>
