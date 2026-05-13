@@ -69,8 +69,12 @@ export default async function MentorQueuePage() {
       </div>
 
       <section data-tour="mentor-queue-table">
-        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
-          <table className="w-full text-sm">
+        {/* `overflow-x-auto` (not overflow-hidden) so the Review column
+            is reachable on narrow viewports via horizontal scroll. The
+            fellow name is also a link to the same destination, so
+            scrolling isn't required if you can tap the name. */}
+        <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white">
+          <table className="w-full min-w-[680px] text-sm">
             <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
               <tr>
                 <th className="px-5 py-3">Fellow</th>
@@ -81,57 +85,63 @@ export default async function MentorQueuePage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {sorted.map((q) => (
-                <tr
-                  key={q.fellowId}
-                  className={
-                    q.awaitingMentorReply ? "bg-warning-50/40" : ""
-                  }
-                >
-                  <td className="px-5 py-4">
-                    <div className="flex items-center gap-3">
-                      <AvatarText name={q.fellowName} className="h-9 w-9" />
-                      <div>
-                        <div className="font-medium text-gray-800">
-                          {q.fellowName}
-                          {q.unreadFromFellow > 0 && (
-                            <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-error-500 px-1.5 text-xs font-semibold text-white">
-                              {q.unreadFromFellow}
-                            </span>
-                          )}
+              {sorted.map((q) => {
+                const reviewHref = `/mentor/capstones/${encodeURIComponent(q.fellowId)}`;
+                return (
+                  <tr
+                    key={q.fellowId}
+                    className={
+                      q.awaitingMentorReply ? "bg-warning-50/40" : ""
+                    }
+                  >
+                    <td className="px-5 py-4">
+                      <Link
+                        href={reviewHref}
+                        className="-mx-1 flex items-center gap-3 rounded-md px-1 py-0.5 transition-colors hover:bg-gray-50"
+                      >
+                        <AvatarText name={q.fellowName} className="h-9 w-9" />
+                        <div>
+                          <div className="font-medium text-gray-800 hover:text-fellowship-navy">
+                            {q.fellowName}
+                            {q.unreadFromFellow > 0 && (
+                              <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-error-500 px-1.5 text-xs font-semibold text-white">
+                                {q.unreadFromFellow}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {q.fellowCountry} · {q.sector ?? "—"}
+                          </div>
                         </div>
-                        <div className="text-xs text-gray-500">
-                          {q.fellowCountry} · {q.sector ?? "—"}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-5 py-4 max-w-xs">
-                    {q.capstoneTitle ? (
-                      <span className="text-gray-800">{q.capstoneTitle}</span>
-                    ) : (
-                      <span className="italic text-gray-400">
-                        Not yet scoped
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-5 py-4">
-                    <StatusBadge status={q.status} />
-                  </td>
-                  <td className="px-5 py-4 text-gray-600">
-                    {relativeTime(q.lastActivityAt)}
-                  </td>
-                  <td className="px-5 py-4 text-right">
-                    <Link
-                      href={`/mentor/capstones/${q.fellowId}`}
-                      className="inline-flex items-center gap-1 text-sm font-medium text-fellowship-navy hover:text-fellowship-navy-dark"
-                    >
-                      Review
-                      <ChevronRightIcon className="h-4 w-4" />
-                    </Link>
-                  </td>
-                </tr>
-              ))}
+                      </Link>
+                    </td>
+                    <td className="px-5 py-4 max-w-xs">
+                      {q.capstoneTitle ? (
+                        <span className="text-gray-800">{q.capstoneTitle}</span>
+                      ) : (
+                        <span className="italic text-gray-400">
+                          Not yet scoped
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-5 py-4">
+                      <StatusBadge status={q.status} />
+                    </td>
+                    <td className="px-5 py-4 text-gray-600">
+                      {relativeTime(q.lastActivityAt)}
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      <Link
+                        href={reviewHref}
+                        className="inline-flex items-center gap-1 text-sm font-medium text-fellowship-navy hover:text-fellowship-navy-dark"
+                      >
+                        Review
+                        <ChevronRightIcon className="h-4 w-4" />
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
