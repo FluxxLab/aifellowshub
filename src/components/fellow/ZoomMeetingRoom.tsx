@@ -186,6 +186,41 @@ export default function ZoomMeetingRoom({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // When the wrapper grows (entering fullscreen / window resize) ask
+  // the embedded video tile to redraw at the new size. Without this
+  // the Zoom embed stays pinned to whatever viewSizes.default it got
+  // at init, leaving a tiny meeting inside a huge black wrapper.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const obs = new ResizeObserver(() => {
+      const client = clientRef.current as
+        | {
+            getCurrentUser?: () => unknown;
+            updateVideoOptions?: (o: {
+              viewSizes?: { default?: { width: number; height: number } };
+            }) => void;
+          }
+        | null;
+      const rect = el.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return;
+      try {
+        client?.updateVideoOptions?.({
+          viewSizes: {
+            default: {
+              width: Math.round(rect.width),
+              height: Math.round(rect.height),
+            },
+          },
+        });
+      } catch {
+        // SDK may not yet expose updateVideoOptions; ignored.
+      }
+    });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [phase]);
+
   useEffect(() => {
     let cancelled = false;
     let cleanup: (() => void) | null = null;
@@ -221,11 +256,37 @@ export default function ZoomMeetingRoom({
           throw new Error("Meeting container missing.");
         }
 
+        // The SDK defaults to a fixed ~600x400 render size when no
+        // viewSizes are passed, which is why the meeting tile looks
+        // tiny inside our larger wrapper. Measure the container at
+        // init time and tell the SDK to fill it. `isResizable: true`
+        // lets the SDK re-layout when we toggle fullscreen.
+        const rect = containerRef.current.getBoundingClientRect();
+        const containerWidth =
+          Math.max(rect.width, window.innerWidth) || window.innerWidth;
+        const containerHeight =
+          Math.max(rect.height, window.innerHeight) || window.innerHeight;
+
         await client.init({
           zoomAppRoot: containerRef.current,
           language: "en-US",
           patchJsMedia: true,
           leaveOnPageUnload: true,
+          customize: {
+            video: {
+              isResizable: true,
+              viewSizes: {
+                default: {
+                  width: Math.round(containerWidth),
+                  height: Math.round(containerHeight),
+                },
+                ribbon: {
+                  width: 300,
+                  height: Math.round(containerHeight),
+                },
+              },
+            },
+          },
         });
         if (cancelled) return;
 
