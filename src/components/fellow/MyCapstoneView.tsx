@@ -10,6 +10,7 @@ import { toast } from "@/lib/toast";
 import { CheckLineIcon, PaperPlaneIcon } from "@/icons";
 import { useCurrentUser } from "@/lib/auth/useCurrentUser";
 import {
+  postFellowCapstoneComment,
   saveFellowCapstone,
   submitFellowCapstone,
   type CapstoneFeedbackEntry,
@@ -127,21 +128,34 @@ export default function MyCapstoneView({
     setSubmitState("idle");
   };
 
-  const onPostReply = () => {
+  const onPostReply = async () => {
     const trimmed = reply.trim();
     if (!trimmed) return;
-    // Phase 2: POST /capstone/me/feedback.
-    setFeedback((prev) => [
-      ...prev,
-      {
-        id: `f-${Date.now()}`,
-        fromMentor: false,
-        fromName: user.fullName,
-        message: trimmed,
-        at: new Date().toISOString(),
-      },
-    ]);
+    // Optimistically render the message so the thread feels instant.
+    // The id has an "opt-" prefix so router.refresh() below can replace
+    // it with the persisted row's real id without leaving a duplicate.
+    const optimisticId = `opt-${Date.now()}`;
+    const optimistic: CapstoneFeedbackEntry = {
+      id: optimisticId,
+      fromMentor: false,
+      fromName: user.fullName,
+      message: trimmed,
+      at: new Date().toISOString(),
+    };
+    setFeedback((prev) => [...prev, optimistic]);
     setReply("");
+    try {
+      await postFellowCapstoneComment(trimmed);
+      // Pull the server's authoritative feedback list so the mentor's
+      // notification timestamp and the row id reconcile.
+      router.refresh();
+    } catch (err) {
+      // Roll back the optimistic insert and surface the error so the
+      // fellow knows their comment didn't actually post.
+      setFeedback((prev) => prev.filter((f) => f.id !== optimisticId));
+      setReply(trimmed);
+      toast.errorFromException("Couldn't post your comment", err);
+    }
   };
 
   return (

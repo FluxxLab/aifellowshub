@@ -188,6 +188,20 @@ export async function submitFellowCapstone(): Promise<CapstoneMutationResult> {
   return mapMutationResult(data.capstone);
 }
 
+/**
+ * POST /me/capstone/comment — fellow appends a message to the
+ * capstone feedback thread. Backend persists a CapstoneFeedback row
+ * with the fellow as author and notifies the assigned mentor.
+ */
+export async function postFellowCapstoneComment(
+  message: string,
+): Promise<void> {
+  await apiFetch<{ capstone: unknown }>("/me/capstone/comment", {
+    method: "POST",
+    body: { message },
+  });
+}
+
 /* ---------- Mentor / admin review (BRD §6.10) ---------- */
 
 export type ReviewOutcome = "comments" | "needs_revision" | "approved";
