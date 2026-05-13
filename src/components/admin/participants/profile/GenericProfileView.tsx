@@ -1,7 +1,11 @@
+"use client";
+import { useState } from "react";
 import Link from "next/link";
 import AvatarText from "@/components/ui/avatar/AvatarText";
 import Badge from "@/components/ui/badge/Badge";
-import { ChevronLeftIcon } from "@/icons";
+import Button from "@/components/ui/button/Button";
+import { ChevronLeftIcon, PencilIcon } from "@/icons";
+import EditUserModal from "./EditUserModal";
 import type { UserProfile } from "@/lib/api/participants";
 
 const ROLE_LABEL: Record<string, string> = {
@@ -22,8 +26,14 @@ export default function GenericProfileView({
 }: {
   user: UserProfile;
 }) {
+  const [editOpen, setEditOpen] = useState(false);
   return (
     <div className="flex flex-col gap-4 md:gap-6">
+      <EditUserModal
+        isOpen={editOpen}
+        onClose={() => setEditOpen(false)}
+        user={user}
+      />
       <Link
         href="/participants"
         className="inline-flex w-fit items-center gap-1 text-sm text-gray-500 transition-colors hover:text-gray-700"
@@ -33,34 +43,46 @@ export default function GenericProfileView({
       </Link>
 
       <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
-        <div className="flex items-start gap-4">
-          <AvatarText name={user.fullName} className="h-16 w-16 text-base" />
-          <div className="flex-1">
-            <h1 className="text-title-sm font-bold text-gray-800">
-              {user.fullName}
-            </h1>
-            {user.jobTitle || user.organisation || user.country ? (
-              <p className="mt-1 text-sm text-gray-500">
-                {[user.jobTitle, user.organisation, user.country]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </p>
-            ) : null}
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <Badge color="info">
-                {ROLE_LABEL[user.role] ?? user.role}
-              </Badge>
-              {user.isActive ? (
-                <Badge color="success">Active</Badge>
-              ) : (
-                <Badge color="light">Inactive</Badge>
-              )}
-              {user.sector && (
-                <Badge color="light">
-                  {user.sector.replace(/_/g, " ")}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-4">
+            <AvatarText name={user.fullName} className="h-16 w-16 text-base" />
+            <div className="flex-1">
+              <h1 className="text-title-sm font-bold text-gray-800">
+                {user.fullName}
+              </h1>
+              {user.jobTitle || user.organisation || user.country ? (
+                <p className="mt-1 text-sm text-gray-500">
+                  {[user.jobTitle, user.organisation, user.country]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+              ) : null}
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <Badge color="info">
+                  {ROLE_LABEL[user.role] ?? user.role}
                 </Badge>
-              )}
+                {user.isActive ? (
+                  <Badge color="success">Active</Badge>
+                ) : (
+                  <Badge color="light">Inactive</Badge>
+                )}
+                {user.sector && (
+                  <Badge color="light">
+                    {user.sector.replace(/_/g, " ")}
+                  </Badge>
+                )}
+              </div>
             </div>
+          </div>
+          <div className="shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              startIcon={<PencilIcon />}
+              onClick={() => setEditOpen(true)}
+            >
+              Edit
+            </Button>
           </div>
         </div>
       </div>
