@@ -45,7 +45,13 @@ export default function LessonsList({ lessons }: { lessons: Lesson[] }) {
             <li key={l.id} className="py-4 first:pt-0 last:pb-0">
               <div className="flex items-start gap-4">
                 <LessonStatusOrb status={l.status} />
-                <div className="flex-1">
+                <button
+                  type="button"
+                  onClick={() => toggle(l.id)}
+                  aria-expanded={isOpen}
+                  aria-controls={`lesson-${l.id}-body`}
+                  className="flex-1 text-left rounded-md -mx-1 px-1 py-0.5 transition-colors hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-fellowship-navy/40"
+                >
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
                       {l.kind}
@@ -57,14 +63,14 @@ export default function LessonsList({ lessons }: { lessons: Lesson[] }) {
                     </span>
                   </div>
                   <h3
-                    className={`mt-1 text-sm font-semibold ${
+                    className={`mt-1 text-sm font-semibold transition-colors group-hover:text-fellowship-navy ${
                       l.status === "not-started" ? "text-gray-700" : "text-gray-800"
                     }`}
                   >
                     {l.title}
                   </h3>
                   <p className="mt-1 text-sm text-gray-600">{l.summary}</p>
-                </div>
+                </button>
                 <div className="shrink-0 pt-1">
                   <Button
                     size="sm"
@@ -89,7 +95,7 @@ export default function LessonsList({ lessons }: { lessons: Lesson[] }) {
               </div>
 
               {isOpen && (
-                <div className="mt-4 ml-10">
+                <div id={`lesson-${l.id}-body`} className="mt-4 ml-10">
                   <LessonContent
                     contentUrl={l.contentUrl}
                     contentMimeType={l.contentMimeType}
