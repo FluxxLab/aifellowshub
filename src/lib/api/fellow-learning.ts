@@ -46,6 +46,10 @@ export type ModuleSession = {
   /** Real backend session id. Null for the mock fallback. Required to embed
    *  the in-app Zoom meeting (used to mint a Meeting SDK signature). */
   id: string | null;
+  /** Admin-set session title (Zoom meeting name) — what the fellow sees
+   *  as the bold heading on session cards. Falls back to the module
+   *  title when the admin didn't customize. */
+  title: string;
   /** Session status as of now. */
   status: "upcoming" | "live" | "ended" | "cancelled";
   /** ISO timestamp. */

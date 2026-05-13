@@ -169,8 +169,11 @@ function SessionCard({
               </span>
             </div>
             <h3 className="mt-1 text-lg font-semibold text-gray-800">
-              {s.moduleTitle}
+              {s.title || s.moduleTitle}
             </h3>
+            {s.title && s.title !== s.moduleTitle && (
+              <p className="text-sm text-gray-500">{s.moduleTitle}</p>
+            )}
             <dl className="mt-2 grid grid-cols-1 gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
               <div className="flex gap-2">
                 <dt className="text-gray-500">When</dt>

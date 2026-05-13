@@ -204,6 +204,7 @@ function mapBackendCurriculumModule(
     ? mapBackendSession(m.session)
     : {
         id: null,
+        title: m.title,
         status: "upcoming",
         startsAt: new Date().toISOString(),
         durationMinutes: 90,
@@ -288,10 +289,12 @@ function mapBackendListedSession(b: BackendListedSession) {
       ? "cancelled"
       : "ended";
   const myStatus = b.myAttendance?.status ?? null;
+  const moduleTitle = b.module?.title ?? "Untitled module";
   return {
     id: b.id,
+    title: b.title || moduleTitle,
     weekNumber: b.module?.weekNumber ?? 0,
-    moduleTitle: b.module?.title ?? "Untitled module",
+    moduleTitle,
     status,
     startsAt: b.startsAt,
     durationMinutes: b.durationMinutes,
@@ -333,6 +336,7 @@ function mapBackendSession(b: BackendSession): ModuleSession {
   const myStatus = b.myAttendance?.status ?? null;
   return {
     id: b.id,
+    title: b.title,
     status,
     startsAt: b.startsAt,
     durationMinutes: b.durationMinutes,
