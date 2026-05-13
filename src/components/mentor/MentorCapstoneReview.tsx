@@ -6,7 +6,6 @@ import Badge from "@/components/ui/badge/Badge";
 import Breadcrumbs from "@/components/common/Breadcrumbs";
 import Button from "@/components/ui/button/Button";
 import {
-  CalenderIcon,
   CheckLineIcon,
   CloseLineIcon,
   PaperPlaneIcon,
@@ -103,7 +102,6 @@ export default function MentorCapstoneReview({
     [
       capstone.draft.problem,
       capstone.draft.approach,
-      capstone.draft.stakeholders,
       capstone.draft.deliverables,
       capstone.draft.risks,
     ].join(" ")
@@ -142,7 +140,6 @@ export default function MentorCapstoneReview({
               />
               <ReadOnlySection label="Problem statement" value={capstone.draft.problem} />
               <ReadOnlySection label="Approach" value={capstone.draft.approach} />
-              <ReadOnlySection label="Stakeholders" value={capstone.draft.stakeholders} />
               <ReadOnlySection label="Deliverables" value={capstone.draft.deliverables} />
               <ReadOnlySection label="Risks & limitations" value={capstone.draft.risks} />
             </>
@@ -158,8 +155,6 @@ export default function MentorCapstoneReview({
             decisionState={decisionState}
             disabled={draftEmpty}
           />
-
-          <ConsultationsCard consultations={capstone.consultations} />
         </aside>
       </div>
 
@@ -349,53 +344,6 @@ function DecisionCard({
         <p className="mt-3 text-xs text-success-700">
           Decision saved. The fellow will see this on their capstone page.
         </p>
-      )}
-    </section>
-  );
-}
-
-function ConsultationsCard({
-  consultations,
-}: {
-  consultations: FellowCapstone["consultations"];
-}) {
-  return (
-    <section className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
-      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-        Stakeholder consultations
-      </p>
-      {consultations.length === 0 ? (
-        <p className="mt-3 text-sm text-gray-500">
-          None logged yet — at least one is required (Week 10).
-        </p>
-      ) : (
-        <ul className="mt-3 space-y-3">
-          {consultations.map((c) => {
-            const when = new Date(c.scheduledAt);
-            return (
-              <li
-                key={c.id}
-                className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm"
-              >
-                <p className="font-medium text-gray-800">{c.stakeholderName}</p>
-                <p className="text-xs text-gray-500">{c.stakeholderRole}</p>
-                <p className="mt-2 inline-flex items-center gap-1 text-xs text-gray-500">
-                  <CalenderIcon className="h-3.5 w-3.5" />
-                  {when.toLocaleDateString(undefined, {
-                    weekday: "short",
-                    day: "numeric",
-                    month: "short",
-                  })}{" "}
-                  ·{" "}
-                  {when.toLocaleTimeString(undefined, {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </p>
-              </li>
-            );
-          })}
-        </ul>
       )}
     </section>
   );

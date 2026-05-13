@@ -47,7 +47,6 @@ export default function MyCapstoneView({
   const wordCount = countWords([
     draft.problem,
     draft.approach,
-    draft.stakeholders,
     draft.deliverables,
     draft.risks,
   ].join(" "));
@@ -64,7 +63,6 @@ export default function MyCapstoneView({
         // so the mentor sees the full draft.
         content: [
           draft.approach && `## Approach\n${draft.approach}`,
-          draft.stakeholders && `## Stakeholders\n${draft.stakeholders}`,
           draft.deliverables && `## Deliverables\n${draft.deliverables}`,
           draft.risks && `## Risks & limitations\n${draft.risks}`,
         ]
@@ -106,7 +104,6 @@ export default function MyCapstoneView({
         problemStatement: draft.problem,
         content: [
           draft.approach && `## Approach\n${draft.approach}`,
-          draft.stakeholders && `## Stakeholders\n${draft.stakeholders}`,
           draft.deliverables && `## Deliverables\n${draft.deliverables}`,
           draft.risks && `## Risks & limitations\n${draft.risks}`,
         ]
@@ -206,13 +203,6 @@ export default function MyCapstoneView({
             description="How will you address it? Method, framework, deliverable type."
             value={draft.approach}
             onChange={(v) => setDraft({ ...draft, approach: v })}
-          />
-
-          <DraftSection
-            label="Stakeholders"
-            description="Who you'll consult — at least one outside the Fellowship."
-            value={draft.stakeholders}
-            onChange={(v) => setDraft({ ...draft, stakeholders: v })}
           />
 
           <DraftSection
