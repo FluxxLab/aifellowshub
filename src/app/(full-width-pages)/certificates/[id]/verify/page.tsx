@@ -6,12 +6,46 @@ import { CertificateCanvas } from "@/components/fellow/MyCertificatesView";
 import { CheckLineIcon, CloseLineIcon } from "@/icons";
 import { getPublicCertificateServer } from "@/lib/api/fellow-certificates.server";
 
+/**
+ * Demo payload rendered when the route param is `sample`. Lets fellows
+ * (and recruiters) preview what a real verification page looks like
+ * without an issued certificate to point at. The banner makes it clear
+ * the page isn't a real verification.
+ */
+const SAMPLE_VERIFY: NonNullable<
+  Awaited<ReturnType<typeof getPublicCertificateServer>>
+> = {
+  certificate: {
+    id: "PIC-AIE-2026-SAMPLE",
+    fellowName: "Adaeze Okafor",
+    programmeName: "AI Ethics & Governance Fellowship",
+    cohortName: "Cohort 2026",
+    completedAt: "2026-04-30T00:00:00.000Z",
+    issuedAt: "2026-05-01T00:00:00.000Z",
+    capstoneTitle: "Auditing algorithmic decisions in Lagos health screening",
+    modulesCompleted: 12,
+    totalModules: 12,
+    signatories: [
+      { name: "Ngozi Okonkwo", role: "Director, Policy Innovation Centre" },
+      { name: "Sara Adekunle", role: "Programme Manager" },
+    ],
+  },
+  verifiedAt: new Date().toISOString(),
+  valid: true,
+};
+
 export async function generateMetadata({
   params,
 }: {
   params: { id: string };
 }): Promise<Metadata> {
   const { id } = params;
+  if (id === "sample") {
+    return {
+      title: "Sample verification page · AI Fellows",
+      robots: { index: false, follow: false },
+    };
+  }
   const result = await getPublicCertificateServer(id);
   if (!result) return { title: "Certificate not found · AI Fellows" };
   const title = `${result.certificate.fellowName} · ${result.certificate.cohortName} · AI Fellows`;
@@ -50,7 +84,8 @@ export default async function VerifyCertificatePage({
   params: { id: string };
 }) {
   const { id } = params;
-  const result = await getPublicCertificateServer(id);
+  const isSample = id === "sample";
+  const result = isSample ? SAMPLE_VERIFY : await getPublicCertificateServer(id);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -74,6 +109,16 @@ export default async function VerifyCertificatePage({
       </header>
 
       <main className="mx-auto max-w-3xl px-4 py-10 md:px-6">
+        {isSample && (
+          <div className="mb-6 rounded-2xl border border-warning-200 bg-warning-50 p-4 text-sm text-warning-700 md:p-5">
+            <p className="font-semibold">This is a sample verification page.</p>
+            <p className="mt-1 text-warning-700/90">
+              The details below are illustrative — not a real certificate. Your
+              own verification page will look just like this once your
+              certificate is issued.
+            </p>
+          </div>
+        )}
         {result === null ? (
           <NotFoundState id={id} />
         ) : (

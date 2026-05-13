@@ -47,7 +47,7 @@ const EMPTY_STATE: FellowCertificateState = {
       },
     ],
   },
-  exampleVerifyUrl: "",
+  exampleVerifyUrl: "/certificates/sample/verify",
   preview: {
     fellowName: "",
     programmeName: PROGRAM_NAME,
