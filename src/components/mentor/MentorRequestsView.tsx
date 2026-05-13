@@ -51,8 +51,26 @@ export default function MentorRequestsView({
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
-    if (filter === "all") return bookings;
-    return bookings.filter((b) => b.status === filter);
+    const subset =
+      filter === "all"
+        ? bookings
+        : bookings.filter((b) => b.status === filter);
+    // Chronological order so the mentor can scan the schedule top-to-
+    // bottom: future requests first (soonest first), then past ones
+    // (most recent first). Sessions with no start date — there
+    // shouldn't be any, but guarding — go to the bottom.
+    const now = Date.now();
+    return [...subset].sort((a, b) => {
+      const aT = +new Date(a.requestedStartsAt);
+      const bT = +new Date(b.requestedStartsAt);
+      const aFuture = aT >= now;
+      const bFuture = bT >= now;
+      if (aFuture && !bFuture) return -1;
+      if (!aFuture && bFuture) return 1;
+      // Both future: ascending (soonest first).
+      // Both past:  descending (most recent first).
+      return aFuture ? aT - bT : bT - aT;
+    });
   }, [bookings, filter]);
 
   async function accept(b: MentorBooking) {
