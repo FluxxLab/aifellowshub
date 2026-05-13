@@ -8,7 +8,7 @@
  * Browsers never call this directly — they call the local route handlers,
  * which call this.
  */
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 // `BACKEND_API_URL` is the canonical name (server-side only). The legacy
 // `NEXT_PUBLIC_API_URL` is honoured during the rollover so existing
@@ -32,19 +32,36 @@ type FetchOpts = RequestInit & {
 };
 
 export async function backendFetch(path: string, opts: FetchOpts = {}) {
-  const headers = new Headers(opts.headers);
-  headers.set("Content-Type", "application/json");
-  headers.set("Origin", PUBLIC_ORIGIN);
+  const reqHeaders = new Headers(opts.headers);
+  reqHeaders.set("Content-Type", "application/json");
+  reqHeaders.set("Origin", PUBLIC_ORIGIN);
+
+  // Forward the original client's IP so the backend's throttler keys
+  // per-user (not per-Vercel-egress) and audit logs attribute the
+  // right address. Without this, every signin request from across the
+  // user base collapses onto Vercel's egress IP and trips the throttle
+  // within seconds. `headers()` is the incoming request — only valid
+  // inside a Next.js request handler, which is the only context that
+  // calls backendFetch.
+  try {
+    const incoming = headers();
+    const xff = incoming.get("x-forwarded-for");
+    const realIp = incoming.get("x-real-ip");
+    if (xff) reqHeaders.set("x-forwarded-for", xff);
+    if (realIp) reqHeaders.set("x-real-ip", realIp);
+  } catch {
+    // Outside a request context (build, edge precompute). Skip silently.
+  }
 
   if (opts.forwardAuth !== false) {
     const cookieStore = cookies();
     const token = cookieStore.get(SESSION_COOKIE)?.value;
-    if (token) headers.set("Authorization", `Bearer ${token}`);
+    if (token) reqHeaders.set("Authorization", `Bearer ${token}`);
   }
 
   const res = await fetch(`${BACKEND_URL}${path}`, {
     ...opts,
-    headers,
+    headers: reqHeaders,
     cache: "no-store",
   });
 
