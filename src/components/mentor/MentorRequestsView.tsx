@@ -127,6 +127,28 @@ export default function MentorRequestsView({
     setBusyId(null);
   }
 
+  async function deletePast(b: MentorBooking) {
+    const ok = await confirm({
+      title: "Delete this past session?",
+      message:
+        "Removes it from your list. The fellow's record of the session is preserved.",
+      confirmLabel: "Delete",
+      tone: "danger",
+    });
+    if (!ok) return;
+    setBusyId(b.id);
+    try {
+      await apiFetch(`/me/mentor/bookings/${encodeURIComponent(b.id)}`, {
+        method: "DELETE",
+      });
+      setBookings((prev) => prev.filter((x) => x.id !== b.id));
+      toast.success("Past session deleted");
+    } catch (err) {
+      toast.errorFromException("Couldn't delete", err);
+    }
+    setBusyId(null);
+  }
+
   return (
     <div className="flex flex-col gap-4 md:gap-6">
       {dialog}
@@ -251,6 +273,19 @@ export default function MentorRequestsView({
                     >
                       Decline
                     </Button>
+                  </div>
+                )}
+
+                {start.getTime() < Date.now() && (
+                  <div className="mt-4 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => deletePast(b)}
+                      disabled={isBusy}
+                      className="text-xs font-medium text-gray-400 hover:text-error-600 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isBusy ? "Deleting…" : "Delete past session"}
+                    </button>
                   </div>
                 )}
               </li>
