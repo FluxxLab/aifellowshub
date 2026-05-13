@@ -53,6 +53,7 @@ function mapKind(kind: LmsNotificationKind): NotificationType {
     case "session_reminder":
       return "session-reminder";
     case "mentorship_booking_confirmed":
+    case "support_ticket_created":
       return "application-received";
   }
 }

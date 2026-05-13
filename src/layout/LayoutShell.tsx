@@ -4,6 +4,7 @@ import AdminFooter from "./AdminFooter";
 import { Header } from "@/components/Layouts/header";
 import { Sidebar } from "@/components/Layouts/sidebar";
 import { SidebarProvider } from "@/components/Layouts/sidebar/sidebar-context";
+import SupportWidget from "@/components/support/SupportWidget";
 import type { Role } from "@/lib/auth/users";
 
 /**
@@ -49,6 +50,10 @@ export default function LayoutShell({
           </main>
           <AdminFooter />
         </div>
+        {/* In-app support widget — floats bottom-right on every
+            authenticated surface. Opens a slide-over with a small
+            ticket form (BRD §6.11 extension). */}
+        <SupportWidget />
       </div>
     </SidebarProvider>
   );

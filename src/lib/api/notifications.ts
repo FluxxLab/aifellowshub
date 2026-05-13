@@ -19,7 +19,8 @@ export type LmsNotificationKind =
   | "session_cancelled"
   | "session_reminder"
   | "mentorship_booking_confirmed"
-  | "module_feedback_prompt";
+  | "module_feedback_prompt"
+  | "support_ticket_created";
 
 export type LmsNotification = {
   id: string;
@@ -98,6 +99,8 @@ function mapKindToType(kind: LmsNotificationKind): NotificationType {
       return "application-received";
     case "module_feedback_prompt":
       return "assessment-pending";
+    case "support_ticket_created":
+      return "application-received";
   }
 }
 
