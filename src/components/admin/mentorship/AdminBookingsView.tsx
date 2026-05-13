@@ -53,6 +53,33 @@ export default function AdminBookingsView({
     return bookings.filter((b) => b.status === filter);
   }, [bookings, filter]);
 
+  async function deletePast(b: AdminBooking) {
+    const ok = await confirm({
+      title: "Delete this past session?",
+      message:
+        "Removes the record from the fellow's and mentor's lists. Use this to tidy up coaching requests whose date has passed. This can't be undone.",
+      confirmLabel: "Delete",
+      tone: "danger",
+    });
+    if (!ok) return;
+    setBusyId(b.id);
+    try {
+      await apiFetch(
+        `/me/mentor/bookings/${encodeURIComponent(b.id)}`,
+        { method: "DELETE" },
+      );
+      setBookings((prev) => prev.filter((x) => x.id !== b.id));
+      toast.success(
+        "Session deleted",
+        "Cleared from the fellow's and mentor's coaching lists.",
+      );
+      router.refresh();
+    } catch (err) {
+      toast.errorFromException("Couldn't delete session", err);
+    }
+    setBusyId(null);
+  }
+
   async function approve(b: AdminBooking) {
     const ok = await confirm({
       title: "Approve this booking?",
@@ -195,6 +222,19 @@ export default function AdminBookingsView({
                     >
                       {isBusy ? "Working…" : "Approve & host"}
                     </Button>
+                  </div>
+                )}
+
+                {start.getTime() < Date.now() && (
+                  <div className="mt-4 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => deletePast(b)}
+                      disabled={isBusy}
+                      className="text-xs font-medium text-gray-400 hover:text-error-600 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isBusy ? "Deleting…" : "Delete past session"}
+                    </button>
                   </div>
                 )}
               </li>
