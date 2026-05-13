@@ -61,28 +61,51 @@ export default function ZoomMeetingRoom({
 }) {
   const user = useCurrentUser();
   const containerRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const clientRef = useRef<unknown>(null);
   const [phase, setPhase] = useState<
     "loading" | "joining" | "in-meeting" | "left" | "error"
   >("loading");
   const [error, setError] = useState<string | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(startFullscreen);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [isHost, setIsHost] = useState(false);
   const [endingSession, setEndingSession] = useState(false);
   const router = useRouter();
   const { confirm, dialog } = useConfirm();
 
-  // Esc exits fullscreen — matches every other "expanded" UI on the
-  // web, and keeps users from getting trapped if the in-meeting Exit
-  // button overlaps a Zoom control.
+  // Sync our local flag with the browser's Fullscreen API so the
+  // overlay state stays consistent when the user exits via Esc, the
+  // browser's own fullscreen control, or the OS gesture.
+  useEffect(() => {
+    const onChange = () => {
+      const fs = !!document.fullscreenElement;
+      setIsFullscreen(fs);
+      if (!fs) {
+        try {
+          (screen.orientation as ScreenOrientation & { unlock?: () => void })
+            .unlock?.();
+        } catch {
+          // Best-effort — Safari / older Android throw or no-op.
+        }
+      }
+    };
+    document.addEventListener("fullscreenchange", onChange);
+    document.addEventListener("webkitfullscreenchange", onChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", onChange);
+      document.removeEventListener("webkitfullscreenchange", onChange);
+    };
+  }, []);
+
+  // CSS-only fallback path (Fullscreen API unsupported / denied) — Esc
+  // still has to work and the body must not scroll behind the overlay.
   useEffect(() => {
     if (!isFullscreen) return;
+    if (document.fullscreenElement) return; // browser handles Esc itself
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setIsFullscreen(false);
     };
     window.addEventListener("keydown", onKey);
-    // Hide page scroll while fullscreen so the body can't scroll behind
-    // the meeting.
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
@@ -90,6 +113,78 @@ export default function ZoomMeetingRoom({
       document.body.style.overflow = prev;
     };
   }, [isFullscreen]);
+
+  async function enterFullscreen() {
+    const el = wrapperRef.current;
+    if (!el) return;
+    const apiEl = el as HTMLElement & {
+      webkitRequestFullscreen?: () => Promise<void> | void;
+    };
+    let inApi = false;
+    try {
+      if (apiEl.requestFullscreen) {
+        await apiEl.requestFullscreen();
+        inApi = true;
+      } else if (apiEl.webkitRequestFullscreen) {
+        await apiEl.webkitRequestFullscreen();
+        inApi = true;
+      }
+    } catch {
+      // User denied, no permission, or unsupported — fall through to
+      // the CSS overlay below.
+    }
+    if (inApi) {
+      // Mobile: rotate to landscape so the Zoom tile uses the long
+      // edge. Orientation.lock requires being in fullscreen first
+      // (browser-enforced), so this can only run after the API call
+      // resolves. iOS Safari rejects — that's expected; the user
+      // rotates the device by hand.
+      const isCoarsePointer = window.matchMedia("(pointer: coarse)").matches;
+      if (isCoarsePointer) {
+        try {
+          const orientation = screen.orientation as ScreenOrientation & {
+            lock?: (o: string) => Promise<void>;
+          };
+          await orientation.lock?.("landscape");
+        } catch {
+          // Silently ignore — user can rotate manually.
+        }
+      }
+    } else {
+      setIsFullscreen(true);
+    }
+  }
+
+  async function exitFullscreen() {
+    const doc = document as Document & {
+      webkitExitFullscreen?: () => Promise<void> | void;
+    };
+    if (document.fullscreenElement || doc.webkitExitFullscreen) {
+      try {
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+          return;
+        }
+        if (doc.webkitExitFullscreen) {
+          await doc.webkitExitFullscreen();
+          return;
+        }
+      } catch {
+        // Fall through to manual state flip.
+      }
+    }
+    setIsFullscreen(false);
+  }
+
+  // Honour the startFullscreen prop on mount. requestFullscreen requires
+  // a user gesture; the parent component invokes us synchronously from
+  // a click, so most browsers still accept it. If they don't, the CSS
+  // overlay kicks in via the catch path inside enterFullscreen.
+  useEffect(() => {
+    if (!startFullscreen) return;
+    void enterFullscreen();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -247,6 +342,7 @@ export default function ZoomMeetingRoom({
       */}
       {dialog}
       <div
+        ref={wrapperRef}
         className={
           isFullscreen
             ? "relative flex-1 bg-black"
@@ -268,7 +364,10 @@ export default function ZoomMeetingRoom({
             )}
             <button
               type="button"
-              onClick={() => setIsFullscreen((v) => !v)}
+              onClick={() => {
+                if (isFullscreen) void exitFullscreen();
+                else void enterFullscreen();
+              }}
               className="rounded-md bg-black/60 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-black/80"
               aria-label={
                 isFullscreen ? "Exit fullscreen" : "Expand to fullscreen"
