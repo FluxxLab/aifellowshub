@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import AvatarText from "@/components/ui/avatar/AvatarText";
 import Badge from "@/components/ui/badge/Badge";
@@ -15,7 +15,6 @@ import { toast } from "@/lib/toast";
 import { useCurrentUser } from "@/lib/auth/useCurrentUser";
 import {
   reviewCapstone,
-  type CapstoneAssignment,
   type CapstoneFeedbackEntry,
   type CapstoneStatus,
   type FellowCapstone,
@@ -50,28 +49,6 @@ export default function MentorCapstoneReview({
   const [reply, setReply] = useState("");
   const [outcome, setOutcome] = useState<ReviewOutcome>("comments");
   const [postingReview, setPostingReview] = useState(false);
-  const [assignments, setAssignments] = useState(capstone.assignments);
-
-  const addAssignment = (title: string, description: string, dueAt: string | null) => {
-    // Phase 2: POST /capstone/:fellowId/assignments
-    setAssignments((prev) => [
-      ...prev,
-      {
-        id: `asg-${Date.now()}`,
-        title: title.trim(),
-        description: description.trim(),
-        assignedBy: { id: user.id, name: user.fullName },
-        assignedAt: new Date().toISOString(),
-        dueAt,
-        status: "pending",
-        completedAt: null,
-      },
-    ]);
-  };
-
-  const removeAssignment = (id: string) => {
-    setAssignments((prev) => prev.filter((a) => a.id !== id));
-  };
   const [decisionState, setDecisionState] = useState<"idle" | "saved">("idle");
 
   const onPostReply = async () => {
@@ -186,13 +163,6 @@ export default function MentorCapstoneReview({
         </aside>
       </div>
 
-      <MentorAssignmentsPanel
-        assignments={assignments}
-        onAdd={addAssignment}
-        onRemove={removeAssignment}
-        fellowName={fellowName}
-      />
-
       <FeedbackThread
         feedback={feedback}
         userName={user.fullName}
@@ -205,226 +175,6 @@ export default function MentorCapstoneReview({
         posting={postingReview}
       />
     </div>
-  );
-}
-
-function MentorAssignmentsPanel({
-  assignments,
-  onAdd,
-  onRemove,
-  fellowName,
-}: {
-  assignments: CapstoneAssignment[];
-  onAdd: (title: string, description: string, dueAt: string | null) => void;
-  onRemove: (id: string) => void;
-  fellowName: string;
-}) {
-  const [composerOpen, setComposerOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [dueAt, setDueAt] = useState("");
-
-  const canAssign = title.trim().length >= 6 && description.trim().length >= 10;
-
-  const submit = () => {
-    if (!canAssign) return;
-    onAdd(title, description, dueAt ? new Date(dueAt).toISOString() : null);
-    setTitle("");
-    setDescription("");
-    setDueAt("");
-    setComposerOpen(false);
-  };
-
-  const pending = assignments.filter((a) => a.status === "pending");
-  const completed = assignments.filter((a) => a.status === "completed");
-
-  return (
-    <section className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-800">
-            Assignments for {fellowName.split(" ")[0]}
-          </h2>
-          <p className="text-xs text-gray-500">
-            {pending.length} pending · {completed.length} completed
-          </p>
-        </div>
-        <Button
-          size="sm"
-          variant="fellowship"
-          onClick={() => setComposerOpen((o) => !o)}
-        >
-          <PaperPlaneIcon className="h-4 w-4" />
-          {composerOpen ? "Cancel" : "Assign new"}
-        </Button>
-      </div>
-
-      {composerOpen && (
-        <div className="mt-4 rounded-lg border border-fellowship-navy/30 bg-gray-50 p-4">
-          <div className="space-y-3">
-            <div>
-              <label className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                Title
-              </label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Cite NDPA articles in problem statement"
-                className="mt-1 h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-fellowship-navy focus:outline-hidden focus:ring-3 focus:ring-fellowship-navy/10"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                Description
-              </label>
-              <textarea
-                rows={3}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="What needs to happen, and what does done look like?"
-                className="mt-1 w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-fellowship-navy focus:outline-hidden focus:ring-3 focus:ring-fellowship-navy/10"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                Due (optional)
-              </label>
-              <input
-                type="date"
-                value={dueAt}
-                onChange={(e) => setDueAt(e.target.value)}
-                className="mt-1 h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-800 shadow-theme-xs focus:border-fellowship-navy focus:outline-hidden focus:ring-3 focus:ring-fellowship-navy/10"
-              />
-            </div>
-          </div>
-          <p className="mt-2 text-xs text-gray-400">
-            Title ≥ 6 chars · Description ≥ 10 chars
-          </p>
-          <div className="mt-3 flex justify-end gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setComposerOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              size="sm"
-              variant="fellowship"
-              onClick={submit}
-              disabled={!canAssign}
-            >
-              Assign
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {assignments.length === 0 && !composerOpen ? (
-        <p className="mt-4 text-sm text-gray-500">
-          No assignments yet. Use this to give {fellowName.split(" ")[0]}{" "}
-          concrete tasks between 1:1s.
-        </p>
-      ) : (
-        <ul className="mt-4 flex flex-col gap-3">
-          {[...pending, ...completed].map((a) => (
-            <MentorAssignmentRow
-              key={a.id}
-              assignment={a}
-              onRemove={() => onRemove(a.id)}
-            />
-          ))}
-        </ul>
-      )}
-    </section>
-  );
-}
-
-function MentorAssignmentRow({
-  assignment: a,
-  onRemove,
-}: {
-  assignment: CapstoneAssignment;
-  onRemove: () => void;
-}) {
-  const isCompleted = a.status === "completed";
-  const overdue = useMemo(
-    // eslint-disable-next-line react-hooks/purity -- transient visual cue
-    () => !isCompleted && a.dueAt && +new Date(a.dueAt) < Date.now(),
-    [isCompleted, a.dueAt],
-  );
-
-  return (
-    <li
-      className={`rounded-lg border p-4 ${
-        isCompleted
-          ? "border-success-100 bg-success-50/40"
-          : overdue
-          ? "border-error-200 bg-error-50/30"
-          : "border-gray-200 bg-white"
-      }`}
-    >
-      <div className="flex items-start gap-3">
-        <span
-          className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
-            isCompleted
-              ? "bg-success-500 text-white"
-              : "border-2 border-gray-300 bg-white"
-          }`}
-          aria-hidden
-        >
-          {isCompleted && <CheckLineIcon className="h-3.5 w-3.5" />}
-        </span>
-        <div className="flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <p
-              className={`text-sm font-semibold ${
-                isCompleted ? "text-gray-500 line-through" : "text-gray-800"
-              }`}
-            >
-              {a.title}
-            </p>
-            {!isCompleted && (
-              <button
-                type="button"
-                onClick={onRemove}
-                className="text-xs font-medium text-gray-400 hover:text-error-600"
-              >
-                Remove
-              </button>
-            )}
-          </div>
-          <p className="mt-1 text-sm text-gray-600">{a.description}</p>
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-500">
-            {a.dueAt && (
-              <span
-                className={
-                  overdue ? "font-semibold text-error-600" : undefined
-                }
-              >
-                {overdue ? "Overdue · " : "Due "}
-                {new Date(a.dueAt).toLocaleDateString(undefined, {
-                  weekday: "short",
-                  day: "numeric",
-                  month: "short",
-                })}
-              </span>
-            )}
-            {a.dueAt && <span className="text-gray-300">·</span>}
-            <span>Assigned {relativeTime(a.assignedAt)}</span>
-            {isCompleted && a.completedAt && (
-              <>
-                <span className="text-gray-300">·</span>
-                <span className="text-success-700">
-                  Completed {relativeTime(a.completedAt)}
-                </span>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-    </li>
   );
 }
 
