@@ -16,7 +16,6 @@ import { useCurrentUser } from "@/lib/auth/useCurrentUser";
 import {
   saveFellowCapstone,
   submitFellowCapstone,
-  type CapstoneAssignment,
   type CapstoneFeedbackEntry,
   type CapstoneMilestone,
   type CapstoneStatus,
@@ -48,30 +47,6 @@ export default function MyCapstoneView({
   const [status, setStatus] = useState<CapstoneStatus>(capstone.status);
   const [feedback, setFeedback] = useState(capstone.feedback);
   const [reply, setReply] = useState("");
-  const [assignments, setAssignments] = useState(capstone.assignments);
-
-  const completeAssignment = (id: string) => {
-    // Phase 2: POST /capstone/me/assignments/:id/complete
-    setAssignments((prev) =>
-      prev.map((a) =>
-        a.id === id
-          ? {
-              ...a,
-              status: "completed",
-              completedAt: new Date().toISOString(),
-            }
-          : a
-      )
-    );
-  };
-
-  const reopenAssignment = (id: string) => {
-    setAssignments((prev) =>
-      prev.map((a) =>
-        a.id === id ? { ...a, status: "pending", completedAt: null } : a
-      )
-    );
-  };
 
   const wordCount = countWords([
     draft.problem,
@@ -302,12 +277,6 @@ export default function MyCapstoneView({
         </aside>
       </div>
 
-      <FellowAssignmentsList
-        assignments={assignments}
-        onComplete={completeAssignment}
-        onReopen={reopenAssignment}
-      />
-
       <FeedbackThread
         feedback={feedback}
         userName={user.fullName}
@@ -318,132 +287,6 @@ export default function MyCapstoneView({
       />
       {dialog}
     </div>
-  );
-}
-
-function FellowAssignmentsList({
-  assignments,
-  onComplete,
-  onReopen,
-}: {
-  assignments: CapstoneAssignment[];
-  onComplete: (id: string) => void;
-  onReopen: (id: string) => void;
-}) {
-  const pending = assignments.filter((a) => a.status === "pending");
-  const completed = assignments.filter((a) => a.status === "completed");
-
-  return (
-    <section className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-800">
-          Mentor assignments
-        </h2>
-        <span className="text-xs text-gray-500">
-          {pending.length} pending · {completed.length} completed
-        </span>
-      </div>
-
-      {assignments.length === 0 ? (
-        <p className="mt-4 text-sm text-gray-500">
-          No assignments yet. Tunde will drop tasks here as they come up in
-          your 1:1s.
-        </p>
-      ) : (
-        <ul className="mt-4 flex flex-col gap-3">
-          {[...pending, ...completed].map((a) => (
-            <FellowAssignmentRow
-              key={a.id}
-              assignment={a}
-              onComplete={() => onComplete(a.id)}
-              onReopen={() => onReopen(a.id)}
-            />
-          ))}
-        </ul>
-      )}
-    </section>
-  );
-}
-
-function FellowAssignmentRow({
-  assignment: a,
-  onComplete,
-  onReopen,
-}: {
-  assignment: CapstoneAssignment;
-  onComplete: () => void;
-  onReopen: () => void;
-}) {
-  const isCompleted = a.status === "completed";
-  /* eslint-disable react-hooks/purity -- transient visual cue */
-  const overdue =
-    !isCompleted && a.dueAt && +new Date(a.dueAt) < Date.now();
-  /* eslint-enable react-hooks/purity */
-  return (
-    <li
-      className={`rounded-lg border p-4 ${
-        isCompleted
-          ? "border-success-100 bg-success-50/40"
-          : overdue
-          ? "border-error-200 bg-error-50/30"
-          : "border-gray-200 bg-white"
-      }`}
-    >
-      <div className="flex items-start gap-3">
-        <button
-          type="button"
-          onClick={isCompleted ? onReopen : onComplete}
-          aria-label={isCompleted ? "Reopen" : "Mark complete"}
-          className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors ${
-            isCompleted
-              ? "bg-success-500 text-white hover:bg-success-600"
-              : "border-2 border-gray-300 bg-white hover:border-fellowship-navy"
-          }`}
-        >
-          {isCompleted && <CheckLineIcon className="h-3.5 w-3.5" />}
-        </button>
-        <div className="flex-1">
-          <p
-            className={`text-sm font-semibold ${
-              isCompleted ? "text-gray-500 line-through" : "text-gray-800"
-            }`}
-          >
-            {a.title}
-          </p>
-          <p className="mt-1 text-sm text-gray-600">{a.description}</p>
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-500">
-            <span>From {a.assignedBy.name}</span>
-            <span className="text-gray-300">·</span>
-            <span>Assigned {relativeTime(a.assignedAt)}</span>
-            {a.dueAt && (
-              <>
-                <span className="text-gray-300">·</span>
-                <span
-                  className={
-                    overdue ? "font-semibold text-error-600" : undefined
-                  }
-                >
-                  {overdue ? "Overdue · " : "Due "}
-                  {new Date(a.dueAt).toLocaleDateString(undefined, {
-                    weekday: "short",
-                    day: "numeric",
-                    month: "short",
-                  })}
-                </span>
-              </>
-            )}
-            {isCompleted && a.completedAt && (
-              <>
-                <span className="text-gray-300">·</span>
-                <span className="text-success-700">
-                  Completed {relativeTime(a.completedAt)}
-                </span>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-    </li>
   );
 }
 
