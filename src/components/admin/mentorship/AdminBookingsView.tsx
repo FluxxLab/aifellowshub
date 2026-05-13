@@ -231,7 +231,7 @@ export default function AdminBookingsView({
                       type="button"
                       onClick={() => deletePast(b)}
                       disabled={isBusy}
-                      className="text-xs font-medium text-gray-400 hover:text-error-600 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="inline-flex items-center gap-1.5 rounded-md border border-error-200 bg-white px-3 py-1.5 text-xs font-semibold text-error-600 transition-colors hover:bg-error-50 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {isBusy ? "Deleting…" : "Delete past session"}
                     </button>
