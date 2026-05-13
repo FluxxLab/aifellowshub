@@ -7,11 +7,7 @@ import Breadcrumbs from "@/components/common/Breadcrumbs";
 import Button from "@/components/ui/button/Button";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { toast } from "@/lib/toast";
-import {
-  CalenderIcon,
-  CheckLineIcon,
-  PaperPlaneIcon,
-} from "@/icons";
+import { CheckLineIcon, PaperPlaneIcon } from "@/icons";
 import { useCurrentUser } from "@/lib/auth/useCurrentUser";
 import {
   saveFellowCapstone,
@@ -20,7 +16,6 @@ import {
   type CapstoneMilestone,
   type CapstoneStatus,
   type FellowCapstone,
-  type StakeholderConsultation,
 } from "@/lib/api/fellow-capstone";
 
 /**
@@ -273,7 +268,6 @@ export default function MyCapstoneView({
             }}
           />
           <MilestonesCard milestones={capstone.milestones} />
-          <ConsultationsCard consultations={capstone.consultations} />
         </aside>
       </div>
 
@@ -479,81 +473,6 @@ function MilestoneOrb({ status }: { status: CapstoneMilestone["status"] }) {
     );
   }
   return <span className="mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 border-gray-200 bg-white" />;
-}
-
-function ConsultationsCard({
-  consultations,
-}: {
-  consultations: StakeholderConsultation[];
-}) {
-  return (
-    <section className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-          Stakeholder consultations
-        </p>
-        <Button size="sm" variant="outline">
-          Log new
-        </Button>
-      </div>
-
-      {consultations.length === 0 ? (
-        <p className="mt-3 text-sm text-gray-500">
-          None scheduled yet — at least one is required (Week 10).
-        </p>
-      ) : (
-        <ul className="mt-3 space-y-3">
-          {consultations.map((c) => {
-            const when = new Date(c.scheduledAt);
-            return (
-              <li key={c.id} className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="font-medium text-gray-800">{c.stakeholderName}</p>
-                    <p className="text-xs text-gray-500">{c.stakeholderRole}</p>
-                  </div>
-                  <Badge
-                    color={
-                      c.status === "complete"
-                        ? "success"
-                        : c.status === "cancelled"
-                        ? "light"
-                        : "info"
-                    }
-                    variant="light"
-                  >
-                    {c.status === "scheduled"
-                      ? "Scheduled"
-                      : c.status === "complete"
-                      ? "Done"
-                      : "Cancelled"}
-                  </Badge>
-                </div>
-                <p className="mt-2 inline-flex items-center gap-1 text-xs text-gray-500">
-                  <CalenderIcon className="h-3.5 w-3.5" />
-                  {when.toLocaleDateString(undefined, {
-                    weekday: "short",
-                    day: "numeric",
-                    month: "short",
-                  })}{" "}
-                  ·{" "}
-                  {when.toLocaleTimeString(undefined, {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </p>
-                {c.notes && (
-                  <p className="mt-2 text-xs leading-relaxed text-gray-600">
-                    {c.notes}
-                  </p>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </section>
-  );
 }
 
 function FeedbackThread({
