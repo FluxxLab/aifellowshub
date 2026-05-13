@@ -79,6 +79,7 @@ const ADMIN_NAV: NavSection[] = [
     label: "SYSTEM",
     items: [
       { title: "Analytics", icon: PieChartIcon as SvgComponent, url: "/analytics", items: [] },
+      { title: "Support", icon: ChatIcon as SvgComponent, url: "/support", items: [] },
       { title: "Settings", icon: PlugInIcon as SvgComponent, url: "/settings", items: [] },
       { title: "Audit log", icon: ListIcon as SvgComponent, url: "/audit-log", items: [] },
     ],
