@@ -264,8 +264,10 @@ function SessionCard({
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-warning-200">
           <CalenderIcon className="h-5 w-5 text-fellowship-navy" />
         </div>
-        <div>
-          <h2 className="text-base font-semibold text-gray-800">Live session</h2>
+        <div className="min-w-0">
+          <h2 className="truncate text-base font-semibold text-gray-800">
+            {s.title || "Live session"}
+          </h2>
           <p className="text-xs text-gray-500">Week {weekNumber} · live-only</p>
         </div>
       </div>
