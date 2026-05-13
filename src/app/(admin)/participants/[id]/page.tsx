@@ -170,6 +170,7 @@ function AttendanceCard({ sessions }: { sessions: SessionAttendance[] }) {
 
 function SessionRow({ session }: { session: SessionAttendance }) {
  const date = new Date(session.date).toLocaleDateString(undefined, {
+ timeZone: "Africa/Lagos",
  weekday:"short",
  month:"short",
  day:"numeric",
@@ -296,7 +297,7 @@ function ContactCard({ fellow }: { fellow: FellowProfile }) {
  }
  />
  )}
- <ContactRow label="Joined" value={new Date(fellow.joinedAt).toLocaleDateString()} />
+ <ContactRow label="Joined" value={new Date(fellow.joinedAt).toLocaleDateString(undefined, { timeZone: "Africa/Lagos" })} />
  </dl>
  </Card>
  );

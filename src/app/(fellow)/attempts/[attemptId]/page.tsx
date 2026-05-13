@@ -79,7 +79,7 @@ function ResultHeader({ attempt }: { attempt: FellowAttempt }) {
             )}
             <span className="inline-flex items-center gap-1 text-xs text-gray-500">
               <TimeIcon className="h-3.5 w-3.5" />
-              Submitted {new Date(attempt.submittedAt).toLocaleString()}
+              Submitted {new Date(attempt.submittedAt).toLocaleString(undefined, { timeZone: "Africa/Lagos" })}
             </span>
           </div>
           <h1 className="mt-1 text-title-sm font-bold text-gray-800">

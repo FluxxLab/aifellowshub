@@ -68,6 +68,7 @@ export default async function ModuleFeedbackPanel({
                 </span>
                 <span className="ml-auto">
                   {new Date(s.submittedAt).toLocaleDateString(undefined, {
+                    timeZone: "Africa/Lagos",
                     day: "numeric",
                     month: "short",
                     year: "numeric",

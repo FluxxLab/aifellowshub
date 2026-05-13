@@ -114,7 +114,7 @@ export default function GenericProfileView({
               )}
               <Row
                 label="Joined"
-                value={new Date(user.joinedAt).toLocaleDateString()}
+                value={new Date(user.joinedAt).toLocaleDateString(undefined, { timeZone: "Africa/Lagos" })}
               />
             </dl>
           </Card>
@@ -201,7 +201,7 @@ function RoleStatsCard({ user }: { user: UserProfile }) {
             label="Last active"
             value={
               stats.lastActiveAt
-                ? new Date(stats.lastActiveAt).toLocaleString()
+                ? new Date(stats.lastActiveAt).toLocaleString(undefined, { timeZone: "Africa/Lagos" })
                 : "Never signed in"
             }
           />

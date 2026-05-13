@@ -118,11 +118,13 @@ function SessionCard({
 }) {
   const start = new Date(s.startsAt);
   const dateLabel = start.toLocaleDateString(undefined, {
+    timeZone: "Africa/Lagos",
     weekday: "short",
     day: "numeric",
     month: "short",
   });
   const timeLabel = start.toLocaleTimeString(undefined, {
+    timeZone: "Africa/Lagos",
     hour: "2-digit",
     minute: "2-digit",
   });

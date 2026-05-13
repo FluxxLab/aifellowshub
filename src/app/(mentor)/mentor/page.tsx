@@ -363,10 +363,12 @@ function relativeTime(iso: string): string {
 function formatBookingWhen(iso: string): string {
   const d = new Date(iso);
   return `${d.toLocaleDateString(undefined, {
+    timeZone: "Africa/Lagos",
     weekday: "short",
     day: "numeric",
     month: "short",
   })} · ${d.toLocaleTimeString(undefined, {
+    timeZone: "Africa/Lagos",
     hour: "2-digit",
     minute: "2-digit",
   })}`;

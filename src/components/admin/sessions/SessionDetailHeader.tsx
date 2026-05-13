@@ -34,12 +34,14 @@ export default function SessionDetailHeader({
 
  const startsAt = new Date(session.scheduledStart);
  const dateLabel = startsAt.toLocaleDateString(undefined, {
+ timeZone: "Africa/Lagos",
  weekday:"long",
  month:"long",
  day:"numeric",
  year:"numeric",
  });
  const timeLabel = startsAt.toLocaleTimeString(undefined, {
+ timeZone: "Africa/Lagos",
  hour:"numeric",
  minute:"2-digit",
  });

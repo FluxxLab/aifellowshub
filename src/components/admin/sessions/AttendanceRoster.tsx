@@ -411,6 +411,7 @@ function EmptyRoster({ title, body }: { title: string; body: string }) {
 
 function formatTime(iso: string): string {
  return new Date(iso).toLocaleTimeString(undefined, {
+ timeZone: "Africa/Lagos",
  hour:"numeric",
  minute:"2-digit",
  });

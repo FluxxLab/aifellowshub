@@ -309,8 +309,12 @@ function ActionBadge({ action }: { action: string }) {
 }
 
 function formatTime(iso: string): string {
+  // Locked to WAT (Africa/Lagos) so audit timestamps don't drift
+  // when admins view from outside Nigeria. lib/datetime keeps the
+  // full app's time display consistent.
   const d = new Date(iso);
   return d.toLocaleString(undefined, {
+    timeZone: "Africa/Lagos",
     month: "short",
     day: "numeric",
     hour: "2-digit",

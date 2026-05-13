@@ -48,6 +48,7 @@ export default function ProfileView({ initial }: ProfileViewProps) {
 
 function ProfileHeader({ profile }: { profile: MyProfile }) {
  const joined = new Date(profile.joinedAt).toLocaleDateString(undefined, {
+ timeZone: "Africa/Lagos",
  month:"long",
  year:"numeric",
  });

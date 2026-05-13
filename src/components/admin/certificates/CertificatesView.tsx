@@ -192,6 +192,7 @@ function IssuedSection({ issued }: { issued: IssuedCertificate[] }) {
  <Td>
  <span className="text-sm text-gray-500">
  {new Date(c.issuedAt).toLocaleDateString(undefined, {
+ timeZone: "Africa/Lagos",
  year:"numeric",
  month:"short",
  day:"numeric",

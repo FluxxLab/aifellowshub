@@ -78,6 +78,7 @@ export default function PastSessionsTable({
                   <td className="px-5 py-3">{s.moduleTitle}</td>
                   <td className="px-5 py-3">
                     {start.toLocaleDateString(undefined, {
+                      timeZone: "Africa/Lagos",
                       day: "numeric",
                       month: "short",
                     })}

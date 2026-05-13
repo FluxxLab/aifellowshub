@@ -42,6 +42,7 @@ export default async function PrintCertificatePage({
  cohortName={c.cohortName}
  capstoneTitle={c.capstoneTitle}
  completedAtLabel={new Date(c.completedAt).toLocaleDateString(undefined, {
+ timeZone: "Africa/Lagos",
  day: "numeric",
  month: "long",
  year: "numeric",

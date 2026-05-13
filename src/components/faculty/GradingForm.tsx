@@ -128,7 +128,7 @@ export default function GradingForm({
             <div className="flex flex-wrap items-center gap-2">
               <StatusBadge status={attempt.status} />
               <span className="text-xs text-gray-500">
-                Submitted {new Date(attempt.submittedAt).toLocaleString()}
+                Submitted {new Date(attempt.submittedAt).toLocaleString(undefined, { timeZone: "Africa/Lagos" })}
               </span>
             </div>
             <h1 className="mt-1 text-title-sm font-bold text-gray-800">

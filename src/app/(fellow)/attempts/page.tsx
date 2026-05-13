@@ -58,7 +58,7 @@ function AttemptRow({ attempt }: { attempt: FellowAttempt }) {
             <StatusBadge status={attempt.status} />
             <span className="inline-flex items-center gap-1 text-xs text-gray-500">
               <TimeIcon className="h-3.5 w-3.5" />
-              {new Date(attempt.submittedAt).toLocaleString()}
+              {new Date(attempt.submittedAt).toLocaleString(undefined, { timeZone: "Africa/Lagos" })}
             </span>
           </div>
           <h2 className="mt-1 text-lg font-semibold text-gray-800">

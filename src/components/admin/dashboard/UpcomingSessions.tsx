@@ -42,11 +42,13 @@ export default function UpcomingSessions({ sessions }: UpcomingSessionsProps) {
 function SessionRow({ session }: { session: UpcomingSession }) {
  const startsAt = new Date(session.startsAt);
  const dateLabel = startsAt.toLocaleDateString(undefined, {
+ timeZone: "Africa/Lagos",
  weekday:"short",
  month:"short",
  day:"numeric",
  });
  const timeLabel = startsAt.toLocaleTimeString(undefined, {
+ timeZone: "Africa/Lagos",
  hour:"numeric",
  minute:"2-digit",
  });

@@ -138,6 +138,7 @@ function VerifiedState({
               Issued by the Policy Innovation Centre, in partnership with the
               Africa Hub for Innovation &amp; Development. Verified at{" "}
               {new Date(verifiedAt).toLocaleString(undefined, {
+                timeZone: "Africa/Lagos",
                 day: "numeric",
                 month: "short",
                 year: "numeric",
@@ -156,6 +157,7 @@ function VerifiedState({
         cohortName={c.cohortName}
         capstoneTitle={c.capstoneTitle}
         completedAtLabel={new Date(c.completedAt).toLocaleDateString(undefined, {
+          timeZone: "Africa/Lagos",
           day: "numeric",
           month: "long",
           year: "numeric",
@@ -175,6 +177,7 @@ function VerifiedState({
           <Row
             label="Issued"
             value={new Date(c.issuedAt).toLocaleDateString(undefined, {
+              timeZone: "Africa/Lagos",
               day: "numeric",
               month: "long",
               year: "numeric",

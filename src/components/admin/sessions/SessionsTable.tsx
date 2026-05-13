@@ -403,6 +403,7 @@ function RowActions({ session: s }: { session: LiveSession }) {
 
 function formatDate(iso: string): string {
  return new Date(iso).toLocaleDateString(undefined, {
+ timeZone: "Africa/Lagos",
  weekday:"short",
  month:"short",
  day:"numeric",
@@ -410,6 +411,7 @@ function formatDate(iso: string): string {
 }
 function formatTime(iso: string): string {
  return new Date(iso).toLocaleTimeString(undefined, {
+ timeZone: "Africa/Lagos",
  hour:"numeric",
  minute:"2-digit",
  });

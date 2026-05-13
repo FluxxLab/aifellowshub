@@ -291,6 +291,7 @@ function MessageRow({
   isMine: boolean;
 }) {
   const time = new Date(message.createdAt).toLocaleTimeString(undefined, {
+    timeZone: "Africa/Lagos",
     hour: "numeric",
     minute: "2-digit",
   });

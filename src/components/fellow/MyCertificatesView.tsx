@@ -175,6 +175,7 @@ function IssuedView({ certificate: c }: { certificate: Certificate }) {
       // Date — plain, above the "Date of Completion" line.
       if (c.completedAt) {
         const dateLabel = new Date(c.completedAt).toLocaleDateString(undefined, {
+          timeZone: "Africa/Lagos",
           day: "numeric",
           month: "long",
           year: "numeric",
@@ -224,6 +225,7 @@ function IssuedView({ certificate: c }: { certificate: Certificate }) {
             </h2>
             <p className="mt-3 text-base font-semibold text-gray-700">
               {new Date(c.completedAt).toLocaleDateString(undefined, {
+                timeZone: "Africa/Lagos",
                 day: "numeric",
                 month: "long",
                 year: "numeric",
@@ -285,7 +287,7 @@ function IssuedView({ certificate: c }: { certificate: Certificate }) {
             capstoneTitle={c.capstoneTitle}
             completedAtLabel={new Date(c.completedAt).toLocaleDateString(
               undefined,
-              { day: "numeric", month: "long", year: "numeric" },
+              { timeZone: "Africa/Lagos", day: "numeric", month: "long", year: "numeric" },
             )}
             signatories={c.signatories}
             isPreview={false}

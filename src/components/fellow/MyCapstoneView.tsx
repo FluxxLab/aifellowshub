@@ -447,6 +447,7 @@ function MilestonesCard({ milestones }: { milestones: CapstoneMilestone[] }) {
                 <p className="text-xs text-gray-500">
                   {m.weekNumber ? `Week ${m.weekNumber} · ` : ""}
                   {new Date(m.dueAt).toLocaleDateString(undefined, {
+                    timeZone: "Africa/Lagos",
                     day: "numeric",
                     month: "short",
                   })}
