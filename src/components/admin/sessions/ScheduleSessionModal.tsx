@@ -187,7 +187,7 @@ export default function ScheduleSessionModal({
 
             <div>
               <Label>
-                Teachers{" "}
+                Facilitators{" "}
                 <span className="text-xs font-normal text-gray-400">
                   (optional · pick one or many for a panel)
                 </span>
