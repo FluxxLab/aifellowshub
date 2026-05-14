@@ -20,6 +20,15 @@ export default async function FellowLayout({
     redirect(roleHome(user.role));
   }
 
+  // Consent gate. Fellows must accept both the Code of Conduct and the
+  // Data Protection Consent before any (fellow) page renders. The
+  // `/consent` route lives outside this group so it doesn't infinite-
+  // loop on itself; on submit, router.refresh() re-runs this layout
+  // and the redirect drops away.
+  if (!user.codeOfConductAcceptedAt || !user.dataConsentAcceptedAt) {
+    redirect("/consent");
+  }
+
   return (
     <LayoutShell userRole={user.role}>
       <PasswordChangeGate />

@@ -24,6 +24,13 @@ export type CurrentUser = {
    * to `/change-password` until cleared.
    */
   mustChangePassword: boolean;
+  /**
+   * Fellow consent state. Both null on fresh fellow accounts; the
+   * (fellow) server layout redirects to /consent until both are set.
+   * Non-fellow roles stay null and the gate short-circuits on role.
+   */
+  codeOfConductAcceptedAt: string | null;
+  dataConsentAcceptedAt: string | null;
 };
 
 /**
@@ -39,4 +46,10 @@ export const LOADING_USER: CurrentUser = {
   role: "fellow",
   avatarUrl: "/images/user/owner.jpg",
   mustChangePassword: false,
+  // Default to "already accepted" during hydration so the client UI
+  // doesn't briefly render a "consent required" banner before the
+  // real user payload lands. The server-side gate is the source of
+  // truth — this placeholder is just to avoid flicker.
+  codeOfConductAcceptedAt: new Date(0).toISOString(),
+  dataConsentAcceptedAt: new Date(0).toISOString(),
 };

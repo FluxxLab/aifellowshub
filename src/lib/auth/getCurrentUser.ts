@@ -19,6 +19,8 @@ type BackendUser = {
   role: Role;
   avatarUrl: string | null;
   mustChangePassword?: boolean;
+  codeOfConductAcceptedAt?: string | null;
+  dataConsentAcceptedAt?: string | null;
 };
 
 function backendToCurrentUser(u: BackendUser): CurrentUser {
@@ -29,6 +31,8 @@ function backendToCurrentUser(u: BackendUser): CurrentUser {
     role: u.role,
     avatarUrl: u.avatarUrl ?? "/images/user/owner.jpg",
     mustChangePassword: u.mustChangePassword ?? false,
+    codeOfConductAcceptedAt: u.codeOfConductAcceptedAt ?? null,
+    dataConsentAcceptedAt: u.dataConsentAcceptedAt ?? null,
   };
 }
 

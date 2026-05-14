@@ -20,6 +20,8 @@ function backendToCurrentUser(u: {
   role: Role;
   avatarUrl: string | null;
   mustChangePassword?: boolean;
+  codeOfConductAcceptedAt?: string | null;
+  dataConsentAcceptedAt?: string | null;
 }): CurrentUser {
   return {
     id: u.id,
@@ -28,6 +30,8 @@ function backendToCurrentUser(u: {
     role: u.role,
     avatarUrl: u.avatarUrl ?? "/images/user/owner.jpg",
     mustChangePassword: u.mustChangePassword ?? false,
+    codeOfConductAcceptedAt: u.codeOfConductAcceptedAt ?? null,
+    dataConsentAcceptedAt: u.dataConsentAcceptedAt ?? null,
   };
 }
 
