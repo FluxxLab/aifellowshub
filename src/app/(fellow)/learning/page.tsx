@@ -41,7 +41,7 @@ export default async function LearningPage() {
       <div data-tour="learning-heading">
         <h1 className="text-3xl font-bold text-gray-800 sm:text-4xl">Curriculum</h1>
         <p className="mt-2 text-gray-600">
-          12 modules across the Fellowship. The next module unlocks when you
+          Your modules across the Fellowship. The next module unlocks when you
           attend that week&apos;s live session{" "}
           <span className="font-semibold text-fellowship-navy">or</span> pass
           its assessment.
