@@ -457,7 +457,7 @@ export async function deleteLesson(lessonId: string): Promise<void> {
  * network, so users get a fast local error instead of an opaque
  * upload-failed-after-200MB.
  */
-export const LESSON_UPLOAD_MAX_BYTES = 2 * 1024 * 1024 * 1024; // 2 GB — mirror of backend cap
+export const LESSON_UPLOAD_MAX_BYTES = 850 * 1024 * 1024; // 850 MB — mirror of backend cap
 export const LESSON_UPLOAD_ALLOWED_MIME = [
   "video/mp4",
   "video/webm",
