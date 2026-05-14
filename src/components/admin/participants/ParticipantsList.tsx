@@ -283,39 +283,148 @@ type TabPanelProps = {
  fellowFilter: (typeof FELLOW_FILTERS)[number]["id"];
 };
 
+/** 25 rows per page across all five participant tables. Big enough
+ *  to fit a typical cohort segment on one screen at desktop widths,
+ *  small enough that mobile users aren't scrolling forever before
+ *  hitting the page-controls strip. */
+const PAGE_SIZE = 25;
+
 function TabPanel({ tab, data, search, fellowFilter }: TabPanelProps) {
  const q = search.trim().toLowerCase();
  const matchesSearch = (s: string) => !q || s.toLowerCase().includes(q);
+
+ // Reset to page 1 whenever the active tab, filter, or search query
+ // changes — otherwise a user on "Fellows page 3" who switches to
+ // "Faculty" (4 rows) sees an empty table.
+ const [page, setPage] = useState(1);
+ useEffect(() => {
+   setPage(1);
+ }, [tab, fellowFilter, search]);
 
  if (tab ==="fellows") {
  const fellows = data.fellows.filter((f) => {
  if (fellowFilter !=="all"&& f.status !== fellowFilter) return false;
  return matchesSearch(f.fullName) || matchesSearch(f.email);
  });
- return <FellowsTable fellows={fellows} />;
+ return (
+   <Paginated
+     items={fellows}
+     page={page}
+     onPageChange={setPage}
+     render={(rows) => <FellowsTable fellows={rows} />}
+   />
+ );
  }
  if (tab ==="faculty") {
  const faculty = data.faculty.filter(
  (f) => matchesSearch(f.fullName) || matchesSearch(f.email)
  );
- return <FacultyTable faculty={faculty} />;
+ return (
+   <Paginated
+     items={faculty}
+     page={page}
+     onPageChange={setPage}
+     render={(rows) => <FacultyTable faculty={rows} />}
+   />
+ );
  }
  if (tab ==="mentors") {
  const mentors = data.mentors.filter(
  (m) => matchesSearch(m.fullName) || matchesSearch(m.email)
  );
- return <MentorsTable mentors={mentors} />;
+ return (
+   <Paginated
+     items={mentors}
+     page={page}
+     onPageChange={setPage}
+     render={(rows) => <MentorsTable mentors={rows} />}
+   />
+ );
  }
  if (tab ==="admins") {
  const admins = data.admins.filter(
  (a) => matchesSearch(a.fullName) || matchesSearch(a.email)
  );
- return <AdminsTable admins={admins} />;
+ return (
+   <Paginated
+     items={admins}
+     page={page}
+     onPageChange={setPage}
+     render={(rows) => <AdminsTable admins={rows} />}
+   />
+ );
  }
  const waitlist = data.waitlist.filter(
  (w) => matchesSearch(w.fullName) || matchesSearch(w.email)
  );
- return <WaitlistTable waitlist={waitlist} />;
+ return (
+   <Paginated
+     items={waitlist}
+     page={page}
+     onPageChange={setPage}
+     render={(rows) => <WaitlistTable waitlist={rows} />}
+   />
+ );
+}
+
+/** Generic pagination wrapper — slices a page out of `items`, passes
+ *  it to `render`, and shows a Prev/Next strip with the current
+ *  range below the table. Hides the strip entirely when everything
+ *  fits on one page so small lists don't show pointless chrome. */
+function Paginated<T>({
+  items,
+  page,
+  onPageChange,
+  render,
+}: {
+  items: T[];
+  page: number;
+  onPageChange: (p: number) => void;
+  render: (rows: T[]) => React.ReactNode;
+}) {
+  const total = items.length;
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const safePage = Math.min(Math.max(1, page), pageCount);
+  const start = (safePage - 1) * PAGE_SIZE;
+  const slice = items.slice(start, start + PAGE_SIZE);
+  const from = total === 0 ? 0 : start + 1;
+  const to = Math.min(start + PAGE_SIZE, total);
+
+  return (
+    <div className="flex flex-col gap-4">
+      {render(slice)}
+      {pageCount > 1 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 px-1">
+          <p className="text-xs text-gray-500">
+            Showing <span className="font-semibold text-gray-700">{from}–{to}</span> of{" "}
+            <span className="font-semibold text-gray-700">{total}</span>
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onPageChange(safePage - 1)}
+              disabled={safePage <= 1}
+              className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              ‹ Prev
+            </button>
+            <span className="text-xs text-gray-500">
+              Page <span className="font-semibold text-gray-700">{safePage}</span> of{" "}
+              <span className="font-semibold text-gray-700">{pageCount}</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => onPageChange(safePage + 1)}
+              disabled={safePage >= pageCount}
+              className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Next ›
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 /* ---------- Tables ---------- */
