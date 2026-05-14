@@ -121,7 +121,7 @@ export default function LiveSessionAction({
     return rsvpd ? (
       <Button size="sm" variant="outline" className="w-full" disabled={busy}>
         <CheckLineIcon className="h-3.5 w-3.5" />
-        Registered · Add to calendar
+        Registered
       </Button>
     ) : (
       <>
