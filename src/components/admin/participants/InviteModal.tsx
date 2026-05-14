@@ -19,7 +19,7 @@ const SECTOR_TO_BACKEND: Record<Sector, string> = {
   "Economic Inclusion Development": "economic_inclusion_development",
 };
 
-type InviteRole ="admin"|"faculty"|"mentor";
+type InviteRole = "admin" | "faculty" | "mentor" | "fellow";
 
 const ALL_SECTORS: Sector[] = [
   "Healthcare",
@@ -131,7 +131,7 @@ export default function InviteModal({ isOpen, onClose }: InviteModalProps) {
  <Label>
  Role <span className="text-error-500">*</span>
  </Label>
- <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+ <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
  <RoleOption
  selected={role ==="admin"}
  onClick={() => setRole("admin")}
@@ -144,6 +144,10 @@ export default function InviteModal({ isOpen, onClose }: InviteModalProps) {
  selected={role ==="mentor"}
  onClick={() => setRole("mentor")}
  title="Mentor" description="Guides fellows; reviews capstones."/>
+ <RoleOption
+ selected={role ==="fellow"}
+ onClick={() => setRole("fellow")}
+ title="Fellow" description="Participant in the cohort."/>
  </div>
  </div>
 
@@ -167,9 +171,9 @@ export default function InviteModal({ isOpen, onClose }: InviteModalProps) {
  />
  </div>
 
- {(role ==="mentor"|| role ==="faculty") && (
+ {(role ==="mentor"|| role ==="faculty"|| role ==="fellow") && (
  <div>
- <Label>Sector</Label>
+ <Label>Sector{role ==="fellow"? " (cohort track)":""}</Label>
  <div className="flex flex-wrap gap-2">
  {ALL_SECTORS.map((s) => (
  <button
@@ -184,7 +188,7 @@ export default function InviteModal({ isOpen, onClose }: InviteModalProps) {
  ))}
  </div>
  <p className="mt-2 text-xs text-gray-500">
- {role ==="mentor"?"Sectors this mentor will primarily support. Optional.":"Sectors whose modules this faculty member will own. Optional."}
+ {role ==="mentor"?"Sectors this mentor will primarily support. Optional.": role ==="faculty"?"Sectors whose modules this faculty member will own. Optional.":"Cohort track this fellow joins. Optional — drives mentor matching."}
  </p>
  </div>
  )}
