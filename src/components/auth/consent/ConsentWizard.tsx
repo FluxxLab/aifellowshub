@@ -7,6 +7,30 @@ import CodeOfConductText from "./CodeOfConductText";
 import DataConsentText from "./DataConsentText";
 
 /**
+ * Country dropdown options — mirrors the list used on the onboarding
+ * wizard so a fellow's country stays consistent across both forms.
+ * "Other" is the escape hatch for countries we don't surface yet.
+ */
+const COUNTRIES = [
+  "Nigeria",
+  "Kenya",
+  "South Africa",
+  "Ghana",
+  "Ethiopia",
+  "Egypt",
+  "Morocco",
+  "Tanzania",
+  "Uganda",
+  "Rwanda",
+  "Senegal",
+  "Côte d'Ivoire",
+  "Cameroon",
+  "Zambia",
+  "Zimbabwe",
+  "Other",
+];
+
+/**
  * Two-step consent wizard fellows complete before the (fellow) layout
  * loads the dashboard. Step 1 captures the Code of Conduct acceptance;
  * Step 2 captures the Data Protection Consent + three granular
@@ -32,16 +56,25 @@ export default function ConsentWizard({
   const router = useRouter();
   const [step, setStep] = useState<1 | 2>(initialStep);
 
+  // Prefill: if the fellow's saved profile country isn't one of our
+  // dropdown options (e.g. they typed something free-form previously),
+  // map to "Other" so the dropdown has a valid match.
+  const initialCountry = fellowCountry && COUNTRIES.includes(fellowCountry)
+    ? fellowCountry
+    : fellowCountry
+      ? "Other"
+      : "";
+
   // Step 1 — Code of Conduct
   const [cocAgreed, setCocAgreed] = useState(false);
   const [cocSignature, setCocSignature] = useState(fellowName);
-  const [cocCountry, setCocCountry] = useState(fellowCountry ?? "");
+  const [cocCountry, setCocCountry] = useState(initialCountry);
   const [cocBusy, setCocBusy] = useState(false);
 
   // Step 2 — Data Protection
   const [dpAgreed, setDpAgreed] = useState(false);
   const [dpSignature, setDpSignature] = useState(fellowName);
-  const [dpCountry, setDpCountry] = useState(fellowCountry ?? "");
+  const [dpCountry, setDpCountry] = useState(initialCountry);
   const [recordingOptIn, setRecordingOptIn] = useState(true);
   const [commsOptIn, setCommsOptIn] = useState(true);
   const [alumniCommsOptIn, setAlumniCommsOptIn] = useState(true);
@@ -149,11 +182,10 @@ export default function ConsentWizard({
               onChange={setCocSignature}
               placeholder="As it should appear on your certificate"
             />
-            <Field
+            <CountrySelect
               label="Country"
               value={cocCountry}
               onChange={setCocCountry}
-              placeholder="e.g. Nigeria"
             />
             <Field label="Date" value={todayLabel} readOnly />
           </div>
@@ -239,7 +271,11 @@ export default function ConsentWizard({
               value={dpSignature}
               onChange={setDpSignature}
             />
-            <Field label="Country" value={dpCountry} onChange={setDpCountry} />
+            <CountrySelect
+              label="Country"
+              value={dpCountry}
+              onChange={setDpCountry}
+            />
             <Field label="Date" value={todayLabel} readOnly />
           </div>
 
@@ -325,6 +361,38 @@ function Field({
           readOnly ? "bg-gray-50 text-gray-500" : "bg-white text-gray-800"
         }`}
       />
+    </label>
+  );
+}
+
+function CountrySelect({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <label className="block text-sm">
+      <span className="mb-1 inline-block text-xs font-medium uppercase tracking-wide text-gray-500">
+        {label}
+      </span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-800"
+      >
+        <option value="" disabled>
+          Select your country
+        </option>
+        {COUNTRIES.map((c) => (
+          <option key={c} value={c}>
+            {c}
+          </option>
+        ))}
+      </select>
     </label>
   );
 }
