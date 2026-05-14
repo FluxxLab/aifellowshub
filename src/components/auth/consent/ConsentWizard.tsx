@@ -1,34 +1,11 @@
 "use client";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/button/Button";
+import { getCountryNames, isKnownCountry } from "@/lib/countries";
 import { toast } from "@/lib/toast";
 import CodeOfConductText from "./CodeOfConductText";
 import DataConsentText from "./DataConsentText";
-
-/**
- * Country dropdown options — mirrors the list used on the onboarding
- * wizard so a fellow's country stays consistent across both forms.
- * "Other" is the escape hatch for countries we don't surface yet.
- */
-const COUNTRIES = [
-  "Nigeria",
-  "Kenya",
-  "South Africa",
-  "Ghana",
-  "Ethiopia",
-  "Egypt",
-  "Morocco",
-  "Tanzania",
-  "Uganda",
-  "Rwanda",
-  "Senegal",
-  "Côte d'Ivoire",
-  "Cameroon",
-  "Zambia",
-  "Zimbabwe",
-  "Other",
-];
 
 /**
  * Two-step consent wizard fellows complete before the (fellow) layout
@@ -56,14 +33,11 @@ export default function ConsentWizard({
   const router = useRouter();
   const [step, setStep] = useState<1 | 2>(initialStep);
 
-  // Prefill: if the fellow's saved profile country isn't one of our
-  // dropdown options (e.g. they typed something free-form previously),
-  // map to "Other" so the dropdown has a valid match.
-  const initialCountry = fellowCountry && COUNTRIES.includes(fellowCountry)
-    ? fellowCountry
-    : fellowCountry
-      ? "Other"
-      : "";
+  // Prefill: if the fellow's saved profile country matches an ISO
+  // country name, use it; otherwise leave blank so the dropdown
+  // forces a real selection. Legacy free-text values (e.g. "naija",
+  // typo'd entries) won't auto-match — fellow gets a fresh pick.
+  const initialCountry = isKnownCountry(fellowCountry) ? fellowCountry! : "";
 
   // Step 1 — Code of Conduct
   const [cocAgreed, setCocAgreed] = useState(false);
@@ -374,6 +348,10 @@ function CountrySelect({
   value: string;
   onChange: (v: string) => void;
 }) {
+  // Memoise the list — it's identical for every render of every
+  // CountrySelect instance. getCountryNames caches internally too,
+  // so this is double-belt-and-braces.
+  const countries = useMemo(() => getCountryNames(), []);
   return (
     <label className="block text-sm">
       <span className="mb-1 inline-block text-xs font-medium uppercase tracking-wide text-gray-500">
@@ -387,7 +365,7 @@ function CountrySelect({
         <option value="" disabled>
           Select your country
         </option>
-        {COUNTRIES.map((c) => (
+        {countries.map((c) => (
           <option key={c} value={c}>
             {c}
           </option>

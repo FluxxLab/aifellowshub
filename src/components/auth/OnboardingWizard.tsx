@@ -7,9 +7,10 @@ import Button from "@/components/ui/button/Button";
 import { ChevronLeftIcon, ChevronRightIcon } from "@/icons";
 import { ApiError } from "@/lib/api/client";
 import { updateMyProfile } from "@/lib/api/profile";
+import { getCountryNames } from "@/lib/countries";
 import { toast } from "@/lib/toast";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 
 type Sector = "Healthcare" | "EdTech" | "Agriculture" | "Economic Inclusion Development";
 
@@ -20,12 +21,10 @@ const SECTORS: { value: Sector; description: string }[] = [
   { value: "Economic Inclusion Development", description: "Fintech, credit, financial inclusion, governance, public policy" },
 ];
 
-const COUNTRIES = [
-  "Nigeria", "Kenya", "South Africa", "Ghana", "Ethiopia",
-  "Egypt", "Morocco", "Tanzania", "Uganda", "Rwanda",
-  "Senegal", "Côte d'Ivoire", "Cameroon", "Zambia", "Zimbabwe",
-  "Other",
-];
+// Country dropdown options now come from a shared `country-list`-backed
+// helper that returns every ISO 3166-1 territory (~249). Keeps the
+// consent wizard and onboarding wizard in lockstep — adding a country
+// in one place automatically updates the other.
 
 type WizardData = {
   country: string;
@@ -195,6 +194,10 @@ type StepProps = {
 };
 
 function AboutYouStep({ data, update }: StepProps) {
+  const countryOptions = useMemo(
+    () => getCountryNames().map((c) => ({ value: c, label: c })),
+    [],
+  );
   return (
     <div className="space-y-5">
       <div>
@@ -213,7 +216,7 @@ function AboutYouStep({ data, update }: StepProps) {
         <SelectField
           value={data.country}
           onChange={(v) => update("country", v)}
-          options={COUNTRIES.map((c) => ({ value: c, label: c }))}
+          options={countryOptions}
           placeholder="Select your country"
         />
       </div>
