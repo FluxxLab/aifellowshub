@@ -4,6 +4,7 @@ import {
   LESSON_UPLOAD_MAX_BYTES,
   isAllowedLessonMime,
   uploadLessonContent,
+  uploadLessonContentMultipart,
   type FacultyLesson,
 } from "@/lib/api/faculty";
 import { toast } from "@/lib/toast";
@@ -19,7 +20,7 @@ import { FileIcon, TrashBinIcon } from "@/icons";
  * Uploads go directly browser → DigitalOcean Spaces using a
  * pre-signed PUT URL minted by the backend. We never proxy the bytes
  * through our own server, so the BFF / backend can stay lean even
- * when faculty are uploading 500 MB lecture videos.
+ * when faculty are uploading 850 MB lecture videos.
  *
  * Mounting/unmounting in the middle of an upload is safe: XHR is
  * referenced via ref so the component can abort it on unmount, and
@@ -51,7 +52,7 @@ export default function LessonContentUpload({
     if (file.size > LESSON_UPLOAD_MAX_BYTES) {
       toast.error(
         "File is too large",
-        `Max upload is 500 MB. This file is ${(file.size / 1024 / 1024).toFixed(1)} MB.`,
+        `Max upload is 850 MB. This file is ${(file.size / 1024 / 1024).toFixed(1)} MB.`,
       );
       return;
     }
@@ -60,7 +61,18 @@ export default function LessonContentUpload({
     setProgress(0);
     setFilename(file.name);
     try {
-      const next = await uploadLessonContent(lesson.id, file, {
+      // Multipart for anything over 50 MB — chunked, resumable per
+      // chunk, immune to single-network-blip failures. Smaller files
+      // use the single-PUT path: one HTTP round trip, faster setup,
+      // and no need for the multipart overhead. The threshold is well
+      // below S3's 5 MB minimum-part-size limit so the multipart path
+      // is never asked to handle a file too small for itself.
+      const MULTIPART_THRESHOLD = 50 * 1024 * 1024;
+      const upload =
+        file.size >= MULTIPART_THRESHOLD
+          ? uploadLessonContentMultipart
+          : uploadLessonContent;
+      const next = await upload(lesson.id, file, {
         onProgress: (loaded, total) =>
           setProgress(total === 0 ? 0 : Math.round((loaded / total) * 100)),
       });
@@ -191,7 +203,7 @@ export default function LessonContentUpload({
         </button>
       </div>
       <p className="mt-1 text-[11px] text-gray-400">
-        Video, PDF, or image · up to 500 MB
+        Video, PDF, or image · up to 850 MB
       </p>
       <input
         ref={inputRef}

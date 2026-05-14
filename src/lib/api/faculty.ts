@@ -562,6 +562,200 @@ export async function uploadLessonContent(
   });
 }
 
+/* ---------- Multipart lesson upload (resumable, chunked) ----------
+ *
+ * Splits the file into 8 MB chunks and PUTs each chunk to Spaces
+ * independently. Survives network drops because a failed chunk only
+ * retries that chunk — the rest of the file's already-uploaded bytes
+ * stay in the bucket. On final fail (after retries exhausted), the
+ * multipart upload is aborted so Spaces doesn't accumulate orphaned
+ * bytes that the customer keeps paying for.
+ *
+ * Use this for video uploads. The single-PUT `uploadLessonContent`
+ * above is fine for sub-50 MB files (faster setup, one HTTP round trip)
+ * but anything bigger should go through here. The lesson-editor UI
+ * uses file size as the threshold to pick between them.
+ */
+
+/** S3 minimum part size is 5 MB except for the last part. 8 MB gives a
+ *  good progress granularity without too many round trips on slow
+ *  connections (an 800 MB file is 100 parts at 8 MB each). */
+const MULTIPART_CHUNK_BYTES = 8 * 1024 * 1024;
+
+/** How many times to retry a single chunk before treating the whole
+ *  upload as failed. Each retry uses a fresh presigned URL so an
+ *  expired signature doesn't kill us. */
+const MULTIPART_RETRIES_PER_PART = 3;
+
+type StartMultipartResponse = { uploadId: string; key: string };
+type SignPartResponse = { uploadUrl: string; partNumber: number };
+
+export async function uploadLessonContentMultipart(
+  lessonId: string,
+  file: File,
+  options: { onProgress?: (loaded: number, total: number) => void } = {},
+): Promise<FacultyLesson> {
+  if (!isAllowedLessonMime(file.type)) {
+    throw new Error(
+      `Unsupported file type: ${file.type || "unknown"}. Allowed: video, PDF, or image.`,
+    );
+  }
+  if (file.size > LESSON_UPLOAD_MAX_BYTES) {
+    throw new Error(
+      `File is too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Max is ${(LESSON_UPLOAD_MAX_BYTES / 1024 / 1024).toFixed(0)} MB.`,
+    );
+  }
+
+  // Step 1: ask the backend to create the multipart upload.
+  const start = await apiFetch<StartMultipartResponse>(
+    `/lessons/${encodeURIComponent(lessonId)}/multipart/start`,
+    {
+      method: "POST",
+      body: {
+        mimeType: file.type,
+        bytes: file.size,
+        filename: file.name,
+      },
+    },
+  );
+
+  // Step 2: slice the file, upload each chunk, capture its ETag.
+  const totalParts = Math.max(1, Math.ceil(file.size / MULTIPART_CHUNK_BYTES));
+  const completed: { partNumber: number; etag: string }[] = [];
+  let bytesUploaded = 0;
+
+  try {
+    for (let partNumber = 1; partNumber <= totalParts; partNumber++) {
+      const startByte = (partNumber - 1) * MULTIPART_CHUNK_BYTES;
+      const endByte = Math.min(startByte + MULTIPART_CHUNK_BYTES, file.size);
+      const chunk = file.slice(startByte, endByte);
+
+      const etag = await uploadOnePartWithRetry({
+        lessonId,
+        uploadId: start.uploadId,
+        objectKey: start.key,
+        partNumber,
+        chunk,
+      });
+      completed.push({ partNumber, etag });
+
+      // Coarse-grained progress — each part's progress only ticks at
+      // chunk-boundary completion. Fine for 8 MB chunks; if a slower
+      // connection wants byte-level resolution, swap the XHR call in
+      // `uploadOnePartWithRetry` to emit upload events.
+      bytesUploaded = endByte;
+      options.onProgress?.(bytesUploaded, file.size);
+    }
+
+    // Step 3: tell the backend to assemble + attach.
+    const data = await apiFetch<{ lesson: BackendLesson }>(
+      `/lessons/${encodeURIComponent(lessonId)}/multipart/complete`,
+      {
+        method: "POST",
+        body: {
+          uploadId: start.uploadId,
+          objectKey: start.key,
+          parts: completed,
+          mimeType: file.type,
+          bytes: file.size,
+        },
+      },
+    );
+    return backendToFacultyLesson(data.lesson);
+  } catch (err) {
+    // Best-effort abort so Spaces drops the partial bytes. Don't let
+    // an abort failure mask the original error.
+    try {
+      await apiFetch(
+        `/lessons/${encodeURIComponent(lessonId)}/multipart/abort`,
+        {
+          method: "POST",
+          body: { uploadId: start.uploadId, objectKey: start.key },
+        },
+      );
+    } catch {
+      // ignore
+    }
+    throw err;
+  }
+}
+
+/** PUT one chunk to Spaces and return its ETag. Refreshes the presigned
+ *  URL on each retry — long uploads on slow networks routinely outlive
+ *  the signing window. */
+async function uploadOnePartWithRetry(input: {
+  lessonId: string;
+  uploadId: string;
+  objectKey: string;
+  partNumber: number;
+  chunk: Blob;
+}): Promise<string> {
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt < MULTIPART_RETRIES_PER_PART; attempt++) {
+    try {
+      const signed = await apiFetch<SignPartResponse>(
+        `/lessons/${encodeURIComponent(input.lessonId)}/multipart/sign-part`,
+        {
+          method: "POST",
+          body: {
+            uploadId: input.uploadId,
+            objectKey: input.objectKey,
+            partNumber: input.partNumber,
+          },
+        },
+      );
+      const etag = await putChunkAndReadEtag(signed.uploadUrl, input.chunk);
+      return etag;
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      // Linear backoff — second tries quickly, third with a real pause
+      // so a transient Spaces hiccup has time to clear.
+      const backoffMs = attempt === 0 ? 500 : 2500;
+      await new Promise((r) => setTimeout(r, backoffMs));
+    }
+  }
+  throw new Error(
+    `Part ${input.partNumber} failed after ${MULTIPART_RETRIES_PER_PART} attempts: ${
+      lastError?.message ?? "unknown error"
+    }`,
+  );
+}
+
+/** Browser → Spaces single-chunk PUT. The ETag the server returns is
+ *  required for the complete-multipart call; it lives on the response
+ *  ETag header. DO Spaces returns quoted ETags ("abc123"); the
+ *  CompleteMultipartUpload API accepts the value with or without
+ *  quotes, but consistency is easier — strip them. */
+function putChunkAndReadEtag(uploadUrl: string, chunk: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", uploadUrl);
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        const etag = xhr.getResponseHeader("ETag")?.replace(/^"|"$/g, "");
+        if (!etag) {
+          reject(
+            new Error(
+              "Spaces accepted the chunk but didn't return an ETag — check that the bucket's CORS policy lists ExposeHeaders: [\"ETag\"].",
+            ),
+          );
+          return;
+        }
+        resolve(etag);
+      } else {
+        reject(
+          new Error(
+            `Spaces rejected the chunk (HTTP ${xhr.status}): ${xhr.responseText.slice(0, 200)}`,
+          ),
+        );
+      }
+    };
+    xhr.onerror = () =>
+      reject(new Error("Network error uploading chunk to Spaces."));
+    xhr.send(chunk);
+  });
+}
+
 export async function reorderLesson(
   lessonId: string,
   payload: { beforeId: string | null; afterId: string | null },
