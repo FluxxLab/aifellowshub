@@ -429,13 +429,86 @@ export default function ZoomMeetingRoom({
         </div>
       )}
 
-      {/*
-        Wrapper is `relative` so the Expand / Exit fullscreen button can
-        be positioned in the corner of the meeting tile without
-        affecting Zoom's inner DOM. Zoom manages everything inside
-        `containerRef`.
-      */}
       {dialog}
+      {/*
+        Control bar sits ABOVE the meeting embed — earlier attempts
+        positioned these buttons absolute over Zoom's UI, which always
+        ended up colliding with Zoom's own top-right minimise/menu icon
+        or its grid-view selector. Moving them out of the embed area
+        entirely guarantees no overlap. In fullscreen mode this strip
+        becomes part of the same vertical flex layout so it stays
+        visible across the top.
+      */}
+      {phase === "in-meeting" && (
+        <div
+          className={
+            isFullscreen
+              ? "flex items-center justify-between gap-2 bg-black px-3 py-2"
+              : "flex items-center justify-between gap-2"
+          }
+        >
+          <button
+            type="button"
+            onClick={() => {
+              if (isFullscreen) void exitFullscreen();
+              else void enterFullscreen();
+            }}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-fellowship-navy px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-fellowship-navy-dark"
+            aria-label={
+              isFullscreen ? "Exit fullscreen" : "Expand to fullscreen"
+            }
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className="h-4 w-4"
+              aria-hidden="true"
+            >
+              {isFullscreen ? (
+                <path
+                  fillRule="evenodd"
+                  d="M4 9h3a1 1 0 001-1V5a1 1 0 112 0v3a3 3 0 01-3 3H4a1 1 0 110-2zm9-4a1 1 0 011 1v3a1 1 0 001 1h3a1 1 0 110 2h-3a3 3 0 01-3-3V6a1 1 0 011-1zm-9 6a1 1 0 011 1v3a1 1 0 001 1h3a1 1 0 110 2H6a3 3 0 01-3-3v-3a1 1 0 011-1zm13 0a1 1 0 011 1v3a3 3 0 01-3 3h-3a1 1 0 110-2h3a1 1 0 001-1v-3a1 1 0 011-1z"
+                  clipRule="evenodd"
+                />
+              ) : (
+                <path
+                  fillRule="evenodd"
+                  d="M3 5a2 2 0 012-2h3a1 1 0 010 2H5v3a1 1 0 11-2 0V5zm14 0v3a1 1 0 11-2 0V5h-3a1 1 0 110-2h3a2 2 0 012 2zM5 17h3a1 1 0 110 2H5a2 2 0 01-2-2v-3a1 1 0 112 0v3zm10 0v-3a1 1 0 112 0v3a2 2 0 01-2 2h-3a1 1 0 110-2h3z"
+                  clipRule="evenodd"
+                />
+              )}
+            </svg>
+            {isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+          </button>
+
+          <div className="flex items-center gap-2">
+            {!isFullscreen && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setPhase("left");
+                  onLeave?.();
+                }}
+              >
+                Close meeting
+              </Button>
+            )}
+            {isHost && (
+              <button
+                type="button"
+                onClick={endSession}
+                disabled={endingSession}
+                className="rounded-lg bg-error-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-error-700 disabled:opacity-60"
+              >
+                {endingSession ? "Ending…" : "End session"}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       <div
         ref={wrapperRef}
         className={
@@ -445,78 +518,7 @@ export default function ZoomMeetingRoom({
         }
       >
         <div ref={containerRef} className="absolute inset-0" />
-        {phase === "in-meeting" && (
-          <>
-            {/*
-              Fullscreen toggle pinned top-LEFT — Zoom's Component View
-              parks its grid-view / minimise / record badges along the
-              top-right of the embed, so anchoring our button there
-              made it disappear under Zoom's chrome on mobile. Top-left
-              is empty in every Zoom layout, so the control is always
-              tappable. z-20 keeps it above Zoom's own overlays.
-            */}
-            <button
-              type="button"
-              onClick={() => {
-                if (isFullscreen) void exitFullscreen();
-                else void enterFullscreen();
-              }}
-              className="absolute left-3 top-3 z-20 inline-flex items-center gap-1.5 rounded-lg bg-fellowship-navy px-3 py-2 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-fellowship-navy-dark"
-              aria-label={
-                isFullscreen ? "Exit fullscreen" : "Expand to fullscreen"
-              }
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                className="h-4 w-4"
-                aria-hidden="true"
-              >
-                {isFullscreen ? (
-                  <path
-                    fillRule="evenodd"
-                    d="M4 9h3a1 1 0 001-1V5a1 1 0 112 0v3a3 3 0 01-3 3H4a1 1 0 110-2zm9-4a1 1 0 011 1v3a1 1 0 001 1h3a1 1 0 110 2h-3a3 3 0 01-3-3V6a1 1 0 011-1zm-9 6a1 1 0 011 1v3a1 1 0 001 1h3a1 1 0 110 2H6a3 3 0 01-3-3v-3a1 1 0 011-1zm13 0a1 1 0 011 1v3a3 3 0 01-3 3h-3a1 1 0 110-2h3a1 1 0 001-1v-3a1 1 0 011-1z"
-                    clipRule="evenodd"
-                  />
-                ) : (
-                  <path
-                    fillRule="evenodd"
-                    d="M3 5a2 2 0 012-2h3a1 1 0 010 2H5v3a1 1 0 11-2 0V5zm14 0v3a1 1 0 11-2 0V5h-3a1 1 0 110-2h3a2 2 0 012 2zM5 17h3a1 1 0 110 2H5a2 2 0 01-2-2v-3a1 1 0 112 0v3zm10 0v-3a1 1 0 112 0v3a2 2 0 01-2 2h-3a1 1 0 110-2h3z"
-                    clipRule="evenodd"
-                  />
-                )}
-              </svg>
-              {isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-            </button>
-            {isHost && (
-              <button
-                type="button"
-                onClick={endSession}
-                disabled={endingSession}
-                className="absolute right-3 top-3 z-20 rounded-lg bg-error-600 px-3 py-2 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-error-700 disabled:opacity-60"
-              >
-                {endingSession ? "Ending…" : "End session"}
-              </button>
-            )}
-          </>
-        )}
       </div>
-
-      {phase === "in-meeting" && !isFullscreen && (
-        <div className="flex justify-end">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              setPhase("left");
-              onLeave?.();
-            }}
-          >
-            Close meeting
-          </Button>
-        </div>
-      )}
     </div>
   );
 }
