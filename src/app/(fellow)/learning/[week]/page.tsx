@@ -260,6 +260,15 @@ function SessionCard({
     minute: "2-digit",
   });
 
+  // Week 0 is the orientation grace week. Some fellows missed it because
+  // of network issues at programme start, and it isn't graded toward
+  // certification anyway. Treat any ended week-0 session as auto-
+  // credited for every fellow so they see "Attended" rather than
+  // "Missed" on the curriculum, and skip the "no recording" warning.
+  const orientationWeek = weekNumber <= 0;
+  const isEnded = s.status === "ended";
+  const effectiveAttended = orientationWeek && isEnded ? true : s.attended;
+
   return (
     <section className="rounded-2xl border border-warning-200 bg-warning-100 p-5 md:p-6">
       <div className="flex items-center gap-3">
@@ -270,7 +279,9 @@ function SessionCard({
           <h2 className="truncate text-base font-semibold text-gray-800">
             {s.title || "Live session"}
           </h2>
-          <p className="text-xs text-gray-500">Week {weekNumber} · live-only</p>
+          <p className="text-xs text-gray-500">
+            Week {weekNumber} · {orientationWeek ? "orientation" : "live-only"}
+          </p>
         </div>
       </div>
 
@@ -292,7 +303,10 @@ function SessionCard({
         <div className="flex justify-between gap-3">
           <dt className="text-gray-500">Status</dt>
           <dd>
-            <SessionStatusBadge status={s.status} attended={s.attended} />
+            <SessionStatusBadge
+              status={s.status}
+              attended={effectiveAttended}
+            />
           </dd>
         </div>
       </dl>
@@ -307,7 +321,14 @@ function SessionCard({
         )}
       </div>
 
-      {s.status === "ended" && s.attended === false && (
+      {orientationWeek && isEnded && (
+        <p className="mt-3 rounded-md bg-success-50 p-3 text-xs text-success-700">
+          Orientation week — credited for all fellows regardless of live
+          attendance. Doesn&apos;t affect your certification score.
+        </p>
+      )}
+
+      {!orientationWeek && isEnded && s.attended === false && (
         <p className="mt-3 rounded-md bg-gray-50 p-3 text-xs text-gray-600">
           Sessions are live-only — no recording is available (BRD §6.4). The
           assessment is the alternative path to completing this module.

@@ -85,7 +85,15 @@ export default function PastSessionsTable({
                   </td>
                   <td className="px-5 py-3">{s.hostName}</td>
                   <td className="px-5 py-3">
-                    <AttendanceBadge state={s.attendanceState} />
+                    <AttendanceBadge
+                      state={
+                        // Week 0 is the orientation grace week — credited
+                        // for everyone regardless of live attendance.
+                        s.weekNumber <= 0
+                          ? "attended"
+                          : s.attendanceState
+                      }
+                    />
                   </td>
                   <td className="px-5 py-3 text-right">
                     <div className="flex flex-wrap items-center justify-end gap-3">

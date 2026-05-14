@@ -26,7 +26,12 @@ export default async function FellowSessionsPage() {
     .filter((s) => s.status === "ended")
     .sort((a, b) => +new Date(b.startsAt) - +new Date(a.startsAt));
 
-  const attendedCount = past.filter((s) => s.attended === true).length;
+  // Week 0 is the orientation grace week — credited for everyone
+  // regardless of live attendance, so it always counts toward the
+  // tally on this page.
+  const attendedCount = past.filter(
+    (s) => s.attended === true || s.weekNumber <= 0,
+  ).length;
   const attendanceRate =
     past.length > 0 ? Math.round((attendedCount / past.length) * 100) : 0;
 
