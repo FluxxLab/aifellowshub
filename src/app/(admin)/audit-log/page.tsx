@@ -13,23 +13,27 @@ type PageProps = {
     action?: string;
     actorId?: string;
     targetUserId?: string;
-    cursor?: string;
+    page?: string;
   };
 };
 
 export default async function AuditLogPage({ searchParams }: PageProps) {
   const params = searchParams;
+  const pageNum = Number(params.page);
+  const page = Number.isFinite(pageNum) && pageNum > 0 ? pageNum : 1;
   const data = await getAuditLogServer({
     action: params.action,
     actorId: params.actorId,
     targetUserId: params.targetUserId,
-    cursor: params.cursor,
-    limit: 50,
+    page,
+    pageSize: 50,
   });
   return (
     <AuditLogView
-      items={data.items}
-      nextCursor={data.nextCursor}
+      rows={data.rows}
+      page={data.page}
+      pageCount={data.pageCount}
+      total={data.total}
       filter={{
         action: params.action ?? "",
         actorId: params.actorId ?? "",

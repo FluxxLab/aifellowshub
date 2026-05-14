@@ -20,8 +20,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState } from "react";
 
 type AuditLogViewProps = {
-  items: AuditEntry[];
-  nextCursor: string | null;
+  rows: AuditEntry[];
+  page: number;
+  pageCount: number;
+  total: number;
   filter: { action: string; actorId: string; targetUserId: string };
 };
 
@@ -42,8 +44,10 @@ const ACTION_OPTIONS: { value: string; label: string }[] = [
 ];
 
 export default function AuditLogView({
-  items,
-  nextCursor,
+  rows,
+  page,
+  pageCount,
+  total,
   filter,
 }: AuditLogViewProps) {
   const router = useRouter();
@@ -57,6 +61,8 @@ export default function AuditLogView({
     if (action) q.set("action", action);
     if (actorId.trim()) q.set("actorId", actorId.trim());
     if (targetUserId.trim()) q.set("targetUserId", targetUserId.trim());
+    // Reset to page 1 on any filter change — landing on page 8 of a
+    // freshly narrowed result set isn't useful.
     router.push(`/audit-log${q.toString() ? `?${q}` : ""}`);
   };
 
@@ -67,11 +73,12 @@ export default function AuditLogView({
     router.push("/audit-log");
   };
 
-  const loadMore = () => {
-    if (!nextCursor) return;
+  const goToPage = (target: number) => {
+    if (target < 1 || target > pageCount) return;
     const q = new URLSearchParams(params?.toString() ?? "");
-    q.set("cursor", nextCursor);
-    router.push(`/audit-log?${q.toString()}`);
+    if (target === 1) q.delete("page");
+    else q.set("page", String(target));
+    router.push(`/audit-log${q.toString() ? `?${q}` : ""}`);
   };
 
   return (
@@ -123,14 +130,14 @@ export default function AuditLogView({
         </div>
       </section>
 
-      {items.length === 0 ? (
+      {rows.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-6 py-12 text-center text-sm text-gray-500">
           No events match the current filter.
         </div>
       ) : (
         <>
           <MobileRowList>
-            {items.map((e) => (
+            {rows.map((e) => (
               <MobileRowCard
                 key={e.id}
                 header={
@@ -200,7 +207,7 @@ export default function AuditLogView({
                   </TableRow>
                 </TableHeader>
                 <TableBody className="divide-y divide-gray-100">
-                  {items.map((e) => (
+                  {rows.map((e) => (
                     <TableRow key={e.id} className="hover:bg-gray-50">
                       <Td>
                         <span className="text-sm text-gray-700">
@@ -268,11 +275,34 @@ export default function AuditLogView({
         </>
       )}
 
-      {nextCursor && (
-        <div className="flex justify-center">
-          <Button size="sm" variant="outline" onClick={loadMore}>
-            Load more
-          </Button>
+      {pageCount > 1 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 px-1">
+          <p className="text-xs text-gray-500">
+            Showing page{" "}
+            <span className="font-semibold text-gray-700">{page}</span> of{" "}
+            <span className="font-semibold text-gray-700">{pageCount}</span>
+            {" · "}
+            <span className="font-semibold text-gray-700">{total}</span> total
+            events
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => goToPage(page - 1)}
+              disabled={page <= 1}
+            >
+              ‹ Prev
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => goToPage(page + 1)}
+              disabled={page >= pageCount}
+            >
+              Next ›
+            </Button>
+          </div>
         </div>
       )}
     </div>
