@@ -201,13 +201,19 @@ export default function ZoomMeetingRoom({
   // the embedded video tile to redraw at the new size. Without this
   // the Zoom embed stays pinned to whatever viewSizes.default it got
   // at init, leaving a tiny meeting inside a huge black wrapper.
+  //
+  // Debounced — ResizeObserver fires 10+ times during a fullscreen
+  // transition, and an undebounced updateVideoOptions on every tick
+  // makes the SDK thrash (video tiles flicker, audio briefly drops,
+  // and on slow networks the meeting reconnects). 150ms is enough to
+  // coalesce a transition without feeling laggy.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const obs = new ResizeObserver(() => {
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+    const apply = () => {
       const client = clientRef.current as
         | {
-            getCurrentUser?: () => unknown;
             updateVideoOptions?: (o: {
               viewSizes?: { default?: { width: number; height: number } };
             }) => void;
@@ -227,10 +233,24 @@ export default function ZoomMeetingRoom({
       } catch {
         // SDK may not yet expose updateVideoOptions; ignored.
       }
+    };
+    const obs = new ResizeObserver(() => {
+      if (timeout) clearTimeout(timeout);
+      timeout = setTimeout(apply, 150);
     });
     obs.observe(el);
-    return () => obs.disconnect();
+    return () => {
+      if (timeout) clearTimeout(timeout);
+      obs.disconnect();
+    };
   }, [phase]);
+
+  // Hold the latest user in a ref so start() can read the real name
+  // without forcing the SDK to re-init each time the user object's
+  // identity changes (useCurrentUser swaps the reference on every
+  // refresh / refetch even when the underlying name/email stay put).
+  const userRef = useRef(user);
+  userRef.current = user;
 
   useEffect(() => {
     let cancelled = false;
@@ -321,13 +341,14 @@ export default function ZoomMeetingRoom({
         // Zoom's timeout. Sending the LMS user id as customerKey on
         // every join tells Zoom "boot the previous session for this
         // user — this one is the new authoritative one."
+        const currentUser = userRef.current;
         await client.join({
           signature: sig.signature,
           meetingNumber: sig.meetingNumber,
-          userName: user?.fullName ?? "PIC LMS Fellow",
-          userEmail: user?.email ?? "",
+          userName: currentUser?.fullName ?? "PIC LMS Fellow",
+          userEmail: currentUser?.email ?? "",
           password: sig.meetingPassword ?? "",
-          customerKey: user?.id ?? user?.email ?? undefined,
+          customerKey: currentUser?.id ?? currentUser?.email ?? undefined,
           // ZAK promotes the joiner to host on Zoom's side. Without it
           // an admin signing in with role=1 would hang at "Connecting".
           // Backend only returns a non-empty ZAK when role=1.
@@ -373,7 +394,13 @@ export default function ZoomMeetingRoom({
       cancelled = true;
       if (cleanup) cleanup();
     };
-  }, [sessionId, user?.fullName, user?.email]);
+    // Only re-init when sessionId changes. The user prop is read at
+    // join time and never afterwards, so its identity churn (which
+    // happens once when useCurrentUser resolves from null → loaded)
+    // must not retear the SDK — that was the "keeps connecting and
+    // disconnecting" loop fellows reported.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId]);
 
   // Host action — boots everyone via Zoom's end-meeting endpoint and
   // settles attendance using the proportional threshold (BRD §6.4).
