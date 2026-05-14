@@ -443,7 +443,12 @@ export default function ZoomMeetingRoom({
         <div
           className={
             isFullscreen
-              ? "flex items-center justify-between gap-2 bg-black px-3 py-2"
+              ? // In fullscreen, float the controls as a transparent overlay
+                // pinned to the top-right. That way Zoom's own layout uses
+                // the full viewport for its toolbar + participant grid
+                // instead of leaving the dead space we used to leave by
+                // reserving a fixed control-bar row at the top.
+                "pointer-events-none absolute right-3 top-3 z-30 flex items-center justify-end gap-2"
               : "flex items-center justify-between gap-2"
           }
         >
@@ -453,7 +458,7 @@ export default function ZoomMeetingRoom({
               if (isFullscreen) void exitFullscreen();
               else void enterFullscreen();
             }}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-fellowship-navy px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-fellowship-navy-dark"
+            className="pointer-events-auto inline-flex items-center gap-1.5 rounded-lg bg-fellowship-navy/90 px-3 py-2 text-sm font-semibold text-white shadow-lg backdrop-blur transition-colors hover:bg-fellowship-navy-dark"
             aria-label={
               isFullscreen ? "Exit fullscreen" : "Expand to fullscreen"
             }
@@ -482,7 +487,7 @@ export default function ZoomMeetingRoom({
             {isFullscreen ? "Exit fullscreen" : "Fullscreen"}
           </button>
 
-          <div className="flex items-center gap-2">
+          <div className="pointer-events-auto flex items-center gap-2">
             {!isFullscreen && (
               <Button
                 size="sm"
@@ -513,7 +518,11 @@ export default function ZoomMeetingRoom({
         ref={wrapperRef}
         className={
           isFullscreen
-            ? "relative flex-1 bg-black"
+            ? // No more flex-1: the overlay control bar doesn't consume
+              // any of the flex layout, so the meeting wrapper takes the
+              // full inset-0 area and Zoom renders against the full
+              // viewport with no dead band above the participant tile.
+              "absolute inset-0 bg-black"
             : "relative h-[70vh] w-full overflow-hidden rounded-2xl bg-black"
         }
       >
