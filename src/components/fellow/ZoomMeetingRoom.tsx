@@ -153,17 +153,6 @@ export default function ZoomMeetingRoom({
     } else {
       setIsFullscreen(true);
     }
-    // Force out of Minimized whenever fullscreen is entered. Zoom
-    // auto-minimises in low-participant edge cases (alone in the room,
-    // joining before the host); without this nudge the embed stays
-    // tiny even though the wrapper just grew to full viewport.
-    try {
-      await (clientRef.current as {
-        setViewType?: (v: string) => Promise<unknown>;
-      } | null)?.setViewType?.("speaker");
-    } catch {
-      // SDK older than setViewType — ignored.
-    }
   }
 
   async function exitFullscreen() {
@@ -306,12 +295,13 @@ export default function ZoomMeetingRoom({
           customize: {
             video: {
               isResizable: true,
-              // `Minimized` (Zoom's default for embedded view) renders
-              // the meeting as a small floating tile — fellows reported
-              // it as "the Zoom embed isn't expanding". `speaker` puts
-              // the active speaker front-and-center at viewSizes.default,
-              // which is the experience the LMS wants.
-              defaultViewType: "speaker" as never,
+              // Intentionally NO defaultViewType. Setting `speaker` made
+              // the tile fill the container but hid Zoom's bottom toolbar
+              // (mic / camera / share / leave) — fellows lost every
+              // control. Leaving it unset lands on the SDK's standard
+              // view (active speaker + toolbar). Size is driven by
+              // viewSizes.default below, which is what makes the embed
+              // fill the wrapper.
               viewSizes: {
                 default: {
                   width: Math.round(containerWidth),
@@ -356,19 +346,6 @@ export default function ZoomMeetingRoom({
         });
         if (cancelled) return;
         setPhase("in-meeting");
-
-        // Zoom auto-flips to Minimized whenever the participant count
-        // drops to 1 (e.g. fellow joins before the host). Force speaker
-        // view on every join so the embed always lands at the expanded
-        // size — defaultViewType only applies on first init, not after
-        // an auto-minimise.
-        try {
-          await (client as unknown as {
-            setViewType?: (v: string) => Promise<unknown>;
-          }).setViewType?.("speaker");
-        } catch {
-          // Older SDK builds don't expose setViewType; ignored.
-        }
 
         cleanup = () => {
           try {
