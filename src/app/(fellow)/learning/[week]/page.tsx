@@ -424,14 +424,6 @@ function SessionCard({
         </div>
       )}
 
-      {isOnboarding && (
-        <p className="mt-5 rounded-md bg-success-50 p-3 text-xs text-success-700">
-          Orientation was conducted before the cohort started — every fellow
-          is credited automatically. Doesn&apos;t affect your certification
-          score.
-        </p>
-      )}
-
       {!isOnboarding && isEnded && s.attended === false && (
         <p className="mt-3 rounded-md bg-gray-50 p-3 text-xs text-gray-600">
           Sessions are live-only — no recording is available (BRD §6.4). The
