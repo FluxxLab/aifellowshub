@@ -15,6 +15,15 @@ export const metadata: Metadata = {
     "Your fellowship at a glance — current module, next session, and recent activity.",
 };
 
+// Force per-request rendering. The data is per-user (cohort, modules,
+// attendance, AI quota) and changes mid-cohort whenever an admin
+// publishes a module or a session marks attendance — we never want
+// Next.js to reuse a previous render. Without this, fresh deploys
+// can be briefly masked by a route-cache entry from the previous
+// build, which is exactly the "subhead says 9, tile says 10"
+// inconsistency we hit during the Onboarding rollout.
+export const dynamic = "force-dynamic";
+
 export default async function FellowHomePage() {
   const [user, home] = await Promise.all([
     getCurrentUser(),
