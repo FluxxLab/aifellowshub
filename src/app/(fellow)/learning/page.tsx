@@ -17,16 +17,23 @@ import type { FellowModuleSummary } from "@/lib/api/fellow-learning";
 export const metadata: Metadata = {
   title: "Modules · AI Fellows LMS",
   description:
-    "Your 12-week curriculum. The next module unlocks when you attend the live session or pass the assessment (BRD §6.3).",
+    "Your cohort curriculum. The next module unlocks when you attend the live session or pass the assessment (BRD §6.3).",
 };
 
 export default async function LearningPage() {
   const modules = await getFellowCurriculumServer();
   const completed = modules.filter((m) => m.status === "completed").length;
   const total = modules.length;
-  const overallPercent = Math.round(
-    modules.reduce((acc, m) => acc + m.progressPercent, 0) / total
-  );
+  // Guard against empty curricula — dividing by zero produces NaN
+  // and the progress bar renders as "0 of 0 modules complete · NaN%".
+  // For a fellow whose cohort has no published modules yet, show 0%
+  // until faculty publish at least one.
+  const overallPercent =
+    total === 0
+      ? 0
+      : Math.round(
+          modules.reduce((acc, m) => acc + m.progressPercent, 0) / total,
+        );
   const currentModule = modules.find((m) => m.status === "in-progress");
 
   return (
@@ -80,18 +87,31 @@ export default async function LearningPage() {
         </div>
       </section>
 
-      <ol
-        data-tour="learning-modules"
-        className="flex flex-col gap-3 md:gap-4"
-      >
-        {modules.map((m, i) => (
-          <ModuleCard
-            key={m.weekNumber}
-            module={m}
-            previous={i > 0 ? modules[i - 1] : null}
-          />
-        ))}
-      </ol>
+      {total === 0 ? (
+        <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-8 text-center md:p-12">
+          <p className="text-base font-semibold text-gray-700">
+            No modules published yet
+          </p>
+          <p className="mx-auto mt-2 max-w-md text-sm text-gray-500">
+            Your cohort&apos;s modules will appear here as faculty publish
+            them. Check back soon, or watch your inbox for the kick-off
+            announcement.
+          </p>
+        </div>
+      ) : (
+        <ol
+          data-tour="learning-modules"
+          className="flex flex-col gap-3 md:gap-4"
+        >
+          {modules.map((m, i) => (
+            <ModuleCard
+              key={m.weekNumber}
+              module={m}
+              previous={i > 0 ? modules[i - 1] : null}
+            />
+          ))}
+        </ol>
+      )}
     </div>
   );
 }
