@@ -70,6 +70,12 @@ export default function PastSessionsTable({
           <tbody className="divide-y divide-gray-100">
             {sessions.map((s) => {
               const start = new Date(s.startsAt);
+              // Orientation (Week 0 + title matches /onboarding/i) was
+              // conducted outside the LMS. There's no real Zoom meeting
+              // record, so date and host are placeholders — render
+              // "Closed" instead so fellows don't see a synthetic date.
+              const isOnboarding =
+                s.weekNumber <= 0 && /onboarding/i.test(s.moduleTitle);
               return (
                 <tr key={s.weekNumber} className="text-gray-700">
                   <td className="px-5 py-3 font-medium text-gray-800">
@@ -77,22 +83,20 @@ export default function PastSessionsTable({
                   </td>
                   <td className="px-5 py-3">{s.moduleTitle}</td>
                   <td className="px-5 py-3">
-                    {start.toLocaleDateString(undefined, {
-                      timeZone: "Africa/Lagos",
-                      day: "numeric",
-                      month: "short",
-                    })}
+                    {isOnboarding
+                      ? "Closed"
+                      : start.toLocaleDateString(undefined, {
+                          timeZone: "Africa/Lagos",
+                          day: "numeric",
+                          month: "short",
+                        })}
                   </td>
-                  <td className="px-5 py-3">{s.hostName}</td>
+                  <td className="px-5 py-3">
+                    {isOnboarding ? "Closed" : s.hostName}
+                  </td>
                   <td className="px-5 py-3">
                     <AttendanceBadge
-                      state={
-                        // Week 0 is the orientation grace week — credited
-                        // for everyone regardless of live attendance.
-                        s.weekNumber <= 0
-                          ? "attended"
-                          : s.attendanceState
-                      }
+                      state={isOnboarding ? "attended" : s.attendanceState}
                     />
                   </td>
                   <td className="px-5 py-3 text-right">

@@ -10,6 +10,7 @@ import { backendFetch } from "./backend";
 import type {
   FellowModuleDetail,
   FellowModuleSummary,
+  FellowSession,
   Lesson,
   ModuleResource,
   ModuleSession,
@@ -333,23 +334,78 @@ export async function getFellowCurriculumDetailServer(): Promise<
   return real.map(mapBackendCurriculumModule);
 }
 
-/** Full cohort sessions list for `/my-sessions`. Empty when backend unreachable. */
+/** Full cohort sessions list for `/my-sessions`. Empty when backend unreachable.
+ *
+ * Onboarding (Week 0 module titled /onboarding/i) doesn't get its own
+ * Zoom session record in the backend — orientation was conducted
+ * outside the LMS. To keep the Past sessions table visible (and the
+ * attendance stats honest), we fetch the curriculum alongside and
+ * inject a synthetic "Attended" row whenever the cohort has an
+ * Onboarding module but no corresponding session in the listing.
+ */
 export async function getFellowSessionsServer() {
   try {
-    const res = await backendFetch("/me/sessions", { method: "GET" });
-    if (!res.ok) return [];
-    const data = (await res.json()) as { sessions: BackendListedSession[] };
-    return (data.sessions ?? []).map(mapBackendListedSession);
+    const [sessionsRes, curriculum] = await Promise.all([
+      backendFetch("/me/sessions", { method: "GET" }),
+      fetchCurriculum(),
+    ]);
+    if (!sessionsRes.ok) return [];
+    const data = (await sessionsRes.json()) as { sessions: BackendListedSession[] };
+    const sessions = (data.sessions ?? []).map(mapBackendListedSession);
+
+    if (curriculum) {
+      const onboarding = curriculum.find(
+        (m) => m.weekNumber <= 0 && /onboarding/i.test(m.title),
+      );
+      const alreadyListed = sessions.some(
+        (s) => s.weekNumber <= 0 && /onboarding/i.test(s.moduleTitle),
+      );
+      if (onboarding && !alreadyListed) {
+        sessions.push(synthOnboardingSession(onboarding));
+      }
+    }
+
+    return sessions;
   } catch {
     return [];
   }
+}
+
+/** Build a synthetic "past attended" session row for the Onboarding
+ *  module so /my-sessions has a Past row to render. Date/host fields
+ *  carry placeholder values — the PastSessionsTable renders "Closed"
+ *  in their place for orientation rows. */
+function synthOnboardingSession(m: BackendCurriculumModule): FellowSession {
+  // Anchor the row ~1 hour in the past so it sorts to the top of the
+  // Past bucket and out of Upcoming. The PastSessionsTable suppresses
+  // the actual date string in favour of "Closed" for orientation, so
+  // this timestamp is never user-visible.
+  const startsAt = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  return {
+    id: null,
+    title: m.title,
+    weekNumber: m.weekNumber,
+    moduleTitle: m.title,
+    status: "ended",
+    startsAt,
+    durationMinutes: m.durationMinutes || 90,
+    hostName: "PIC",
+    rsvpd: true,
+    attended: true,
+    attendanceState: "attended",
+    hasRecording: false,
+    recordingDurationSeconds: null,
+    recordingWatchedSeconds: 0,
+    joinUrl: "#",
+    attendanceThresholdMinutes: 0,
+  };
 }
 
 type BackendListedSession = BackendSession & {
   module: { id: string; title: string; weekNumber: number } | null;
 };
 
-function mapBackendListedSession(b: BackendListedSession) {
+function mapBackendListedSession(b: BackendListedSession): FellowSession {
   const status: "upcoming" | "live" | "ended" | "cancelled" =
     b.status === "scheduled"
       ? "upcoming"
