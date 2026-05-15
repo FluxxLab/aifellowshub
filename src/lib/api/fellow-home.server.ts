@@ -138,12 +138,22 @@ export async function getFellowHomeServer(): Promise<FellowHome> {
           weekNumber: currentModule.weekNumber,
           title: currentModule.title,
           nextLesson: currentModule.lessons[0]?.title ?? "Start the module",
-          progressPercent:
-            currentModule.myAttempts.bestStatus === "passed"
-              ? 100
-              : currentModule.myAttempts.attemptsUsed > 0
-              ? 50
-              : 0,
+          // Progress mirrors the same completion semantics as the
+          // modules-complete tile and the curriculum list:
+          //   - 100% when isCompleted (covers Onboarding, attended
+          //     session, or passed assessment)
+          //   - 50% when there's partial progress (session attended
+          //     OR assessment attempted but neither path complete)
+          //   - 0% otherwise
+          // Previously this only looked at assessment attempts, so a
+          // fellow who attended the live session but hadn't opened
+          // the quiz saw a stale 0% on the card.
+          progressPercent: isCompleted(currentModule)
+            ? 100
+            : currentModule.session?.myAttendance?.status === "attended" ||
+              currentModule.myAttempts.attemptsUsed > 0
+            ? 50
+            : 0,
         }
       : null,
     nextSession: upcoming
