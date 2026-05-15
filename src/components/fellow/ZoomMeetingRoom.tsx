@@ -568,25 +568,31 @@ export default function ZoomMeetingRoom({
         <style
           dangerouslySetInnerHTML={{
             __html: `
-            .zoom-meeting-fill .suspension-window-container,
-            .zoom-meeting-fill .suspension-window-content,
-            .zoom-meeting-fill .video-popper,
-            .zoom-meeting-fill .speaker-active-container,
-            .zoom-meeting-fill .gallery-video-container,
-            .zoom-meeting-fill .active-video-container {
+            /*
+             * Pin only the OUTERMOST popper Zoom renders into our
+             * zoomAppRoot to fill the wrapper. Pushing every internal
+             * container to 100% height (earlier iteration) pushed
+             * Zoom's bottom toolbar off-screen and split the stage
+             * into a grey void above the participant tile.
+             *
+             * Letting Zoom's internal flex layout do its own work
+             * once the popper is full-bleed gives the toolbar room
+             * to anchor at the bottom and the participant tile to
+             * fill the area in between.
+             */
+            .zoom-meeting-fill > div:first-of-type,
+            .zoom-meeting-fill .video-popper {
               width: 100% !important;
               height: 100% !important;
               max-width: none !important;
               max-height: none !important;
-              transform: none !important;
-              left: 0 !important;
               top: 0 !important;
-            }
-            .zoom-meeting-fill canvas[class*="zoom"],
-            .zoom-meeting-fill video[class*="zoom"] {
-              width: 100% !important;
-              height: 100% !important;
-              object-fit: contain;
+              left: 0 !important;
+              right: 0 !important;
+              bottom: 0 !important;
+              transform: none !important;
+              position: absolute !important;
+              inset: 0 !important;
             }
           `,
           }}
