@@ -76,14 +76,25 @@ export async function getFellowHomeServer(): Promise<FellowHome> {
   ]);
 
   const modules = curriculum?.modules ?? [];
-  const totalWeeks = modules.reduce((m, x) => Math.max(m, x.weekNumber), 0) || 12;
+  // Use real module data instead of hardcoded 12. `totalWeeks` is the
+  // greatest weekNumber across the cohort's curriculum (drives the
+  // "Week X of Y" subhead). `totalModules` is the count of modules,
+  // which is what the Modules-complete tile should compare against.
+  // Both default to 0 when no modules are published, so a fresh
+  // cohort doesn't see fictitious "12" anywhere.
+  const totalWeeks = modules.reduce((m, x) => Math.max(m, x.weekNumber), 0);
+  const totalModules = modules.length;
   const completed = modules.filter(
     (m) =>
       m.myAttempts.bestStatus === "passed" ||
       m.session?.myAttendance?.status === "attended",
   ).length;
   const currentModule = pickCurrentModule(modules);
-  const currentWeek = currentModule?.weekNumber ?? Math.max(1, completed + 1);
+  // Clamp to the curriculum's range so "Week 1 of 0" never happens.
+  // When no modules exist, currentWeek = 0.
+  const currentWeek =
+    currentModule?.weekNumber ??
+    Math.min(totalWeeks, Math.max(0, completed + 1));
 
   const sessionList = sessions?.sessions ?? [];
   const past = sessionList.filter((s) => s.status === "ended");
@@ -104,7 +115,9 @@ export async function getFellowHomeServer(): Promise<FellowHome> {
   return {
     cohort: { name: cohortName, currentWeek, totalWeeks },
     metrics: {
-      modulesComplete: { value: completed, total: totalWeeks },
+      // Compare against the actual published module count, not the
+      // max-week. Fellows see "X / N" matching the curriculum index.
+      modulesComplete: { value: completed, total: totalModules },
       attendanceRatePercent,
       aiBuddyRemaining: {
         value: aiQuota.remaining,

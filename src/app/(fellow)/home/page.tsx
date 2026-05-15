@@ -40,7 +40,11 @@ export default async function FellowHomePage() {
           Hi, {firstName}.
         </h1>
         <p className="mt-2 text-gray-600">
-          You&apos;re in week {cohort.currentWeek} of {cohort.totalWeeks}
+          {cohort.totalWeeks > 0 ? (
+            <>You&apos;re in week {cohort.currentWeek} of {cohort.totalWeeks}</>
+          ) : (
+            <>Welcome to the {cohort.name}</>
+          )}
           {currentModule && (
             <>
               {" "}·{" "}
