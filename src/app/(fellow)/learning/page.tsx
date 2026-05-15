@@ -173,7 +173,13 @@ function ModuleCard({ module: m, previous }: ModuleCardProps) {
             >
               {m.title}
             </h3>
-            <p className="mt-1 text-sm text-gray-600">{m.summary}</p>
+            {/* Prefer the admin-authored Overview (first paragraph,
+                line-clamped to two lines) over the legacy one-line
+                summary. Falls back to summary when no overview is set,
+                so older modules render unchanged. */}
+            <p className="mt-1 text-sm text-gray-600 line-clamp-2">
+              {previewFor(m)}
+            </p>
 
             {isInProgress && (
               <div className="mt-3 h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-gray-100">
@@ -274,6 +280,17 @@ function ModuleCard({ module: m, previous }: ModuleCardProps) {
       </Link>
     </li>
   );
+}
+
+/** Card-preview text for a module. Uses the admin-authored Overview's
+ *  first paragraph when set, otherwise falls back to the one-line
+ *  summary. CSS `line-clamp-2` on the rendering <p> caps the visual
+ *  height so a long overview never blows out the card layout. */
+function previewFor(m: FellowModuleSummary): string {
+  const firstOverviewPara = m.overview
+    ?.split(/\n{2,}/)[0]
+    ?.trim();
+  return firstOverviewPara || m.summary;
 }
 
 function StatusOrb({
