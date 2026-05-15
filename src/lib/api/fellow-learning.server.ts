@@ -33,6 +33,9 @@ type BackendCurriculumModule = {
   weekNumber: number;
   title: string;
   summary: string;
+  overview: string | null;
+  learningObjectives: string | null;
+  keywords: string[];
   durationMinutes: number;
   lessons: {
     id: string;
@@ -167,6 +170,9 @@ export async function getFellowCurriculumServer(): Promise<FellowModuleSummary[]
       weekNumber: m.weekNumber,
       title: m.title,
       summary: m.summary,
+      overview: m.overview ?? null,
+      learningObjectives: m.learningObjectives ?? null,
+      keywords: m.keywords ?? [],
       status,
       progressPercent:
         status === "completed" ? 100 : status === "in-progress" ? 50 : 0,
@@ -246,6 +252,9 @@ function mapBackendCurriculumModule(
     weekNumber: m.weekNumber,
     title: m.title,
     summary: m.summary,
+    overview: m.overview ?? null,
+    learningObjectives: m.learningObjectives ?? null,
+    keywords: m.keywords ?? [],
     status,
     progressPercent:
       status === "completed" ? 100 : status === "in-progress" ? 50 : 0,

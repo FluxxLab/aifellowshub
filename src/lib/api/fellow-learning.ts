@@ -9,6 +9,13 @@ export type FellowModuleSummary = {
   weekNumber: number;
   title: string;
   summary: string;
+  /** Longer prose intro authored by faculty. Null when not set; UI
+   *  falls back to `summary` for the overview section. */
+  overview: string | null;
+  /** Newline-separated bullet objectives. Frontend splits on \n. */
+  learningObjectives: string | null;
+  /** Tag chips. Empty array when none set. */
+  keywords: string[];
   status: ModuleStatus;
   progressPercent: number;
   /** Did the fellow attend that week's live session? null = upcoming. */

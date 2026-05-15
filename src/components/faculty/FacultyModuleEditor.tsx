@@ -67,6 +67,16 @@ export default function FacultyModuleEditor({
   const [status, setStatus] = useState<FacultyModuleStatus>(initial.status);
   const [title, setTitle] = useState(initial.title);
   const [summary, setSummary] = useState(initial.summary);
+  const [overview, setOverview] = useState(initial.overview ?? "");
+  const [learningObjectives, setLearningObjectives] = useState(
+    initial.learningObjectives ?? "",
+  );
+  // Keywords are stored as an array on the server but the textarea
+  // input is a comma-separated string for editing convenience. Round-
+  // trip on save: split on comma, trim each, drop empties.
+  const [keywordsRaw, setKeywordsRaw] = useState(
+    (initial.keywords ?? []).join(", "),
+  );
   const [lessons, setLessons] = useState<FacultyLesson[]>(initial.lessons);
   const [resources, setResources] = useState<FacultyResource[]>(initial.resources);
   const [session, setSession] = useState<FacultySession | null>(initial.session);
@@ -76,9 +86,15 @@ export default function FacultyModuleEditor({
   const [savingState, setSavingState] = useState<"idle" | "saving" | "saved">("idle");
   const [submitState, setSubmitState] = useState<"idle" | "submitting" | "submitted">("idle");
 
+  const parseKeywords = (raw: string) =>
+    raw.split(",").map((k) => k.trim()).filter(Boolean);
+
   const dirty =
     title !== initial.title ||
     summary !== initial.summary ||
+    overview !== (initial.overview ?? "") ||
+    learningObjectives !== (initial.learningObjectives ?? "") ||
+    keywordsRaw !== (initial.keywords ?? []).join(", ") ||
     JSON.stringify(lessons) !== JSON.stringify(initial.lessons);
 
   const [error, setError] = useState<string | null>(null);
@@ -89,7 +105,13 @@ export default function FacultyModuleEditor({
     setSavingState("saving");
     try {
       // Real PATCH — backend auto-reverts published → draft on content change.
-      const updated = await saveModuleDraft(initial.id, { title, summary });
+      const updated = await saveModuleDraft(initial.id, {
+        title,
+        summary,
+        overview,
+        learningObjectives,
+        keywords: parseKeywords(keywordsRaw),
+      });
       setStatus(updated.status);
       setSavingState("saved");
       window.setTimeout(() => setSavingState("idle"), 1800);
@@ -287,8 +309,57 @@ export default function FacultyModuleEditor({
               rows={2}
               value={summary}
               onChange={(e) => setSummary(e.target.value)}
+              placeholder="One-line summary fellows see on the curriculum index."
               className="mt-2 w-full resize-y rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm text-gray-600 hover:border-gray-200 focus:border-fellowship-navy focus:outline-hidden focus:ring-3 focus:ring-fellowship-navy/10"
             />
+          </div>
+        </div>
+
+        {/* Overview / Objectives / Keywords — long-form module info
+            that fellows see at the top of the module page. Optional;
+            modules without these fields fall back to just the summary. */}
+        <div className="mt-5 space-y-4 border-t border-gray-100 pt-5">
+          <div>
+            <label className="text-xs font-medium uppercase tracking-wide text-gray-500">
+              Overview
+            </label>
+            <textarea
+              rows={5}
+              value={overview}
+              onChange={(e) => setOverview(e.target.value)}
+              placeholder="Long-form intro to the module. What is it about, why does it matter, how does it fit into the cohort arc? Several paragraphs are fine."
+              className="mt-1 w-full resize-y rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-fellowship-navy focus:outline-hidden focus:ring-3 focus:ring-fellowship-navy/10"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium uppercase tracking-wide text-gray-500">
+              Learning objectives
+            </label>
+            <textarea
+              rows={4}
+              value={learningObjectives}
+              onChange={(e) => setLearningObjectives(e.target.value)}
+              placeholder={"One bullet per line. Examples:\nExplain the major fairness frameworks in AI governance.\nCritique a real-world model deployment for procedural justice gaps."}
+              className="mt-1 w-full resize-y rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-fellowship-navy focus:outline-hidden focus:ring-3 focus:ring-fellowship-navy/10"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              One objective per line. Fellows see them as a bulleted list.
+            </p>
+          </div>
+          <div>
+            <label className="text-xs font-medium uppercase tracking-wide text-gray-500">
+              Keywords
+            </label>
+            <input
+              type="text"
+              value={keywordsRaw}
+              onChange={(e) => setKeywordsRaw(e.target.value)}
+              placeholder="algorithmic fairness, bias audits, procedural justice"
+              className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-fellowship-navy focus:outline-hidden focus:ring-3 focus:ring-fellowship-navy/10"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Comma-separated. Renders as tag chips on the module page.
+            </p>
           </div>
         </div>
 

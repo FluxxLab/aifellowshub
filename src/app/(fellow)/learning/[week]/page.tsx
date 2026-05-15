@@ -83,6 +83,8 @@ export default async function ModuleDetailPage({
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 md:gap-6">
         <div className="lg:col-span-2 flex flex-col gap-4 md:gap-6">
+          <ModuleInfoSection module={m} />
+
           {/*
             Tiered assessments (BRD §6.5 + extension):
               1. Pre-quiz (faculty) — entry baseline, score hidden
@@ -254,6 +256,68 @@ function hasAnyAssessment(m: FellowModuleDetail): boolean {
   if (m.preAssessment) return true;
   if (m.postAssessment) return true;
   return m.lessons.some((l) => Boolean(l.assessment));
+}
+
+/** Long-form module info: Overview, Learning objectives, Keywords.
+ *  All three fields are optional; the section only renders when at
+ *  least one is set so modules without prose info don't show an
+ *  empty card. */
+function ModuleInfoSection({ module: m }: { module: FellowModuleDetail }) {
+  const hasOverview = Boolean(m.overview && m.overview.trim().length > 0);
+  const objectives = (m.learningObjectives ?? "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const hasObjectives = objectives.length > 0;
+  const hasKeywords = (m.keywords ?? []).length > 0;
+
+  if (!hasOverview && !hasObjectives && !hasKeywords) return null;
+
+  return (
+    <section className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
+      {hasOverview && (
+        <div>
+          <h2 className="text-base font-semibold text-gray-800">Overview</h2>
+          {/* Render newlines as paragraph breaks. Faculty type prose
+              with paragraph spacing, not Markdown — keep it simple. */}
+          <div className="mt-2 space-y-3 text-sm leading-relaxed text-gray-700">
+            {m.overview!.split(/\n{2,}/).map((para, i) => (
+              <p key={i}>{para}</p>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {hasObjectives && (
+        <div className={hasOverview ? "mt-6" : ""}>
+          <h2 className="text-base font-semibold text-gray-800">
+            Learning objectives
+          </h2>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-700">
+            {objectives.map((o, i) => (
+              <li key={i}>{o}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {hasKeywords && (
+        <div className={hasOverview || hasObjectives ? "mt-6" : ""}>
+          <h2 className="text-base font-semibold text-gray-800">Keywords</h2>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {m.keywords.map((k) => (
+              <span
+                key={k}
+                className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-700"
+              >
+                {k}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  );
 }
 
 function SessionCard({

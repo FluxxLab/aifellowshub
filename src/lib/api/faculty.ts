@@ -100,6 +100,12 @@ export type FacultyModuleSummary = {
   weekNumber: number;
   title: string;
   summary: string;
+  /** Longer prose intro for the curriculum view. Optional. */
+  overview: string | null;
+  /** Newline-separated bullet objectives. Optional. */
+  learningObjectives: string | null;
+  /** Tag chips. Empty array when none set. */
+  keywords: string[];
   status: FacultyModuleStatus;
   lessonsCount: number;
   /** Active fellows currently in this module across all cohorts. */
@@ -227,6 +233,9 @@ export type BackendModule = {
   weekNumber: number;
   title: string;
   summary: string;
+  overview?: string | null;
+  learningObjectives?: string | null;
+  keywords?: string[];
   status: "draft" | "under_review" | "published";
   unlockCondition: string;
   orderIndex: number;
@@ -255,6 +264,9 @@ export function backendToModuleSummary(m: BackendModule): FacultyModuleSummary {
     weekNumber: m.weekNumber,
     title: m.title,
     summary: m.summary,
+    overview: m.overview ?? null,
+    learningObjectives: m.learningObjectives ?? null,
+    keywords: m.keywords ?? [],
     status: backendStatusToFaculty(m.status),
     lessonsCount: m.lessons?.length ?? m.lessonCount ?? 0,
     enrolledFellows: 0, // backend doesn't compute this yet
@@ -349,7 +361,14 @@ export async function createModule(payload: {
 /** Save the editable draft fields on a module. */
 export async function saveModuleDraft(
   moduleId: string,
-  patch: Partial<{ title: string; summary: string; weekNumber: number }>,
+  patch: Partial<{
+    title: string;
+    summary: string;
+    overview: string;
+    learningObjectives: string;
+    keywords: string[];
+    weekNumber: number;
+  }>,
 ): Promise<FacultyModuleDetail> {
   const data = await apiFetch<{ module: BackendModule }>(
     `/modules/${encodeURIComponent(moduleId)}`,
