@@ -362,18 +362,14 @@ export default function ZoomMeetingRoom({
         if (cancelled) return;
         setPhase("in-meeting");
 
-        // Belt-and-braces re-nudge out of Minimized. Even with
-        // defaultViewType: 'speaker' set at init, the SDK has
-        // occasionally been observed to land in Minimized when the
-        // joiner is the only participant. Calling setViewType right
-        // after join short-circuits that race.
-        try {
-          await (client as {
-            setViewType?: (v: string) => Promise<unknown>;
-          })?.setViewType?.("speaker");
-        } catch {
-          // SDK version without setViewType — ignored.
-        }
+        // Earlier iterations called client.setViewType("speaker") here
+        // to re-nudge the SDK out of Minimized. That call landed during
+        // the SDK's post-join settlement window and was triggering
+        // connect/disconnect loops mid-join — fellows reported "keeps
+        // disconnecting before connecting" and the mic/camera toolbar
+        // never rendered. defaultViewType at init is init-only per
+        // the SDK types but stable; the runtime nudge stays only on
+        // the user-gesture fullscreen-enter path.
 
         cleanup = () => {
           try {
@@ -569,30 +565,20 @@ export default function ZoomMeetingRoom({
           dangerouslySetInnerHTML={{
             __html: `
             /*
-             * Pin only the OUTERMOST popper Zoom renders into our
-             * zoomAppRoot to fill the wrapper. Pushing every internal
-             * container to 100% height (earlier iteration) pushed
-             * Zoom's bottom toolbar off-screen and split the stage
-             * into a grey void above the participant tile.
-             *
-             * Letting Zoom's internal flex layout do its own work
-             * once the popper is full-bleed gives the toolbar room
-             * to anchor at the bottom and the participant tile to
-             * fill the area in between.
+             * Only nudge max-width/max-height off the outermost Zoom
+             * popper so it isn't clamped to a small default size.
+             * Don't force position/inset/transform — earlier
+             * iterations that did so were fighting the SDK's own
+             * positioning during the join handshake, causing the
+             * connect/disconnect loop fellows reported and burying
+             * the bottom toolbar. Width/height: 100% is enough to
+             * let the SDK's natural flex layout occupy the wrapper.
              */
-            .zoom-meeting-fill > div:first-of-type,
             .zoom-meeting-fill .video-popper {
               width: 100% !important;
               height: 100% !important;
               max-width: none !important;
               max-height: none !important;
-              top: 0 !important;
-              left: 0 !important;
-              right: 0 !important;
-              bottom: 0 !important;
-              transform: none !important;
-              position: absolute !important;
-              inset: 0 !important;
             }
           `,
           }}
