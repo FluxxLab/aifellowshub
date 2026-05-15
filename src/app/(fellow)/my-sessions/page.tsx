@@ -5,6 +5,7 @@ import Breadcrumbs from "@/components/common/Breadcrumbs";
 import LiveSessionAction from "@/components/fellow/LiveSessionAction";
 import PastSessionsTable from "@/components/fellow/PastSessionsTable";
 import SessionsTour from "@/components/fellow/tours/SessionsTour";
+import ZoomSdkPrefetch from "@/components/fellow/ZoomSdkPrefetch";
 import { CalenderIcon, ChevronRightIcon, TimeIcon } from "@/icons";
 import { getFellowSessionsServer } from "@/lib/api/fellow-learning.server";
 import type { FellowSession } from "@/lib/api/fellow-learning";
@@ -60,6 +61,7 @@ export default async function FellowSessionsPage() {
   return (
     <div className="flex flex-col gap-4 md:gap-6">
       <SessionsTour />
+      <ZoomSdkPrefetch />
       <Breadcrumbs
         items={[
           { label: "Home", href: "/home" },

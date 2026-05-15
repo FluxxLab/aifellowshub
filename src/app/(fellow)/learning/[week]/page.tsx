@@ -19,6 +19,7 @@ import { getFellowModuleServer } from "@/lib/api/fellow-learning.server";
 import LessonsList from "@/components/fellow/LessonsList";
 import LiveSessionAction from "@/components/fellow/LiveSessionAction";
 import ModuleFeedbackForm from "@/components/fellow/ModuleFeedbackForm";
+import ZoomSdkPrefetch from "@/components/fellow/ZoomSdkPrefetch";
 import { getMyModuleFeedbackServer } from "@/lib/api/feedback.server";
 import type {
   FellowModuleDetail,
@@ -71,6 +72,7 @@ export default async function ModuleDetailPage({
 
   return (
     <div className="flex flex-col gap-4 md:gap-6">
+      <ZoomSdkPrefetch />
       <Breadcrumbs
         items={[
           { label: "Home", href: "/home" },

@@ -153,6 +153,16 @@ export default function ZoomMeetingRoom({
     } else {
       setIsFullscreen(true);
     }
+    // Re-nudge to speaker view on every fullscreen-enter. Covers
+    // the case where the SDK Minimized while in inline mode and
+    // the user expects the embed to grow when they hit Fullscreen.
+    try {
+      await (clientRef.current as {
+        setViewType?: (v: string) => Promise<unknown>;
+      } | null)?.setViewType?.("speaker");
+    } catch {
+      // SDK version without setViewType — ignored.
+    }
   }
 
   async function exitFullscreen() {
@@ -295,13 +305,18 @@ export default function ZoomMeetingRoom({
           customize: {
             video: {
               isResizable: true,
-              // Intentionally NO defaultViewType. Setting `speaker` made
-              // the tile fill the container but hid Zoom's bottom toolbar
-              // (mic / camera / share / leave) — fellows lost every
-              // control. Leaving it unset lands on the SDK's standard
-              // view (active speaker + toolbar). Size is driven by
-              // viewSizes.default below, which is what makes the embed
-              // fill the wrapper.
+              // `speaker` view forces the SDK out of its Minimized
+               // default — without it, joining as the only participant
+               // (or before the host) leaves the embed as a tiny
+               // ~600x400 tile in the corner of an otherwise empty
+               // fullscreen overlay. Trade-off: speaker view also
+               // hides Zoom's bottom toolbar (mic / camera / share /
+               // leave). The empty-meeting reading-broken UX was the
+               // bigger problem, especially for a cohort launch
+               // experience; fellows fall back to OS audio controls
+               // and our floating "Close meeting" / "Exit fullscreen"
+               // overlay until we ship custom mic/camera buttons.
+              defaultViewType: "speaker" as never,
               viewSizes: {
                 default: {
                   width: Math.round(containerWidth),
@@ -346,6 +361,19 @@ export default function ZoomMeetingRoom({
         });
         if (cancelled) return;
         setPhase("in-meeting");
+
+        // Belt-and-braces re-nudge out of Minimized. Even with
+        // defaultViewType: 'speaker' set at init, the SDK has
+        // occasionally been observed to land in Minimized when the
+        // joiner is the only participant. Calling setViewType right
+        // after join short-circuits that race.
+        try {
+          await (client as {
+            setViewType?: (v: string) => Promise<unknown>;
+          })?.setViewType?.("speaker");
+        } catch {
+          // SDK version without setViewType — ignored.
+        }
 
         cleanup = () => {
           try {
