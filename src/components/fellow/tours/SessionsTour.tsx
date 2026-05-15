@@ -14,7 +14,7 @@ export default function SessionsTour() {
       popover: {
         title: "Your live sessions",
         description:
-          "Twelve sessions, one per module. They run on Zoom, but you join right inside the LMS — no app needed.",
+          "Every session for your cohort. They run on Zoom, but you join right inside the LMS — no app needed.",
         side: "bottom",
         align: "start",
       },

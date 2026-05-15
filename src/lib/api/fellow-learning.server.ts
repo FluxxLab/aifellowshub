@@ -332,6 +332,7 @@ function mapBackendListedSession(b: BackendListedSession) {
       : "ended";
   const myStatus = b.myAttendance?.status ?? null;
   const moduleTitle = b.module?.title ?? "Untitled module";
+  const sessionEnded = status === "ended";
   return {
     id: b.id,
     title: b.title || moduleTitle,
@@ -342,13 +343,18 @@ function mapBackendListedSession(b: BackendListedSession) {
     durationMinutes: b.durationMinutes,
     hostName: b.host?.fullName ?? "TBD",
     rsvpd: Boolean(b.myAttendance),
+    // Only flip `attended` to false ("Missed") when the session has
+    // actually ended. A leftover "missed" attendance row from a
+    // previously-scheduled-then-rescheduled session would otherwise
+    // bleed into an upcoming session and surface as "Missed" on a
+    // session the fellow hasn't even had a chance to attend yet.
     attended:
       myStatus === "attended" || myStatus === "attended_recording"
         ? true
-        : myStatus === "missed"
+        : myStatus === "missed" && sessionEnded
         ? false
         : null,
-    attendanceState: mapAttendanceState(myStatus),
+    attendanceState: mapAttendanceState(myStatus, sessionEnded),
     hasRecording: Boolean(b.hasRecording),
     recordingDurationSeconds: b.recordingDurationSeconds ?? null,
     recordingWatchedSeconds: b.myAttendance?.recordingWatchedSeconds ?? 0,
@@ -357,12 +363,16 @@ function mapBackendListedSession(b: BackendListedSession) {
   };
 }
 
+/** Map the backend's per-fellow attendance state to the UI's display
+ *  state. The `missed` enum value is only honoured when the session
+ *  has actually ended — see comment above for why. */
 function mapAttendanceState(
   status: string | null,
+  sessionEnded: boolean,
 ): ModuleSession["attendanceState"] {
   if (status === "attended") return "attended";
   if (status === "attended_recording") return "attended_recording";
-  if (status === "missed") return "missed";
+  if (status === "missed" && sessionEnded) return "missed";
   return null;
 }
 
@@ -376,6 +386,7 @@ function mapBackendSession(b: BackendSession): ModuleSession {
       ? "cancelled"
       : "ended";
   const myStatus = b.myAttendance?.status ?? null;
+  const sessionEnded = status === "ended";
   return {
     id: b.id,
     title: b.title,
@@ -384,13 +395,16 @@ function mapBackendSession(b: BackendSession): ModuleSession {
     durationMinutes: b.durationMinutes,
     hostName: b.host?.fullName ?? "TBD",
     rsvpd: Boolean(b.myAttendance),
+    // Same clamp as mapBackendListedSession: only honour "missed" once
+    // the session has actually ended, so a future session never reads
+    // as Missed on the module page's Live-session chip.
     attended:
       myStatus === "attended" || myStatus === "attended_recording"
         ? true
-        : myStatus === "missed"
+        : myStatus === "missed" && sessionEnded
         ? false
         : null,
-    attendanceState: mapAttendanceState(myStatus),
+    attendanceState: mapAttendanceState(myStatus, sessionEnded),
     hasRecording: Boolean(b.hasRecording),
     recordingDurationSeconds: b.recordingDurationSeconds ?? null,
     recordingWatchedSeconds: b.myAttendance?.recordingWatchedSeconds ?? 0,
