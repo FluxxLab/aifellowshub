@@ -118,7 +118,11 @@ export default async function ModuleDetailPage({
           )}
         </div>
         <div className="flex flex-col gap-4 md:gap-6">
-          <SessionCard session={m.session} weekNumber={m.weekNumber} />
+          <SessionCard
+            session={m.session}
+            weekNumber={m.weekNumber}
+            moduleTitle={m.title}
+          />
         </div>
       </div>
     </div>
@@ -323,9 +327,11 @@ function ModuleInfoSection({ module: m }: { module: FellowModuleDetail }) {
 function SessionCard({
   session: s,
   weekNumber,
+  moduleTitle,
 }: {
   session: ModuleSession;
   weekNumber: number;
+  moduleTitle: string;
 }) {
   const start = new Date(s.startsAt);
   const dateLabel = start.toLocaleDateString(undefined, {
@@ -340,15 +346,17 @@ function SessionCard({
     minute: "2-digit",
   });
 
-  // Week 0 is the orientation grace week. It was run outside the LMS
-  // before the cohort started, so regardless of the session row's DB
-  // status (which may still read "scheduled" if the placeholder
-  // session date hasn't ticked over), every fellow is credited as
-  // attended and the action card hides the Register / Join controls.
-  // Certification scoring already skips Week 0 via certifications.service.
-  const orientationWeek = weekNumber <= 0;
+  // "Closed" + hidden Register + auto-Attended is the treatment for
+  // the Onboarding module specifically — orientation was run outside
+  // the LMS before the cohort started, so there's nothing to action.
+  // Title-matched (case-insensitive "onboarding") rather than gated
+  // purely on Week 0, so a future cohort that chooses to run an
+  // in-LMS Week 0 (e.g. an intro live session) keeps the normal
+  // Register / attendance flow.
+  const isOnboarding =
+    weekNumber <= 0 && /onboarding/i.test(moduleTitle);
   const isEnded = s.status === "ended";
-  const effectiveAttended = orientationWeek ? true : s.attended;
+  const effectiveAttended = isOnboarding ? true : s.attended;
 
   return (
     <section className="rounded-2xl border border-warning-200 bg-warning-100 p-5 md:p-6">
@@ -361,7 +369,7 @@ function SessionCard({
             {s.title || "Live session"}
           </h2>
           <p className="text-xs text-gray-500">
-            Week {weekNumber} · {orientationWeek ? "orientation" : "live-only"}
+            Week {weekNumber} · {isOnboarding ? "orientation" : "live-only"}
           </p>
         </div>
       </div>
@@ -374,7 +382,7 @@ function SessionCard({
         <div className="flex justify-between gap-3">
           <dt className="text-gray-500">When</dt>
           <dd className="text-gray-800">
-            {orientationWeek ? "Closed" : `${dateLabel} · ${timeLabel}`}
+            {isOnboarding ? "Closed" : `${dateLabel} · ${timeLabel}`}
           </dd>
         </div>
         <div className="flex justify-between gap-3">
@@ -384,13 +392,13 @@ function SessionCard({
         <div className="flex justify-between gap-3">
           <dt className="text-gray-500">Host</dt>
           <dd className="text-gray-800">
-            {orientationWeek ? "Closed" : s.hostName}
+            {isOnboarding ? "Closed" : s.hostName}
           </dd>
         </div>
         <div className="flex justify-between gap-3">
           <dt className="text-gray-500">Status</dt>
           <dd>
-            {orientationWeek ? (
+            {isOnboarding ? (
               <Badge color="success">Attended</Badge>
             ) : (
               <SessionStatusBadge
@@ -404,7 +412,7 @@ function SessionCard({
 
       {/* Orientation skips Register / Join entirely — the session
           happened outside the LMS, so there's nothing to action. */}
-      {!orientationWeek && (
+      {!isOnboarding && (
         <div className="mt-5">
           <SessionAction session={s} />
           {(s.status === "live" || s.status === "upcoming") && (
@@ -416,7 +424,7 @@ function SessionCard({
         </div>
       )}
 
-      {orientationWeek && (
+      {isOnboarding && (
         <p className="mt-5 rounded-md bg-success-50 p-3 text-xs text-success-700">
           Orientation was conducted before the cohort started — every fellow
           is credited automatically. Doesn&apos;t affect your certification
@@ -424,7 +432,7 @@ function SessionCard({
         </p>
       )}
 
-      {!orientationWeek && isEnded && s.attended === false && (
+      {!isOnboarding && isEnded && s.attended === false && (
         <p className="mt-3 rounded-md bg-gray-50 p-3 text-xs text-gray-600">
           Sessions are live-only — no recording is available (BRD §6.4). The
           assessment is the alternative path to completing this module.
