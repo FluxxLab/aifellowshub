@@ -258,7 +258,16 @@ function mapBackendCurriculumModule(
     status,
     progressPercent:
       status === "completed" ? 100 : status === "in-progress" ? 50 : 0,
-    sessionAttended: session.attended,
+    // Onboarding was conducted outside the LMS — every fellow is
+    // credited regardless of the underlying attendance row. Force
+    // sessionAttended to true so the path chip on the module header
+    // reads "Attended" instead of "Upcoming". Mirrors the SessionCard's
+    // title-matched gate so non-Onboarding Week 0 modules keep the
+    // real attendance value.
+    sessionAttended:
+      m.weekNumber <= 0 && /onboarding/i.test(m.title)
+        ? true
+        : session.attended,
     assessmentPassed: passed ? true : failed ? false : null,
     assessmentScore: my.bestScore,
     hasAssessment,

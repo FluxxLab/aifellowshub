@@ -168,12 +168,6 @@ function LockedView({ module: m }: { module: FellowModuleDetail }) {
 function ModuleHeader({ module: m }: { module: FellowModuleDetail }) {
   const isCompleted = m.status === "completed";
   const isInProgress = m.status === "in-progress";
-  // Mirror the SessionCard's title-matched gate — Onboarding hides
-  // the "Live session: Upcoming" / "Assessment: Not yet" path chips
-  // because the session was conducted externally and there's no
-  // assessment to take. Any other Week 0 module keeps both chips.
-  const isOnboarding =
-    m.weekNumber <= 0 && /onboarding/i.test(m.title);
 
   return (
     <section className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
@@ -212,50 +206,48 @@ function ModuleHeader({ module: m }: { module: FellowModuleDetail }) {
         </div>
       )}
 
-      {!isOnboarding && (
-        <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-4 flex flex-wrap gap-2">
+        <PathChip
+          label="Live session"
+          state={
+            m.sessionAttended === true
+              ? "good"
+              : m.sessionAttended === false
+              ? "bad"
+              : "pending"
+          }
+          detail={
+            m.sessionAttended === true
+              ? "Attended"
+              : m.sessionAttended === false
+              ? "Missed"
+              : "Upcoming"
+          }
+        />
+        {/* Only show the Assessment chip when the module actually has
+            one. Faculty-light weeks without a pre/post quiz or
+            lesson-level quiz hide it so fellows don't see a
+            permanently-pending control with nothing to act on. */}
+        {hasAnyAssessment(m) && (
           <PathChip
-            label="Live session"
+            label="Assessment"
             state={
-              m.sessionAttended === true
+              m.assessmentPassed === true
                 ? "good"
-                : m.sessionAttended === false
+                : m.assessmentPassed === false
                 ? "bad"
                 : "pending"
             }
             detail={
-              m.sessionAttended === true
-                ? "Attended"
-                : m.sessionAttended === false
-                ? "Missed"
-                : "Upcoming"
+              m.assessmentScore !== null
+                ? `${m.assessmentScore}%`
+                : m.assessmentPassed === false
+                ? "Failed"
+                : "Not yet"
             }
           />
-          {/* Only show the Assessment chip when the module actually
-              has one. Faculty-light weeks without a pre/post quiz or
-              lesson-level quiz hide it so fellows don't see a
-              permanently-pending control with nothing to act on. */}
-          {hasAnyAssessment(m) && (
-            <PathChip
-              label="Assessment"
-              state={
-                m.assessmentPassed === true
-                  ? "good"
-                  : m.assessmentPassed === false
-                  ? "bad"
-                  : "pending"
-              }
-              detail={
-                m.assessmentScore !== null
-                  ? `${m.assessmentScore}%`
-                  : m.assessmentPassed === false
-                  ? "Failed"
-                  : "Not yet"
-              }
-            />
-          )}
-        </div>
-      )}
+        )}
+      </div>
     </section>
   );
 }
