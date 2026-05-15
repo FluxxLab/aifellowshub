@@ -153,16 +153,13 @@ export default function ZoomMeetingRoom({
     } else {
       setIsFullscreen(true);
     }
-    // Re-nudge to speaker view on every fullscreen-enter. Covers
-    // the case where the SDK Minimized while in inline mode and
-    // the user expects the embed to grow when they hit Fullscreen.
-    try {
-      await (clientRef.current as {
-        setViewType?: (v: string) => Promise<unknown>;
-      } | null)?.setViewType?.("speaker");
-    } catch {
-      // SDK version without setViewType — ignored.
-    }
+    // Earlier iterations called setViewType("speaker") here so the
+    // tile would grow when the user entered fullscreen. Two problems:
+    // speaker view hides Zoom's bottom toolbar (fellows lose mic/
+    // camera controls), and the SDK didn't always settle cleanly
+    // when the view type flipped during transition. With both
+    // removed the toolbar stays, and the tile growing on join is
+    // handled by Zoom's own multi-participant logic.
   }
 
   async function exitFullscreen() {
@@ -305,18 +302,17 @@ export default function ZoomMeetingRoom({
           customize: {
             video: {
               isResizable: true,
-              // `speaker` view forces the SDK out of its Minimized
-               // default — without it, joining as the only participant
-               // (or before the host) leaves the embed as a tiny
-               // ~600x400 tile in the corner of an otherwise empty
-               // fullscreen overlay. Trade-off: speaker view also
-               // hides Zoom's bottom toolbar (mic / camera / share /
-               // leave). The empty-meeting reading-broken UX was the
-               // bigger problem, especially for a cohort launch
-               // experience; fellows fall back to OS audio controls
-               // and our floating "Close meeting" / "Exit fullscreen"
-               // overlay until we ship custom mic/camera buttons.
-              defaultViewType: "speaker" as never,
+              // No defaultViewType. We tried "speaker" to push the
+              // SDK out of its Minimized default — it did expand the
+              // single-participant tile, but Zoom's speaker view
+              // never renders the bottom toolbar (mic / camera /
+              // share / leave). Fellows couldn't mute themselves.
+              // For the cohort launch, having functional meeting
+              // controls beats having a slightly bigger placeholder
+              // tile during solo testing. With 2+ participants in a
+              // real session, Zoom auto-expands the active speaker
+              // tile via its own layout — solo testing is the only
+              // case where the tile reads as small.
               viewSizes: {
                 default: {
                   width: Math.round(containerWidth),
