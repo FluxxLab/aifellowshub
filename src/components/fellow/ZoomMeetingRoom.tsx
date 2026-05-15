@@ -573,37 +573,20 @@ export default function ZoomMeetingRoom({
       >
         <div ref={containerRef} className="absolute inset-0" />
         {/*
-          Zoom Component View renders a fixed-size participant tile
-          when there's only one person in the meeting — speaker /
-          active view types push us out of "minimized" but Zoom still
-          centres the tile inside its own background. These CSS
-          overrides force the tile container to fill the wrapper.
-          Targeting the SDK's internal class names is fragile (Zoom
-          can rename without notice), but the alternative is staring
-          at an empty navy void during the launch.
+          Earlier iterations injected CSS overrides on .video-popper
+          to force the Zoom embed to fill the wrapper. The
+          width/height: 100% nudge on its own was clean, but every
+          variant we tried (position: absolute, inset: 0, max-width:
+          none, etc.) ended up clipping Zoom's bottom toolbar —
+          fellows lost the mic / camera / share / leave row. The
+          official Zoom forum thread on filling Component View
+          confirms there's no supported CSS pattern; Zoom's
+          recommended workaround is "switch to Client View in an
+          iframe," which is a bigger architectural change. For now
+          we trust Zoom's own layout: the tile is small when alone,
+          auto-expands on multi-participant sessions, and the
+          toolbar stays where the SDK puts it.
         */}
-        <style
-          dangerouslySetInnerHTML={{
-            __html: `
-            /*
-             * Only nudge max-width/max-height off the outermost Zoom
-             * popper so it isn't clamped to a small default size.
-             * Don't force position/inset/transform — earlier
-             * iterations that did so were fighting the SDK's own
-             * positioning during the join handshake, causing the
-             * connect/disconnect loop fellows reported and burying
-             * the bottom toolbar. Width/height: 100% is enough to
-             * let the SDK's natural flex layout occupy the wrapper.
-             */
-            .zoom-meeting-fill .video-popper {
-              width: 100% !important;
-              height: 100% !important;
-              max-width: none !important;
-              max-height: none !important;
-            }
-          `,
-          }}
-        />
       </div>
     </div>
   );
