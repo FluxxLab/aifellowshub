@@ -12,7 +12,7 @@ import type { FellowSession } from "@/lib/api/fellow-learning";
 export const metadata: Metadata = {
   title: "My sessions · AI Fellows LMS",
   description:
-    "All 12 live sessions in your cohort. Sessions run on Zoom — attendance is auto-credited if you stay for at least 50% of the duration (BRD §6.4).",
+    "Register and join live sessions for your cohort here.",
 };
 
 export default async function FellowSessionsPage() {
@@ -49,9 +49,7 @@ export default async function FellowSessionsPage() {
           My sessions
         </h1>
         <p className="mt-2 text-gray-600">
-          12 live sessions, one per module — hosted on Zoom. Attendance is
-          auto-credited when you stay in the meeting for at least 50% of the
-          duration.
+          Register and join live sessions here.
         </p>
       </div>
 
