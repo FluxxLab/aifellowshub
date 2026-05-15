@@ -25,14 +25,30 @@ export default async function FellowSessionsPage() {
   // instead of hiding under Upcoming where it can't ever resolve.
   const isOrientation = (s: FellowSession) => s.weekNumber <= 0;
 
+  // A session is "actually past" only when its DB status reads
+  // "ended" AND its start time is in the past. Guards against the
+  // data-inconsistency case where an admin reschedules a previously-
+  // ended session forward — the status stayed "ended" and the
+  // attendance row stayed "missed", so the future session bled into
+  // the Past table as a missed row. Now those flip back to Upcoming.
+  const now = Date.now();
+  const isActuallyPast = (s: FellowSession) =>
+    s.status === "ended" && +new Date(s.startsAt) < now;
+
   const live = sessions.filter(
     (s) => s.status === "live" && !isOrientation(s),
   );
   const upcoming = sessions
-    .filter((s) => s.status === "upcoming" && !isOrientation(s))
+    .filter(
+      (s) =>
+        !isOrientation(s) &&
+        !isActuallyPast(s) &&
+        s.status !== "live" &&
+        s.status !== "cancelled",
+    )
     .sort((a, b) => +new Date(a.startsAt) - +new Date(b.startsAt));
   const past = sessions
-    .filter((s) => s.status === "ended" || isOrientation(s))
+    .filter((s) => isActuallyPast(s) || isOrientation(s))
     .sort((a, b) => +new Date(b.startsAt) - +new Date(a.startsAt));
 
   const attendedCount = past.filter(

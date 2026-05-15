@@ -332,7 +332,14 @@ function mapBackendListedSession(b: BackendListedSession) {
       : "ended";
   const myStatus = b.myAttendance?.status ?? null;
   const moduleTitle = b.module?.title ?? "Untitled module";
-  const sessionEnded = status === "ended";
+  // Session is "actually past" only when BOTH the DB status reads
+  // "ended" AND the wall-clock start time is in the past. Guards
+  // against the data-inconsistency case where a session's date got
+  // moved forward but the status / attendance row still carry values
+  // from its previous schedule. Without this, a future session can
+  // read as "Missed" on the past-sessions table.
+  const sessionEnded =
+    status === "ended" && new Date(b.startsAt).getTime() < Date.now();
   return {
     id: b.id,
     title: b.title || moduleTitle,
@@ -386,7 +393,11 @@ function mapBackendSession(b: BackendSession): ModuleSession {
       ? "cancelled"
       : "ended";
   const myStatus = b.myAttendance?.status ?? null;
-  const sessionEnded = status === "ended";
+  // Same clamp as mapBackendListedSession — only treat as ended when
+  // both the DB status and the calendar agree, so a rescheduled
+  // future session never reads as Missed.
+  const sessionEnded =
+    status === "ended" && new Date(b.startsAt).getTime() < Date.now();
   return {
     id: b.id,
     title: b.title,
