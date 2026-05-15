@@ -119,13 +119,58 @@ export default function LiveSessionAction({
 
   if (s.status === "upcoming") {
     if (rsvpd) {
-      // After registering, fellows want a single primary "Join session"
-      // link they can click on the day of (or to test their setup).
-      // Zoom handles the "host hasn't started yet" waiting state on
-      // its end — no need to mirror that gating here. We only fall
-      // back to a disabled state when the admin scheduled the session
-      // without attaching a Zoom meeting yet (joinUrl unset / "#").
+      // After registering, fellows join the meeting inline via the
+      // Zoom Component View embed — same flow used for live sessions,
+      // so the experience stays inside the LMS instead of yanking
+      // them out to a new tab. Zoom handles the "host hasn't started
+      // yet" waiting state inside the embed.
+      //
+      // Two fallbacks:
+      //   - No backend session id (mock data) → external Zoom URL
+      //     in a new tab.
+      //   - No Zoom meeting attached yet (joinUrl unset / "#") → a
+      //     disabled placeholder. Nothing to join.
       const hasJoinUrl = s.joinUrl && s.joinUrl !== "#";
+      if (s.id) {
+        return (
+          <>
+            {!open && (
+              <div className="flex flex-col gap-2">
+                <Button
+                  size="sm"
+                  variant="fellowship"
+                  className="w-full bg-fellowship-navy! text-white! hover:bg-fellowship-navy-dark!"
+                  onClick={() => setOpen(true)}
+                >
+                  Join in app
+                </Button>
+                <p className="flex items-center justify-center gap-1.5 text-xs font-medium text-success-700">
+                  <CheckLineIcon className="h-3.5 w-3.5" />
+                  You&apos;re registered
+                </p>
+              </div>
+            )}
+            {open && (
+              <div className="mt-3 rounded-2xl border border-gray-200 bg-gray-900 p-3">
+                <div className="mb-2 flex items-center justify-between text-white">
+                  <h3 className="text-xs font-semibold">Live session</h3>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setOpen(false)}
+                  >
+                    Close meeting
+                  </Button>
+                </div>
+                <ZoomMeetingRoom
+                  sessionId={s.id}
+                  onLeave={() => setOpen(false)}
+                />
+              </div>
+            )}
+          </>
+        );
+      }
       return (
         <div className="flex flex-col gap-2">
           {hasJoinUrl ? (
