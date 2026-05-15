@@ -31,10 +31,24 @@ export async function getCourseDetail(
     const res = await backendFetch(`/courses/${encodeURIComponent(id)}`, {
       method: "GET",
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      // Log the backend's status + reason so a notFound() on the page
+      // is traceable. Without this the page just 404s with no breadcrumb
+      // about whether it was a 401 / 403 / 404 / 500 from upstream.
+      const body = await res.text().catch(() => "");
+      console.warn(
+        `[courses.server] getCourseDetail(${id}) → backend ${res.status}: ${body.slice(0, 200)}`,
+      );
+      return null;
+    }
     const data = (await res.json()) as { course: BackendCourseDetail };
     return backendToCourseDetail(data.course);
-  } catch {
+  } catch (err) {
+    console.warn(
+      `[courses.server] getCourseDetail(${id}) threw: ${
+        err instanceof Error ? err.message : String(err)
+      }`,
+    );
     return null;
   }
 }
