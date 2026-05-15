@@ -260,14 +260,15 @@ function SessionCard({
     minute: "2-digit",
   });
 
-  // Week 0 is the orientation grace week. Some fellows missed it because
-  // of network issues at programme start, and it isn't graded toward
-  // certification anyway. Treat any ended week-0 session as auto-
-  // credited for every fellow so they see "Attended" rather than
-  // "Missed" on the curriculum, and skip the "no recording" warning.
+  // Week 0 is the orientation grace week. It was run outside the LMS
+  // before the cohort started, so regardless of the session row's DB
+  // status (which may still read "scheduled" if the placeholder
+  // session date hasn't ticked over), every fellow is credited as
+  // attended and the action card hides the Register / Join controls.
+  // Certification scoring already skips Week 0 via certifications.service.
   const orientationWeek = weekNumber <= 0;
   const isEnded = s.status === "ended";
-  const effectiveAttended = orientationWeek && isEnded ? true : s.attended;
+  const effectiveAttended = orientationWeek ? true : s.attended;
 
   return (
     <section className="rounded-2xl border border-warning-200 bg-warning-100 p-5 md:p-6">
@@ -303,28 +304,37 @@ function SessionCard({
         <div className="flex justify-between gap-3">
           <dt className="text-gray-500">Status</dt>
           <dd>
-            <SessionStatusBadge
-              status={s.status}
-              attended={effectiveAttended}
-            />
+            {orientationWeek ? (
+              <Badge color="success">Attended</Badge>
+            ) : (
+              <SessionStatusBadge
+                status={s.status}
+                attended={effectiveAttended}
+              />
+            )}
           </dd>
         </div>
       </dl>
 
-      <div className="mt-5">
-        <SessionAction session={s} />
-        {(s.status === "live" || s.status === "upcoming") && (
-          <p className="mt-2 text-center text-xs text-gray-500">
-            Hosted on Zoom · attendance auto-credited if you stay ≥{" "}
-            {Math.round(s.durationMinutes / 2)} min
-          </p>
-        )}
-      </div>
+      {/* Orientation skips Register / Join entirely — the session
+          happened outside the LMS, so there's nothing to action. */}
+      {!orientationWeek && (
+        <div className="mt-5">
+          <SessionAction session={s} />
+          {(s.status === "live" || s.status === "upcoming") && (
+            <p className="mt-2 text-center text-xs text-gray-500">
+              Hosted on Zoom · attendance auto-credited if you stay ≥{" "}
+              {Math.round(s.durationMinutes / 2)} min
+            </p>
+          )}
+        </div>
+      )}
 
-      {orientationWeek && isEnded && (
-        <p className="mt-3 rounded-md bg-success-50 p-3 text-xs text-success-700">
-          Orientation week — credited for all fellows regardless of live
-          attendance. Doesn&apos;t affect your certification score.
+      {orientationWeek && (
+        <p className="mt-5 rounded-md bg-success-50 p-3 text-xs text-success-700">
+          Orientation was conducted before the cohort started — every fellow
+          is credited automatically. Doesn&apos;t affect your certification
+          score.
         </p>
       )}
 
