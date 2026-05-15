@@ -550,11 +550,47 @@ export default function ZoomMeetingRoom({
               // any of the flex layout, so the meeting wrapper takes the
               // full inset-0 area and Zoom renders against the full
               // viewport with no dead band above the participant tile.
-              "absolute inset-0 bg-black"
-            : "relative h-[70vh] w-full overflow-hidden rounded-2xl bg-black"
+              "zoom-meeting-fill absolute inset-0 bg-black"
+            : "zoom-meeting-fill relative h-[70vh] w-full overflow-hidden rounded-2xl bg-black"
         }
       >
         <div ref={containerRef} className="absolute inset-0" />
+        {/*
+          Zoom Component View renders a fixed-size participant tile
+          when there's only one person in the meeting — speaker /
+          active view types push us out of "minimized" but Zoom still
+          centres the tile inside its own background. These CSS
+          overrides force the tile container to fill the wrapper.
+          Targeting the SDK's internal class names is fragile (Zoom
+          can rename without notice), but the alternative is staring
+          at an empty navy void during the launch.
+        */}
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+            .zoom-meeting-fill .suspension-window-container,
+            .zoom-meeting-fill .suspension-window-content,
+            .zoom-meeting-fill .video-popper,
+            .zoom-meeting-fill .speaker-active-container,
+            .zoom-meeting-fill .gallery-video-container,
+            .zoom-meeting-fill .active-video-container {
+              width: 100% !important;
+              height: 100% !important;
+              max-width: none !important;
+              max-height: none !important;
+              transform: none !important;
+              left: 0 !important;
+              top: 0 !important;
+            }
+            .zoom-meeting-fill canvas[class*="zoom"],
+            .zoom-meeting-fill video[class*="zoom"] {
+              width: 100% !important;
+              height: 100% !important;
+              object-fit: contain;
+            }
+          `,
+          }}
+        />
       </div>
     </div>
   );
