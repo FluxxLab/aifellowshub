@@ -167,10 +167,8 @@ export default function ZoomMeetingRoom({
         // init time and tell the SDK to fill it. `isResizable: true`
         // lets the SDK re-layout when we toggle fullscreen.
         const rect = containerRef.current.getBoundingClientRect();
-        const containerWidth =
-          Math.max(rect.width, window.innerWidth) || window.innerWidth;
-        const containerHeight =
-          Math.max(rect.height, window.innerHeight) || window.innerHeight;
+        const containerWidth = rect.width || 800;
+        const containerHeight = rect.height || 600;
 
         await client.init({
           zoomAppRoot: containerRef.current,
