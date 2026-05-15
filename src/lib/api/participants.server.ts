@@ -4,6 +4,7 @@
  * page renders. Returns empty groups when the backend is unreachable.
  */
 import "server-only";
+import { redirect } from "next/navigation";
 import { backendFetch } from "./backend";
 import type {
   Faculty,
@@ -209,33 +210,33 @@ type BackendFellowProfile = {
 export async function getUserProfileServer(
   id: string,
 ): Promise<UserProfile | null> {
-  try {
-    const res = await backendFetch(
-      `/admin/users/${encodeURIComponent(id)}`,
-      { method: "GET" },
-    );
-    if (!res.ok) return null;
-    const data = (await res.json()) as { user: UserProfile };
-    return data.user;
-  } catch {
-    return null;
+  const res = await backendFetch(
+    `/admin/users/${encodeURIComponent(id)}`,
+    { method: "GET" },
+  );
+  if (res.status === 401 || res.status === 403) redirect("/signin");
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    throw new Error(`Failed to load participant (${res.status}).`);
   }
+  const data = (await res.json()) as { user: UserProfile };
+  return data.user;
 }
 
 export async function getFellowProfileServer(
   id: string,
 ): Promise<FellowProfile | null> {
-  try {
-    const res = await backendFetch(
-      `/admin/fellows/${encodeURIComponent(id)}`,
-      { method: "GET" },
-    );
-    if (!res.ok) return null;
-    const data = (await res.json()) as { fellow: BackendFellowProfile };
-    return mapFellowProfile(data.fellow);
-  } catch {
-    return null;
+  const res = await backendFetch(
+    `/admin/fellows/${encodeURIComponent(id)}`,
+    { method: "GET" },
+  );
+  if (res.status === 401 || res.status === 403) redirect("/signin");
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    throw new Error(`Failed to load fellow profile (${res.status}).`);
   }
+  const data = (await res.json()) as { fellow: BackendFellowProfile };
+  return mapFellowProfile(data.fellow);
 }
 
 function mapFellowProfile(f: BackendFellowProfile): FellowProfile {
