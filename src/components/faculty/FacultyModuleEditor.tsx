@@ -130,6 +130,22 @@ export default function FacultyModuleEditor({
     setError(null);
     setSubmitState("submitting");
     try {
+      // Persist any in-flight form edits *before* flipping status —
+      // submitModuleForReview only changes the workflow state, it
+      // doesn't accept title/summary/overview/objectives/keywords.
+      // Without this save, fields typed since the last "Save draft"
+      // click silently vanished the moment the page re-fetched after
+      // publish, which is exactly the "new text disappears after
+      // publishing" report from admin testing.
+      if (dirty) {
+        await saveModuleDraft(initial.id, {
+          title,
+          summary,
+          overview,
+          learningObjectives,
+          keywords: parseKeywords(keywordsRaw),
+        });
+      }
       const updated = await submitModuleForReview(initial.id);
       setStatus(updated.status);
       setSubmitState("submitted");
