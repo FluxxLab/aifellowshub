@@ -17,6 +17,14 @@ export const metadata: Metadata = {
     "Programme health at a glance — fellow progress, attendance, capstones, and upcoming sessions.",
 };
 
+// Force per-request rendering. The dashboard mixes near-real-time
+// figures (active fellows, attendance rate, capstones in review) that
+// move whenever an admin acts elsewhere in the app — we never want
+// Next.js to reuse a previous render. Without this, a fresh deploy
+// can be briefly masked by a stale route-cache entry from the
+// previous build.
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
   const [summary, user] = await Promise.all([
     getDashboardSummaryServer(),
