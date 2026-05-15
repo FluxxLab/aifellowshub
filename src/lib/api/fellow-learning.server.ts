@@ -151,6 +151,13 @@ export async function getFellowCurriculumServer(): Promise<FellowModuleSummary[]
     else if (my.attemptsUsed > 0) status = "in-progress";
     else status = "available";
 
+    // Orientation (Week 0) was conducted outside the LMS and isn't
+    // graded — it has no assessment to pass, so the default rules
+    // would leave it stuck on "available" forever. Force it to
+    // "completed" so the curriculum reads cleanly and progress
+    // counters tick up the way fellows expect.
+    if (m.weekNumber <= 0) status = "completed";
+
     return {
       weekNumber: m.weekNumber,
       title: m.title,
@@ -177,6 +184,11 @@ function mapBackendCurriculumModule(
   else if (passed) status = "completed";
   else if (my.attemptsUsed > 0) status = "in-progress";
   else status = "available";
+
+  // Orientation (Week 0): always reads as completed. Matches the
+  // list view's treatment so the detail page and curriculum index
+  // stay in lockstep.
+  if (m.weekNumber <= 0) status = "completed";
 
   // Map lessons; mark all as not-started for now (lesson-progress backend TBD).
   const lessons: Lesson[] = m.lessons.map((l) => ({
