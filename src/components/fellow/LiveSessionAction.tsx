@@ -118,23 +118,53 @@ export default function LiveSessionAction({
   }
 
   if (s.status === "upcoming") {
-    return rsvpd ? (
-      <Button size="sm" variant="outline" className="w-full" disabled={busy}>
-        <CheckLineIcon className="h-3.5 w-3.5" />
-        Registered
+    if (rsvpd) {
+      // After registering, fellows want a single primary "Join session"
+      // link they can click on the day of (or to test their setup).
+      // Zoom handles the "host hasn't started yet" waiting state on
+      // its end — no need to mirror that gating here. We only fall
+      // back to a disabled state when the admin scheduled the session
+      // without attaching a Zoom meeting yet (joinUrl unset / "#").
+      const hasJoinUrl = s.joinUrl && s.joinUrl !== "#";
+      return (
+        <div className="flex flex-col gap-2">
+          {hasJoinUrl ? (
+            <a
+              href={s.joinUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block"
+            >
+              <Button
+                size="sm"
+                variant="fellowship"
+                className="w-full bg-fellowship-navy! text-white! hover:bg-fellowship-navy-dark!"
+              >
+                Join session
+              </Button>
+            </a>
+          ) : (
+            <Button size="sm" variant="outline" className="w-full" disabled>
+              Join link coming soon
+            </Button>
+          )}
+          <p className="flex items-center justify-center gap-1.5 text-xs font-medium text-success-700">
+            <CheckLineIcon className="h-3.5 w-3.5" />
+            You&apos;re registered
+          </p>
+        </div>
+      );
+    }
+    return (
+      <Button
+        size="sm"
+        variant="primary"
+        className="w-full bg-fellowship-navy! text-white! hover:bg-fellowship-navy-dark!"
+        onClick={rsvp}
+        disabled={busy}
+      >
+        {busy ? "Saving…" : "Register"}
       </Button>
-    ) : (
-      <>
-        <Button
-          size="sm"
-          variant="primary"
-          className="w-full bg-fellowship-navy! text-white! hover:bg-fellowship-navy-dark!"
-          onClick={rsvp}
-          disabled={busy}
-        >
-          {busy ? "Saving…" : "Register"}
-        </Button>
-      </>
     );
   }
 
