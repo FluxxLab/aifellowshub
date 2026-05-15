@@ -18,19 +18,25 @@ export const metadata: Metadata = {
 export default async function FellowSessionsPage() {
   const sessions = await getFellowSessionsServer();
 
-  const live = sessions.filter((s) => s.status === "live");
+  // Week 0 (orientation) was run outside the LMS — the placeholder
+  // session row may still read "scheduled" with a future date. Pin it
+  // to the "past" bucket and to the attended tally regardless of its
+  // DB status, so it counts toward the cohort's attendance stats
+  // instead of hiding under Upcoming where it can't ever resolve.
+  const isOrientation = (s: FellowSession) => s.weekNumber <= 0;
+
+  const live = sessions.filter(
+    (s) => s.status === "live" && !isOrientation(s),
+  );
   const upcoming = sessions
-    .filter((s) => s.status === "upcoming")
+    .filter((s) => s.status === "upcoming" && !isOrientation(s))
     .sort((a, b) => +new Date(a.startsAt) - +new Date(b.startsAt));
   const past = sessions
-    .filter((s) => s.status === "ended")
+    .filter((s) => s.status === "ended" || isOrientation(s))
     .sort((a, b) => +new Date(b.startsAt) - +new Date(a.startsAt));
 
-  // Week 0 is the orientation grace week — credited for everyone
-  // regardless of live attendance, so it always counts toward the
-  // tally on this page.
   const attendedCount = past.filter(
-    (s) => s.attended === true || s.weekNumber <= 0,
+    (s) => s.attended === true || isOrientation(s),
   ).length;
   const attendanceRate =
     past.length > 0 ? Math.round((attendedCount / past.length) * 100) : 0;
