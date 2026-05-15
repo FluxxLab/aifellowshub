@@ -342,14 +342,39 @@ export default function ZoomMeetingRoom({
         // Zoom's timeout. Sending the LMS user id as customerKey on
         // every join tells Zoom "boot the previous session for this
         // user — this one is the new authoritative one."
-        const currentUser = userRef.current;
+        // Wait for useCurrentUser() to resolve before calling join.
+        // The hook starts at LOADING_USER (id="" fullName="") and
+        // fills in once /api/auth/me responds — usually <100ms. If
+        // the SDK init finished first we used to call client.join
+        // with the empty placeholder name, and Zoom rejected with
+        // "userName cannot be empty". Poll up to 3s; fall back to a
+        // generic name if the hook never settles (shouldn't happen
+        // in normal auth flow but guards against a permanent stall).
+        let currentUser = userRef.current;
+        const waitStart = Date.now();
+        while (
+          (!currentUser?.fullName?.trim() || !currentUser?.id) &&
+          Date.now() - waitStart < 3000
+        ) {
+          await new Promise((r) => setTimeout(r, 100));
+          if (cancelled) return;
+          currentUser = userRef.current;
+        }
+        // `||` (not `??`) so an empty-string fullName also falls
+        // back — `??` was the original bug: LOADING_USER.fullName is
+        // "", not null, so the nullish coalesce never triggered.
+        const userName =
+          currentUser?.fullName?.trim() || "PIC LMS Fellow";
+        const userEmail = currentUser?.email?.trim() || "";
+        const customerKey = currentUser?.id || currentUser?.email || undefined;
+
         await client.join({
           signature: sig.signature,
           meetingNumber: sig.meetingNumber,
-          userName: currentUser?.fullName ?? "PIC LMS Fellow",
-          userEmail: currentUser?.email ?? "",
+          userName,
+          userEmail,
           password: sig.meetingPassword ?? "",
-          customerKey: currentUser?.id ?? currentUser?.email ?? undefined,
+          customerKey,
           // ZAK promotes the joiner to host on Zoom's side. Without it
           // an admin signing in with role=1 would hang at "Connecting".
           // Backend only returns a non-empty ZAK when role=1.
