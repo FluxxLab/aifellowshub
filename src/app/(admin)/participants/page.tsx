@@ -11,6 +11,14 @@ export const metadata: Metadata = {
     "Manage fellows, mentors, admins, and the cohort waitlist (BRD §6.2).",
 };
 
+// Force per-request rendering. The participants list reflects the
+// live state of the user table — wiped via reset-fellows.cjs,
+// re-populated via bulk-invite-fellows.cjs, edited inline from this
+// page itself. Without force-dynamic, Next.js can serve a stale
+// render after a reset and admins click rows whose IDs no longer
+// exist in the DB, hitting a confusing 404 on the detail page.
+export const dynamic = "force-dynamic";
+
 export default async function ParticipantsPage() {
   const data = await getParticipantsServer();
 
