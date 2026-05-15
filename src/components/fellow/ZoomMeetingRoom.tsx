@@ -47,7 +47,6 @@ type SignatureResponse = {
 export default function ZoomMeetingRoom({
   sessionId,
   onLeave,
-  startFullscreen = false,
 }: {
   sessionId: string;
   onLeave?: () => void;
@@ -67,131 +66,10 @@ export default function ZoomMeetingRoom({
     "loading" | "joining" | "in-meeting" | "left" | "error"
   >("loading");
   const [error, setError] = useState<string | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [isHost, setIsHost] = useState(false);
   const [endingSession, setEndingSession] = useState(false);
   const router = useRouter();
   const { confirm, dialog } = useConfirm();
-
-  // Sync our local flag with the browser's Fullscreen API so the
-  // overlay state stays consistent when the user exits via Esc, the
-  // browser's own fullscreen control, or the OS gesture.
-  useEffect(() => {
-    const onChange = () => {
-      const fs = !!document.fullscreenElement;
-      setIsFullscreen(fs);
-      if (!fs) {
-        try {
-          (screen.orientation as ScreenOrientation & { unlock?: () => void })
-            .unlock?.();
-        } catch {
-          // Best-effort — Safari / older Android throw or no-op.
-        }
-      }
-    };
-    document.addEventListener("fullscreenchange", onChange);
-    document.addEventListener("webkitfullscreenchange", onChange);
-    return () => {
-      document.removeEventListener("fullscreenchange", onChange);
-      document.removeEventListener("webkitfullscreenchange", onChange);
-    };
-  }, []);
-
-  // CSS-only fallback path (Fullscreen API unsupported / denied) — Esc
-  // still has to work and the body must not scroll behind the overlay.
-  useEffect(() => {
-    if (!isFullscreen) return;
-    if (document.fullscreenElement) return; // browser handles Esc itself
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setIsFullscreen(false);
-    };
-    window.addEventListener("keydown", onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prev;
-    };
-  }, [isFullscreen]);
-
-  async function enterFullscreen() {
-    const el = wrapperRef.current;
-    if (!el) return;
-    const apiEl = el as HTMLElement & {
-      webkitRequestFullscreen?: () => Promise<void> | void;
-    };
-    let inApi = false;
-    try {
-      if (apiEl.requestFullscreen) {
-        await apiEl.requestFullscreen();
-        inApi = true;
-      } else if (apiEl.webkitRequestFullscreen) {
-        await apiEl.webkitRequestFullscreen();
-        inApi = true;
-      }
-    } catch {
-      // User denied, no permission, or unsupported — fall through to
-      // the CSS overlay below.
-    }
-    if (inApi) {
-      // Mobile: rotate to landscape so the Zoom tile uses the long
-      // edge. Orientation.lock requires being in fullscreen first
-      // (browser-enforced), so this can only run after the API call
-      // resolves. iOS Safari rejects — that's expected; the user
-      // rotates the device by hand.
-      const isCoarsePointer = window.matchMedia("(pointer: coarse)").matches;
-      if (isCoarsePointer) {
-        try {
-          const orientation = screen.orientation as ScreenOrientation & {
-            lock?: (o: string) => Promise<void>;
-          };
-          await orientation.lock?.("landscape");
-        } catch {
-          // Silently ignore — user can rotate manually.
-        }
-      }
-    } else {
-      setIsFullscreen(true);
-    }
-    // Earlier iterations called setViewType("speaker") here so the
-    // tile would grow when the user entered fullscreen. Two problems:
-    // speaker view hides Zoom's bottom toolbar (fellows lose mic/
-    // camera controls), and the SDK didn't always settle cleanly
-    // when the view type flipped during transition. With both
-    // removed the toolbar stays, and the tile growing on join is
-    // handled by Zoom's own multi-participant logic.
-  }
-
-  async function exitFullscreen() {
-    const doc = document as Document & {
-      webkitExitFullscreen?: () => Promise<void> | void;
-    };
-    if (document.fullscreenElement || doc.webkitExitFullscreen) {
-      try {
-        if (document.exitFullscreen) {
-          await document.exitFullscreen();
-          return;
-        }
-        if (doc.webkitExitFullscreen) {
-          await doc.webkitExitFullscreen();
-          return;
-        }
-      } catch {
-        // Fall through to manual state flip.
-      }
-    }
-    setIsFullscreen(false);
-  }
-
-  // Honour the startFullscreen prop on mount. requestFullscreen requires
-  // a user gesture; the parent component invokes us synchronously from
-  // a click, so most browsers still accept it. If they don't, the CSS
-  // overlay kicks in via the catch path inside enterFullscreen.
-  useEffect(() => {
-    if (!startFullscreen) return;
-    void enterFullscreen();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // When the wrapper grows (entering fullscreen / window resize) ask
   // the embedded video tile to redraw at the new size. Without this
@@ -443,7 +321,6 @@ export default function ZoomMeetingRoom({
         method: "POST",
       });
       toast.success("Session ended", "Attendance has been settled.");
-      setIsFullscreen(false);
       setPhase("left");
       onLeave?.();
       router.refresh();
@@ -456,19 +333,15 @@ export default function ZoomMeetingRoom({
 
   return (
     <div
-      className={
-        isFullscreen
-          ? "fixed inset-0 z-9999 flex flex-col bg-black"
-          : "flex flex-col gap-3"
-      }
+      className="flex flex-col gap-3"
     >
-      {phase === "loading" && !isFullscreen && (
+      {phase === "loading" && (
         <p className="text-sm text-gray-600">Loading meeting…</p>
       )}
-      {phase === "joining" && !isFullscreen && (
+      {phase === "joining" && (
         <p className="text-sm text-gray-600">Joining meeting…</p>
       )}
-      {phase === "error" && !isFullscreen && (
+      {phase === "error" && (
         <div className="rounded-md border border-error-200 bg-error-50 p-3 text-sm text-error-700">
           {error}
         </div>
@@ -485,55 +358,8 @@ export default function ZoomMeetingRoom({
         visible across the top.
       */}
       {phase === "in-meeting" && (
-        <div
-          className={
-            isFullscreen
-              ? // In fullscreen, float the controls as a transparent overlay
-                // pinned to the top-right. That way Zoom's own layout uses
-                // the full viewport for its toolbar + participant grid
-                // instead of leaving the dead space we used to leave by
-                // reserving a fixed control-bar row at the top.
-                "pointer-events-none absolute right-3 top-3 z-30 flex items-center justify-end gap-2"
-              : "flex items-center justify-between gap-2"
-          }
-        >
-          <button
-            type="button"
-            onClick={() => {
-              if (isFullscreen) void exitFullscreen();
-              else void enterFullscreen();
-            }}
-            className="pointer-events-auto inline-flex items-center gap-1.5 rounded-lg bg-fellowship-navy/90 px-3 py-2 text-sm font-semibold text-white shadow-lg backdrop-blur transition-colors hover:bg-fellowship-navy-dark"
-            aria-label={
-              isFullscreen ? "Exit fullscreen" : "Expand to fullscreen"
-            }
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className="h-4 w-4"
-              aria-hidden="true"
-            >
-              {isFullscreen ? (
-                <path
-                  fillRule="evenodd"
-                  d="M4 9h3a1 1 0 001-1V5a1 1 0 112 0v3a3 3 0 01-3 3H4a1 1 0 110-2zm9-4a1 1 0 011 1v3a1 1 0 001 1h3a1 1 0 110 2h-3a3 3 0 01-3-3V6a1 1 0 011-1zm-9 6a1 1 0 011 1v3a1 1 0 001 1h3a1 1 0 110 2H6a3 3 0 01-3-3v-3a1 1 0 011-1zm13 0a1 1 0 011 1v3a3 3 0 01-3 3h-3a1 1 0 110-2h3a1 1 0 001-1v-3a1 1 0 011-1z"
-                  clipRule="evenodd"
-                />
-              ) : (
-                <path
-                  fillRule="evenodd"
-                  d="M3 5a2 2 0 012-2h3a1 1 0 010 2H5v3a1 1 0 11-2 0V5zm14 0v3a1 1 0 11-2 0V5h-3a1 1 0 110-2h3a2 2 0 012 2zM5 17h3a1 1 0 110 2H5a2 2 0 01-2-2v-3a1 1 0 112 0v3zm10 0v-3a1 1 0 112 0v3a2 2 0 01-2 2h-3a1 1 0 110-2h3z"
-                  clipRule="evenodd"
-                />
-              )}
-            </svg>
-            {isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-          </button>
-
+        <div className="flex items-center justify-end gap-2">
           <div className="pointer-events-auto flex items-center gap-2">
-            {!isFullscreen && (
               <Button
                 size="sm"
                 variant="outline"
@@ -544,7 +370,6 @@ export default function ZoomMeetingRoom({
               >
                 Close meeting
               </Button>
-            )}
             {isHost && (
               <button
                 type="button"
@@ -561,15 +386,7 @@ export default function ZoomMeetingRoom({
 
       <div
         ref={wrapperRef}
-        className={
-          isFullscreen
-            ? // No more flex-1: the overlay control bar doesn't consume
-              // any of the flex layout, so the meeting wrapper takes the
-              // full inset-0 area and Zoom renders against the full
-              // viewport with no dead band above the participant tile.
-              "zoom-meeting-fill absolute inset-0 bg-black"
-            : "zoom-meeting-fill relative h-[70vh] w-full overflow-hidden rounded-2xl bg-black"
-        }
+        className="zoom-meeting-fill relative h-[70vh] w-full overflow-hidden rounded-2xl bg-black"
       >
         <div ref={containerRef} className="absolute inset-0" />
         {/*

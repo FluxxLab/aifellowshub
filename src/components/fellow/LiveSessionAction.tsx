@@ -1,37 +1,20 @@
 "use client";
 import React, { useState } from "react";
-import dynamic from "next/dynamic";
+import Link from "next/link";
 import Button from "@/components/ui/button/Button";
 import { CheckLineIcon } from "@/icons";
 import { toast } from "@/lib/toast";
 import type { ModuleSession } from "@/lib/api/fellow-learning";
 
-// Lazy-loaded so the ~3MB Zoom Meeting SDK bundle stays out of every
-// other fellow page. SSR off because the SDK reaches for `window` on
-// import.
-const ZoomMeetingRoom = dynamic(
-  () => import("@/components/fellow/ZoomMeetingRoom"),
-  {
-    ssr: false,
-    loading: () => <p className="text-sm text-gray-500">Loading meeting…</p>,
-  },
-);
-
 /**
- * Client-side session controls. Handles registration, in-app meeting embed, and
- * the external-link fallback. The Zoom Component View embed is rendered
- * full-screen via a fixed overlay so it has the room it needs without
- * fighting the existing card layout.
- *
- * Renders nothing for "ended"/"cancelled" — the parent SessionCard surfaces
- * the appropriate "no recording" copy in those states.
+ * Client-side session controls. Handles registration, in-app meeting redirect, and
+ * the external-link fallback.
  */
 export default function LiveSessionAction({
   session: s,
 }: {
   session: ModuleSession;
 }) {
-  const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [rsvpd, setRsvpd] = useState(s.rsvpd);
 
@@ -61,47 +44,18 @@ export default function LiveSessionAction({
 
   // Live: prefer in-app embed when we have a real session id (real backend
   // path); fall back to the external join URL for mock data without an id.
-  // The embed is rendered inline below the action button instead of in a
-  // fullscreen overlay — keeps the session card / module context visible
-  // while the meeting runs.
   if (s.status === "live") {
     if (s.id) {
       return (
-        <>
-          {!open && (
-            <Button
-              size="sm"
-              variant="fellowship"
-              className="w-full bg-fellowship-navy! text-white! hover:bg-fellowship-navy-dark!"
-              onClick={() => setOpen(true)}
-            >
-              Join in app
-            </Button>
-          )}
-          {open && (
-            // Fixed full-viewport overlay — mirrors the upcoming +
-            // rsvpd branch below. SDK measures the full viewport on
-            // init instead of being locked to the 192px sidebar.
-            <div className="fixed inset-0 z-9999 flex flex-col bg-gray-900 p-3">
-              <div className="mb-2 flex items-center justify-between text-white">
-                <h3 className="text-sm font-semibold">Live session</h3>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setOpen(false)}
-                >
-                  Close meeting
-                </Button>
-              </div>
-              <div className="flex-1 overflow-hidden rounded-2xl">
-                <ZoomMeetingRoom
-                  sessionId={s.id}
-                  onLeave={() => setOpen(false)}
-                />
-              </div>
-            </div>
-          )}
-        </>
+        <Link href={`/my-sessions/${s.id}`} className="block">
+          <Button
+            size="sm"
+            variant="fellowship"
+            className="w-full bg-fellowship-navy! text-white! hover:bg-fellowship-navy-dark!"
+          >
+            Join in app
+          </Button>
+        </Link>
       );
     }
     return (
@@ -124,67 +78,24 @@ export default function LiveSessionAction({
 
   if (s.status === "upcoming") {
     if (rsvpd) {
-      // After registering, fellows join the meeting inline via the
-      // Zoom Component View embed — same flow used for live sessions,
-      // so the experience stays inside the LMS instead of yanking
-      // them out to a new tab. Zoom handles the "host hasn't started
-      // yet" waiting state inside the embed.
-      //
-      // Two fallbacks:
-      //   - No backend session id (mock data) → external Zoom URL
-      //     in a new tab.
-      //   - No Zoom meeting attached yet (joinUrl unset / "#") → a
-      //     disabled placeholder. Nothing to join.
       const hasJoinUrl = s.joinUrl && s.joinUrl !== "#";
       if (s.id) {
         return (
-          <>
-            {!open && (
-              <div className="flex flex-col gap-2">
-                <Button
-                  size="sm"
-                  variant="fellowship"
-                  className="w-full bg-fellowship-navy! text-white! hover:bg-fellowship-navy-dark!"
-                  onClick={() => setOpen(true)}
-                >
-                  Join in app
-                </Button>
-                <p className="flex items-center justify-center gap-1.5 text-xs font-medium text-success-700">
-                  <CheckLineIcon className="h-3.5 w-3.5" />
-                  You&apos;re registered
-                </p>
-              </div>
-            )}
-            {open && (
-              // Fixed full-viewport overlay — NOT inline inside the
-              // SessionCard's right-hand column. Why: when the embed
-              // mounts inside the small 192-256px sidebar wrapper,
-              // the Zoom SDK measures that container at init time
-              // and locks the meeting canvas to that footprint. Even
-              // when fullscreen kicks in afterward, the canvas stays
-              // pinned to the original tiny dimensions. Rendering
-              // here from the start so the SDK measures the full
-              // viewport on its first init pass.
-              <div className="fixed inset-0 z-9999 flex flex-col bg-gray-900 p-3">
-                <div className="mb-2 flex items-center justify-between text-white">
-                  <h3 className="text-sm font-semibold">Live session</h3>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setOpen(false)}
-                  >
-                    Close meeting
-                  </Button>
-                </div>
-                <div className="flex-1 overflow-hidden rounded-2xl">
-                  <ZoomMeetingRoom
-                    sessionId={s.id}
-                    onLeave={() => setOpen(false)}
-                  />
-                </div>
-              </div>
-            )}
-          </>
+          <div className="flex flex-col gap-2">
+            <Link href={`/my-sessions/${s.id}`} className="block">
+              <Button
+                size="sm"
+                variant="fellowship"
+                className="w-full bg-fellowship-navy! text-white! hover:bg-fellowship-navy-dark!"
+              >
+                Join in app
+              </Button>
+            </Link>
+            <p className="flex items-center justify-center gap-1.5 text-xs font-medium text-success-700">
+              <CheckLineIcon className="h-3.5 w-3.5" />
+              You're registered
+            </p>
+          </div>
         );
       }
       return (
@@ -211,7 +122,7 @@ export default function LiveSessionAction({
           )}
           <p className="flex items-center justify-center gap-1.5 text-xs font-medium text-success-700">
             <CheckLineIcon className="h-3.5 w-3.5" />
-            You&apos;re registered
+            You're registered
           </p>
         </div>
       );
