@@ -166,6 +166,34 @@ export async function getFellowCurriculumServer(): Promise<FellowModuleSummary[]
       Boolean(m.postAssessment) ||
       m.lessons.some((l) => Boolean(l.assessment));
 
+    // Derive sessionAttended from the same backend payload the detail
+    // mapper uses. Same clamps as elsewhere:
+    //   - Onboarding (Week 0 + title matches /onboarding/i) → forced
+    //     true because orientation was conducted outside the LMS.
+    //   - Otherwise honour the attendance row, but only treat a
+    //     "missed" row as false once the session has actually ended
+    //     (both DB status === "ended" AND startsAt in the past), so a
+    //     rescheduled future session never shows as Missed.
+    const isOnboarding =
+      m.weekNumber <= 0 && /onboarding/i.test(m.title);
+    let sessionAttended: boolean | null = null;
+    if (isOnboarding) {
+      sessionAttended = true;
+    } else if (m.session) {
+      const myAttStatus = m.session.myAttendance?.status ?? null;
+      const sessionEnded =
+        m.session.status === "ended" &&
+        new Date(m.session.startsAt).getTime() < Date.now();
+      if (
+        myAttStatus === "attended" ||
+        myAttStatus === "attended_recording"
+      ) {
+        sessionAttended = true;
+      } else if (myAttStatus === "missed" && sessionEnded) {
+        sessionAttended = false;
+      }
+    }
+
     return {
       weekNumber: m.weekNumber,
       title: m.title,
@@ -176,7 +204,7 @@ export async function getFellowCurriculumServer(): Promise<FellowModuleSummary[]
       status,
       progressPercent:
         status === "completed" ? 100 : status === "in-progress" ? 50 : 0,
-      sessionAttended: null, // sessions backend pending
+      sessionAttended,
       assessmentPassed: passed ? true : failed ? false : null,
       assessmentScore: my.bestScore,
       hasAssessment,
