@@ -86,12 +86,18 @@ export async function getFellowHomeServer(): Promise<FellowHome> {
   // cohort doesn't see fictitious counts anywhere.
   const totalModules = modules.length;
   const totalWeeks = totalModules;
-  const completed = modules.filter(
-    (m) =>
-      m.myAttempts.bestStatus === "passed" ||
-      m.session?.myAttendance?.status === "attended",
-  ).length;
-  const currentModule = pickCurrentModule(modules);
+  // Orientation (Week 0 with title matching /onboarding/i) was run
+  // outside the LMS, so it has no attendance row and no assessment.
+  // Treat it as completed for tile/progress purposes — same override
+  // already applied in the curriculum + sessions mappers.
+  const isOnboarding = (m: BackendCurriculumModule) =>
+    m.weekNumber <= 0 && /onboarding/i.test(m.title);
+  const isCompleted = (m: BackendCurriculumModule) =>
+    isOnboarding(m) ||
+    m.myAttempts.bestStatus === "passed" ||
+    m.session?.myAttendance?.status === "attended";
+  const completed = modules.filter(isCompleted).length;
+  const currentModule = pickCurrentModule(modules, isCompleted);
   // Clamp to the curriculum's range so "Week 1 of 0" never happens.
   // When no modules exist, currentWeek = 0.
   const currentWeek =
@@ -169,11 +175,16 @@ async function safeJson<T>(path: string): Promise<T | null> {
   }
 }
 
-function pickCurrentModule(modules: BackendCurriculumModule[]): BackendCurriculumModule | null {
+function pickCurrentModule(
+  modules: BackendCurriculumModule[],
+  isCompleted: (m: BackendCurriculumModule) => boolean,
+): BackendCurriculumModule | null {
   // First unlocked module the fellow hasn't completed yet, falling back to
-  // the highest unlocked week if everything's done.
+  // the highest unlocked week if everything's done. Uses the shared
+  // completion predicate so Onboarding (no assessment, no attendance row)
+  // doesn't keep showing up as "Continue Onboarding" forever.
   const unlocked = modules.filter((m) => m.unlocked);
-  const inProgress = unlocked.find((m) => m.myAttempts.bestStatus !== "passed");
+  const inProgress = unlocked.find((m) => !isCompleted(m));
   return inProgress ?? unlocked[unlocked.length - 1] ?? modules[0] ?? null;
 }
 
