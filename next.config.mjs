@@ -103,7 +103,18 @@ const nextConfig = {
 
     const zoomIsolationHeaders = [
       { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
-      { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
+      // `credentialless` instead of the stricter `require-corp`.
+      // Both enable SharedArrayBuffer (which Zoom's SDK needs for
+      // screen sharing) but `credentialless` lets Zoom's CDN
+      // resources load without a Cross-Origin-Resource-Policy
+      // header. Under `require-corp`, the screen-share render path
+      // pulls assets that ship without CORP, the browser blocks
+      // them, and viewers see the "You are viewing X's screen"
+      // banner with a black canvas where the share should be.
+      // Forum-confirmed fix from Zoom's own developer thread.
+      // Browser support: Chrome 96+, Firefox 110+, Safari 16.4+
+      // — well past our supported floor.
+      { key: "Cross-Origin-Embedder-Policy", value: "credentialless" },
     ];
     const zoomIsolatedRoutes = [
       "/learning/:path*",
