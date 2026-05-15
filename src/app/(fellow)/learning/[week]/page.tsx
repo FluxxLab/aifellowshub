@@ -367,10 +367,14 @@ function SessionCard({
       </div>
 
       <dl className="mt-4 space-y-2 text-sm">
+        {/* When + Host read "Closed" for orientation — the placeholder
+            session date / TBD host are irrelevant because the meeting
+            happened outside the LMS before the cohort started. Duration
+            stays so the row reads like a real archived record. */}
         <div className="flex justify-between gap-3">
           <dt className="text-gray-500">When</dt>
           <dd className="text-gray-800">
-            {dateLabel} · {timeLabel}
+            {orientationWeek ? "Closed" : `${dateLabel} · ${timeLabel}`}
           </dd>
         </div>
         <div className="flex justify-between gap-3">
@@ -379,7 +383,9 @@ function SessionCard({
         </div>
         <div className="flex justify-between gap-3">
           <dt className="text-gray-500">Host</dt>
-          <dd className="text-gray-800">{s.hostName}</dd>
+          <dd className="text-gray-800">
+            {orientationWeek ? "Closed" : s.hostName}
+          </dd>
         </div>
         <div className="flex justify-between gap-3">
           <dt className="text-gray-500">Status</dt>
