@@ -63,7 +63,7 @@ const nextConfig = {
 
     const csp = [
       `default-src 'self'`,
-      `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://source.zoom.us`,
+      `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://source.zoom.us blob:`,
       `style-src 'self' 'unsafe-inline' https://source.zoom.us`,
       `img-src 'self' data: blob: https:`,
       `font-src 'self' data:`,
