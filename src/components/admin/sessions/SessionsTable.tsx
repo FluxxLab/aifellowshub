@@ -336,8 +336,18 @@ function RowActions({ session: s }: { session: LiveSession }) {
      actions.push({ label: "Watch recording", onClick: openRecording });
    }
  }
- if (status === "cancelled") {
-   actions.push({ label: "Delete permanently", onClick: deleteSession, destructive: true });
+ // Hard-delete is available for any status except live — for a live
+ // session the admin must End it first. Use cases: a session was
+ // scheduled by mistake, a cancelled row needs to be cleared out, an
+ // ended session was created in error and is polluting attendance
+ // stats. Backend gates the route to admin / super_admin via @Roles,
+ // so non-admins reaching this page won't be able to fire it anyway.
+ if (status !== "live") {
+   actions.push({
+     label: "Delete permanently",
+     onClick: deleteSession,
+     destructive: true,
+   });
  }
 
  return (
