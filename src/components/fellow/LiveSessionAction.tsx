@@ -79,9 +79,12 @@ export default function LiveSessionAction({
             </Button>
           )}
           {open && (
-            <div className="mt-3 rounded-2xl border border-gray-200 bg-gray-900 p-3">
+            // Fixed full-viewport overlay — mirrors the upcoming +
+            // rsvpd branch below. SDK measures the full viewport on
+            // init instead of being locked to the 192px sidebar.
+            <div className="fixed inset-0 z-9999 flex flex-col bg-gray-900 p-3">
               <div className="mb-2 flex items-center justify-between text-white">
-                <h3 className="text-xs font-semibold">Live session</h3>
+                <h3 className="text-sm font-semibold">Live session</h3>
                 <Button
                   size="sm"
                   variant="outline"
@@ -90,11 +93,12 @@ export default function LiveSessionAction({
                   Close meeting
                 </Button>
               </div>
-              <ZoomMeetingRoom
-                sessionId={s.id}
-                onLeave={() => setOpen(false)}
-                startFullscreen
-              />
+              <div className="flex-1 overflow-hidden rounded-2xl">
+                <ZoomMeetingRoom
+                  sessionId={s.id}
+                  onLeave={() => setOpen(false)}
+                />
+              </div>
             </div>
           )}
         </>
@@ -152,9 +156,18 @@ export default function LiveSessionAction({
               </div>
             )}
             {open && (
-              <div className="mt-3 rounded-2xl border border-gray-200 bg-gray-900 p-3">
+              // Fixed full-viewport overlay — NOT inline inside the
+              // SessionCard's right-hand column. Why: when the embed
+              // mounts inside the small 192-256px sidebar wrapper,
+              // the Zoom SDK measures that container at init time
+              // and locks the meeting canvas to that footprint. Even
+              // when fullscreen kicks in afterward, the canvas stays
+              // pinned to the original tiny dimensions. Rendering
+              // here from the start so the SDK measures the full
+              // viewport on its first init pass.
+              <div className="fixed inset-0 z-9999 flex flex-col bg-gray-900 p-3">
                 <div className="mb-2 flex items-center justify-between text-white">
-                  <h3 className="text-xs font-semibold">Live session</h3>
+                  <h3 className="text-sm font-semibold">Live session</h3>
                   <Button
                     size="sm"
                     variant="outline"
@@ -163,10 +176,12 @@ export default function LiveSessionAction({
                     Close meeting
                   </Button>
                 </div>
-                <ZoomMeetingRoom
-                  sessionId={s.id}
-                  onLeave={() => setOpen(false)}
-                />
+                <div className="flex-1 overflow-hidden rounded-2xl">
+                  <ZoomMeetingRoom
+                    sessionId={s.id}
+                    onLeave={() => setOpen(false)}
+                  />
+                </div>
               </div>
             )}
           </>
