@@ -76,14 +76,16 @@ export async function getFellowHomeServer(): Promise<FellowHome> {
   ]);
 
   const modules = curriculum?.modules ?? [];
-  // Use real module data instead of hardcoded 12. `totalWeeks` is the
-  // greatest weekNumber across the cohort's curriculum (drives the
-  // "Week X of Y" subhead). `totalModules` is the count of modules,
-  // which is what the Modules-complete tile should compare against.
-  // Both default to 0 when no modules are published, so a fresh
-  // cohort doesn't see fictitious "12" anywhere.
-  const totalWeeks = modules.reduce((m, x) => Math.max(m, x.weekNumber), 0);
+  // Use real module data instead of hardcoded 12. Both the "Week X of
+  // Y" subhead and the Modules-complete tile compare against the
+  // *count* of published modules so the two numbers always agree.
+  // Previously totalWeeks used max(weekNumber), which underreported by
+  // one whenever Onboarding (Week 0) was published — fellows saw
+  // "Week 0 of 8" alongside "0 / 9 modules complete" and were rightly
+  // confused. Defaults to 0 when nothing's published, so a fresh
+  // cohort doesn't see fictitious counts anywhere.
   const totalModules = modules.length;
+  const totalWeeks = totalModules;
   const completed = modules.filter(
     (m) =>
       m.myAttempts.bestStatus === "passed" ||
