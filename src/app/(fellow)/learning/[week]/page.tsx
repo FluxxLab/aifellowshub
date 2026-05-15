@@ -218,26 +218,42 @@ function ModuleHeader({ module: m }: { module: FellowModuleDetail }) {
               : "Upcoming"
           }
         />
-        <PathChip
-          label="Assessment"
-          state={
-            m.assessmentPassed === true
-              ? "good"
-              : m.assessmentPassed === false
-              ? "bad"
-              : "pending"
-          }
-          detail={
-            m.assessmentScore !== null
-              ? `${m.assessmentScore}%`
-              : m.assessmentPassed === false
-              ? "Failed"
-              : "Not yet"
-          }
-        />
+        {/* Only show the Assessment chip when the module actually has
+            one. Orientation (Week 0) and any other faculty-light week
+            without a pre/post quiz or lesson-level quiz would
+            otherwise display "Not yet" forever with nothing for the
+            fellow to act on. */}
+        {hasAnyAssessment(m) && (
+          <PathChip
+            label="Assessment"
+            state={
+              m.assessmentPassed === true
+                ? "good"
+                : m.assessmentPassed === false
+                ? "bad"
+                : "pending"
+            }
+            detail={
+              m.assessmentScore !== null
+                ? `${m.assessmentScore}%`
+                : m.assessmentPassed === false
+                ? "Failed"
+                : "Not yet"
+            }
+          />
+        )}
       </div>
     </section>
   );
+}
+
+/** True when the module has at least one assessment the fellow can
+ *  take — pre-quiz, post-quiz, or a lesson-level quiz. Drives whether
+ *  the Assessment chip and the AssessmentCards render. */
+function hasAnyAssessment(m: FellowModuleDetail): boolean {
+  if (m.preAssessment) return true;
+  if (m.postAssessment) return true;
+  return m.lessons.some((l) => Boolean(l.assessment));
 }
 
 function SessionCard({

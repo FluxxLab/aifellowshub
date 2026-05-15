@@ -158,6 +158,11 @@ export async function getFellowCurriculumServer(): Promise<FellowModuleSummary[]
     // counters tick up the way fellows expect.
     if (m.weekNumber <= 0) status = "completed";
 
+    const hasAssessment =
+      Boolean(m.preAssessment) ||
+      Boolean(m.postAssessment) ||
+      m.lessons.some((l) => Boolean(l.assessment));
+
     return {
       weekNumber: m.weekNumber,
       title: m.title,
@@ -168,6 +173,7 @@ export async function getFellowCurriculumServer(): Promise<FellowModuleSummary[]
       sessionAttended: null, // sessions backend pending
       assessmentPassed: passed ? true : failed ? false : null,
       assessmentScore: my.bestScore,
+      hasAssessment,
       durationMinutes: m.durationMinutes,
     };
   });
@@ -230,6 +236,11 @@ function mapBackendCurriculumModule(
         joinUrl: "#",
       };
 
+  const hasAssessment =
+    Boolean(m.preAssessment) ||
+    Boolean(m.postAssessment) ||
+    m.lessons.some((l) => Boolean(l.assessment));
+
   return {
     id: m.id,
     weekNumber: m.weekNumber,
@@ -241,6 +252,7 @@ function mapBackendCurriculumModule(
     sessionAttended: session.attended,
     assessmentPassed: passed ? true : failed ? false : null,
     assessmentScore: my.bestScore,
+    hasAssessment,
     durationMinutes: m.durationMinutes,
     lessons,
     session,

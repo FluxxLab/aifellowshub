@@ -16,6 +16,12 @@ export type FellowModuleSummary = {
   /** Did the fellow pass the assessment? null = not attempted. */
   assessmentPassed: boolean | null;
   assessmentScore: number | null;
+  /** True when the module carries at least one assessment (pre / post
+   *  / lesson-level). Drives whether the curriculum list shows the
+   *  Assessment chip — orientation-style weeks without any quiz hide
+   *  the chip entirely so fellows don't see a permanently-pending
+   *  control with nothing to do about it. */
+  hasAssessment: boolean;
   /** Total study time across lessons + session, in minutes. */
   durationMinutes: number;
 };

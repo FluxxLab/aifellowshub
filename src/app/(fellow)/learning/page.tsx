@@ -183,23 +183,25 @@ function ModuleCard({ module: m, previous }: ModuleCardProps) {
                       : "Upcoming"
                   }
                 />
-                <PathChip
-                  label="Assessment"
-                  state={
-                    m.assessmentPassed === true
-                      ? "good"
-                      : m.assessmentPassed === false
-                      ? "bad"
-                      : "pending"
-                  }
-                  detail={
-                    m.assessmentScore !== null
-                      ? `${m.assessmentScore}%`
-                      : m.assessmentPassed === false
-                      ? "Failed"
-                      : "Not yet"
-                  }
-                />
+                {m.hasAssessment && (
+                  <PathChip
+                    label="Assessment"
+                    state={
+                      m.assessmentPassed === true
+                        ? "good"
+                        : m.assessmentPassed === false
+                        ? "bad"
+                        : "pending"
+                    }
+                    detail={
+                      m.assessmentScore !== null
+                        ? `${m.assessmentScore}%`
+                        : m.assessmentPassed === false
+                        ? "Failed"
+                        : "Not yet"
+                    }
+                  />
+                )}
               </div>
             )}
 
