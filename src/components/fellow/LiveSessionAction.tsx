@@ -93,6 +93,7 @@ export default function LiveSessionAction({
               <ZoomMeetingRoom
                 sessionId={s.id}
                 onLeave={() => setOpen(false)}
+                startFullscreen
               />
             </div>
           )}
