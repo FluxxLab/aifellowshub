@@ -86,3 +86,21 @@ export async function deleteResource(id: string): Promise<void> {
     method: "DELETE",
   });
 }
+
+import type { SignedUploadResponse } from "./uploads";
+export async function getResourceUploadUrl(
+  moduleId: string,
+  file: File,
+): Promise<SignedUploadResponse> {
+  return apiFetch<SignedUploadResponse>(
+    `/modules/${encodeURIComponent(moduleId)}/resources/upload-url`,
+    {
+      method: "POST",
+      body: {
+        filename: file.name,
+        mimeType: file.type || "application/octet-stream",
+        bytes: file.size,
+      },
+    },
+  );
+}

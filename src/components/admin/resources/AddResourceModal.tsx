@@ -14,9 +14,11 @@ import {
   RESOURCE_TYPE_LABELS,
   toBackendKind,
   updateResource,
+  getResourceUploadUrl,
   type Resource,
   type ResourceType,
 } from "@/lib/api/resources";
+import { uploadFileToSignedUrl } from "@/lib/api/uploads";
 import { useRouter } from "next/navigation";
 
 const TYPE_OPTIONS: ResourceType[] = ["article", "pdf", "video", "tool", "dataset", "other",
@@ -87,6 +89,10 @@ export default function AddResourceModal({
   const [modules, setModules] = useState<AdminModule[]>([]);
   const [loadingModules, setLoadingModules] = useState(true);
 
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
   // Pre-fill when entering edit mode (or switching between rows
   // without unmounting the modal). Resetting on close is handled by
   // `reset` further down.
@@ -138,6 +144,32 @@ export default function AddResourceModal({
     const trimmed = raw.trim();
     if (/^https?:\/\//i.test(trimmed)) return trimmed;
     return `https://${trimmed}`;
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !moduleId) return;
+    
+    // Clear the input so selecting the same file again triggers onChange
+    if (fileInputRef.current) fileInputRef.current.value = "";
+
+    setUploadingFile(true);
+    setUploadProgress(0);
+    try {
+      const signed = await getResourceUploadUrl(moduleId, file);
+      await uploadFileToSignedUrl(signed.uploadUrl, file, {
+        onProgress: (loaded, total) => {
+          setUploadProgress(Math.round((loaded / total) * 100));
+        },
+      });
+      setUrl(signed.publicUrl);
+      toast.success("Upload complete", `${file.name} is ready.`);
+    } catch (err) {
+      toast.errorFromException("Upload failed", err);
+    } finally {
+      setUploadingFile(false);
+      setUploadProgress(0);
+    }
   };
 
   const reset = () => {
@@ -290,10 +322,31 @@ export default function AddResourceModal({
               <Label>
                 URL <span className="text-error-500">*</span>
               </Label>
-              <Input
-                type="url" placeholder="aiegfellowship.org/resources/foo" defaultValue={url}
-                onChange={(e) => setUrl(e.target.value)}
-              />
+              <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <Input
+                    type="url" placeholder="aiegfellowship.org/resources/foo" defaultValue={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                  />
+                </div>
+                {(type === "pdf" || type === "video") && moduleId && (
+                  <Button
+                    variant="outline"
+                    type="button"
+                    disabled={uploadingFile}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    {uploadingFile ? `Uploading ${uploadProgress}%` : "Upload file…"}
+                  </Button>
+                )}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept={type === "pdf" ? ".pdf" : "video/*"}
+                  onChange={handleFileUpload}
+                />
+              </div>
               {urlTouched && !urlValid ? (
                 <p className="mt-1 text-xs text-error-600">
                   Doesn&apos;t look like a URL — needs a hostname with a dot
