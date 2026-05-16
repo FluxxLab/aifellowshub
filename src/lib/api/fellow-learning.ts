@@ -31,6 +31,13 @@ export type FellowModuleSummary = {
   hasAssessment: boolean;
   /** Total study time across lessons + session, in minutes. */
   durationMinutes: number;
+  /**
+   * Label for the re-access button on completed modules.
+   * "Re-watch" when the module has video content, "Re-read" when it has
+   * only readings/docs, null when the module has no lessons or resources
+   * (e.g. Onboarding — no button should be shown).
+   */
+  contentLabel: "Re-watch" | "Re-read" | null;
 };
 
 export type LessonKind = "reading" | "video" | "exercise";

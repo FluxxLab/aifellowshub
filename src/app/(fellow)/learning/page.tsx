@@ -243,9 +243,9 @@ function ModuleCard({ module: m, previous }: ModuleCardProps) {
         </div>
 
         <div className="flex shrink-0 items-center md:pl-2">
-          {isCompleted && (
+          {isCompleted && m.contentLabel && (
             <Button size="sm" variant="outline">
-              Re-read
+              {m.contentLabel}
             </Button>
           )}
           {isInProgress && (

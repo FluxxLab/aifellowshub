@@ -195,6 +195,17 @@ export async function getFellowCurriculumServer(): Promise<FellowModuleSummary[]
       }
     }
 
+    const hasVideoContent =
+      m.lessons.some((l) => l.kind === "video") ||
+      m.resources.some((r) => r.kind === "video");
+    const hasAnyContent =
+      m.lessons.length > 0 || m.resources.length > 0;
+    const contentLabel: FellowModuleSummary["contentLabel"] = !hasAnyContent
+      ? null
+      : hasVideoContent
+      ? "Re-watch"
+      : "Re-read";
+
     return {
       weekNumber: m.weekNumber,
       title: m.title,
@@ -210,6 +221,7 @@ export async function getFellowCurriculumServer(): Promise<FellowModuleSummary[]
       assessmentScore: my.bestScore,
       hasAssessment,
       durationMinutes: m.durationMinutes,
+      contentLabel,
     };
   });
 }
@@ -301,6 +313,12 @@ function mapBackendCurriculumModule(
     assessmentScore: my.bestScore,
     hasAssessment,
     durationMinutes: m.durationMinutes,
+    contentLabel:
+      m.lessons.length === 0 && m.resources.length === 0
+        ? null
+        : m.lessons.some((l) => l.kind === "video") || m.resources.some((r) => r.kind === "video")
+        ? "Re-watch"
+        : "Re-read",
     lessons,
     session,
     resources,
