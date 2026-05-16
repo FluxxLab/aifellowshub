@@ -112,6 +112,12 @@ export default function ZoomMeetingRoom({
           language: "en-US",
           patchJsMedia: true,
           leaveOnPageUnload: true,
+          customize: {
+            video: {
+              defaultViewType: "gallery",
+              isResizable: true,
+            },
+          },
         });
         if (cancelled) return;
 
