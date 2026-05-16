@@ -71,6 +71,8 @@ export default function CohortCompositionDonut({
  },
  },
  tooltip: {
+ theme: "light",
+ style: { fontFamily: "inherit", fontSize: "13px" },
  y: {
  formatter: (val: number) =>`${val} fellow${val === 1 ?"":"s"} (${Math.round((val / total) * 100)}%)`,
  },
