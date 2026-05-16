@@ -210,79 +210,92 @@ type BackendFellowProfile = {
 export async function getUserProfileServer(
   id: string,
 ): Promise<UserProfile | null> {
-  const res = await backendFetch(
-    `/admin/users/${encodeURIComponent(id)}`,
-    { method: "GET" },
-  );
-  if (res.status === 401 || res.status === 403) redirect("/signin");
-  if (res.status === 404) return null;
-  if (!res.ok) {
-    throw new Error(`Failed to load participant (${res.status}).`);
+  try {
+    const res = await backendFetch(
+      `/admin/users/${encodeURIComponent(id)}`,
+      { method: "GET" },
+    );
+    if (res.status === 401 || res.status === 403) redirect("/signin");
+    if (!res.ok) return null;
+    const data = (await res.json()) as { user: UserProfile };
+    return data.user ?? null;
+  } catch (e) {
+    if ((e as { digest?: string }).digest?.startsWith("NEXT_REDIRECT")) throw e;
+    return null;
   }
-  const data = (await res.json()) as { user: UserProfile };
-  return data.user;
 }
 
 export async function getFellowProfileServer(
   id: string,
 ): Promise<FellowProfile | null> {
-  const res = await backendFetch(
-    `/admin/fellows/${encodeURIComponent(id)}`,
-    { method: "GET" },
-  );
-  if (res.status === 401 || res.status === 403) redirect("/signin");
-  if (res.status === 404) return null;
-  if (!res.ok) {
-    throw new Error(`Failed to load fellow profile (${res.status}).`);
+  try {
+    const res = await backendFetch(
+      `/admin/fellows/${encodeURIComponent(id)}`,
+      { method: "GET" },
+    );
+    if (res.status === 401 || res.status === 403) redirect("/signin");
+    if (!res.ok) return null;
+    const data = (await res.json()) as { fellow: BackendFellowProfile };
+    if (!data.fellow) return null;
+    return mapFellowProfile(data.fellow);
+  } catch (e) {
+    if ((e as { digest?: string }).digest?.startsWith("NEXT_REDIRECT")) throw e;
+    return null;
   }
-  const data = (await res.json()) as { fellow: BackendFellowProfile };
-  return mapFellowProfile(data.fellow);
+}
+
+function mapCapstoneStatus(
+  s: string | null | undefined,
+): CapstoneSnapshot["status"] {
+  if (s === "draft") return "draft";
+  if (s === "under_review") return "under-review";
+  if (s === "approved") return "approved";
+  if (s === "submitted" || s === "needs_revision") return "submitted";
+  return "not-started";
 }
 
 function mapFellowProfile(f: BackendFellowProfile): FellowProfile {
-  const capstoneStatus: CapstoneSnapshot["status"] =
-    f.capstone.status === "draft"
-      ? "draft"
-      : f.capstone.status === "under_review"
-      ? "under-review"
-      : f.capstone.status === "approved"
-      ? "approved"
-      : "submitted";
-
   return {
     id: f.id,
-    fullName: f.fullName,
-    email: f.email,
+    fullName: f.fullName ?? "",
+    email: f.email ?? "",
     country: f.country ?? "",
     organisation: f.organisation ?? "",
     jobTitle: f.jobTitle ?? "",
     sector: prettySector(f.sector),
-    mentor: f.mentorName,
-    progressPercent: f.progressPercent,
-    attendanceRate: f.attendanceRate,
+    mentor: f.mentorName ?? null,
+    progressPercent: f.progressPercent ?? 0,
+    attendanceRate: f.attendanceRate ?? 0,
     status: f.status === "at_risk" ? "at-risk" : f.status ?? "active",
-    isActive: f.isActive,
+    isActive: f.isActive ?? true,
     joinedAt: f.joinedAt,
-    bio: f.bio,
-    linkedinUrl: f.linkedinUrl,
-    assignedMentor: f.mentor,
+    bio: f.bio ?? null,
+    linkedinUrl: f.linkedinUrl ?? null,
+    assignedMentor: f.mentor ?? null,
     hasMentorOverride: Boolean(f.mentorOverrideId),
-    modules: f.modules.map(
+    modules: (f.modules ?? []).map(
       (m): ModuleProgressEntry => ({
         weekNumber: m.weekNumber,
         title: m.title,
         status: m.status,
       }),
     ),
-    recentSessions: f.recentSessions,
-    assessments: f.assessments,
-    capstone: {
-      status: capstoneStatus,
-      title: f.capstone.title,
-      submittedAt: f.capstone.submittedAt,
-      lastFeedback: f.capstone.lastFeedback,
-    },
-    activity: f.activity,
+    recentSessions: f.recentSessions ?? [],
+    assessments: f.assessments ?? [],
+    capstone: f.capstone
+      ? {
+          status: mapCapstoneStatus(f.capstone.status),
+          title: f.capstone.title ?? null,
+          submittedAt: f.capstone.submittedAt ?? null,
+          lastFeedback: f.capstone.lastFeedback ?? null,
+        }
+      : {
+          status: "not-started",
+          title: null,
+          submittedAt: null,
+          lastFeedback: null,
+        },
+    activity: f.activity ?? [],
   };
 }
 

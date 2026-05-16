@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+
+export const dynamic = "force-dynamic";
 import Badge from "@/components/ui/badge/Badge";
 import ProfileHeader from "@/components/admin/participants/profile/ProfileHeader";
 import AssignMentorCard from "@/components/admin/participants/profile/AssignMentorCard";
