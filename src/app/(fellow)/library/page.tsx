@@ -6,7 +6,7 @@ import { getLibraryServer } from "@/lib/api/fellow-library.server";
 export const metadata: Metadata = {
   title: "Library · AI Fellows LMS",
   description:
-    "Curated readings, audits, frameworks, and templates across the Fellowship curriculum (BRD §6.9).",
+    "Curated readings, audits, frameworks, and templates across the Fellowship curriculum.",
 };
 
 export default async function LibraryPage() {

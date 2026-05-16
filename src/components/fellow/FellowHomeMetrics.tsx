@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import CountUp from "@/components/ui/motion/CountUp";
 import {
@@ -29,6 +30,7 @@ export default function FellowHomeMetrics({ metrics }: Props) {
       animate={reduce ? false : "show"}
     >
       <MetricCard
+        href="/learning"
         icon={<BoxIconLine className="text-fellowship-navy size-5" />}
         label="Modules complete"
         valueNode={
@@ -39,11 +41,13 @@ export default function FellowHomeMetrics({ metrics }: Props) {
         }
       />
       <MetricCard
+        href="/my-sessions"
         icon={<CalenderIcon className="text-fellowship-navy size-5" />}
         label="Your attendance"
         valueNode={<CountUp value={metrics.attendanceRatePercent} suffix="%" />}
       />
       <MetricCard
+        href="/ai-buddy"
         tourAnchor="ai-buddy"
         icon={<BoltIcon className="text-fellowship-navy size-5" />}
         label="AI Buddy today"
@@ -56,6 +60,7 @@ export default function FellowHomeMetrics({ metrics }: Props) {
         hint="messages left"
       />
       <MetricCard
+        href="/my-capstone"
         icon={<CheckCircleIcon className="text-fellowship-navy size-5" />}
         label="Capstone"
         valueNode={<>{metrics.capstoneStatus}</>}
@@ -70,9 +75,10 @@ type CardProps = {
   valueNode: React.ReactNode;
   hint?: string;
   tourAnchor?: string;
+  href?: string;
 };
 
-function MetricCard({ icon, label, valueNode, hint, tourAnchor }: CardProps) {
+function MetricCard({ icon, label, valueNode, hint, tourAnchor, href }: CardProps) {
   const reduce = useReducedMotion();
   const variants = reduce
     ? undefined
@@ -87,19 +93,17 @@ function MetricCard({ icon, label, valueNode, hint, tourAnchor }: CardProps) {
           },
         },
       };
-  return (
+
+  const card = (
     <motion.div
       data-tour={tourAnchor}
       variants={variants}
       whileHover={reduce ? undefined : { y: -2 }}
       transition={{ type: "spring", stiffness: 300, damping: 22 }}
-      className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6"
+      className={`rounded-2xl border border-gray-200 bg-white p-5 md:p-6 ${
+        href ? "hover:border-fellowship-navy/30 transition-colors" : ""
+      }`}
     >
-      {/* Tighter badge — was w-12 h-12 with no icon-size cap, which let
-          the SVGR-bundled `h-5 w-5` defaults bloom because consumers
-          weren't pinning a size. Now the badge is 40px and every icon
-          is forced to size-5 (20px), so the proportion matches the
-          rest of the design system. */}
       <div className="flex items-center justify-center w-10 h-10 bg-warning-100 rounded-xl">
         {icon}
       </div>
@@ -112,4 +116,9 @@ function MetricCard({ icon, label, valueNode, hint, tourAnchor }: CardProps) {
       </div>
     </motion.div>
   );
+
+  if (href) {
+    return <Link href={href} className="block">{card}</Link>;
+  }
+  return card;
 }

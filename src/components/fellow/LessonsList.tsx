@@ -29,6 +29,8 @@ export default function LessonsList({ lessons }: { lessons: Lesson[] }) {
   const toggle = (id: string) =>
     setOpenId((prev) => (prev === id ? null : id));
 
+  if (lessons.length === 0) return null;
+
   return (
     <section className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
       <div className="flex items-center justify-between">

@@ -17,7 +17,7 @@ import type { FellowModuleSummary } from "@/lib/api/fellow-learning";
 export const metadata: Metadata = {
   title: "Modules · AI Fellows LMS",
   description:
-    "Your cohort curriculum. The next module unlocks when you attend the live session or pass the assessment (BRD §6.3).",
+    "Your cohort curriculum. The next module unlocks when you attend the live session or pass the assessment.",
 };
 
 export default async function LearningPage() {

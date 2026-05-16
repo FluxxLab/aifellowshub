@@ -4,6 +4,7 @@ import Badge from "@/components/ui/badge/Badge";
 import Breadcrumbs from "@/components/common/Breadcrumbs";
 import {
   ChevronRightIcon,
+  CloseLineIcon,
   DocsIcon,
   FileIcon,
   ShootingStarIcon,
@@ -35,6 +36,7 @@ export default function LibraryView({
   const [query, setQuery] = useState("");
   const [kind, setKind] = useState<KindFilter>("all");
   const [source, setSource] = useState<SourceFilter>("all");
+  const [selectedPdf, setSelectedPdf] = useState<LibraryResource | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -144,7 +146,12 @@ export default function LibraryView({
           </h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {featured.map((r) => (
-              <ResourceCard key={r.id} resource={r} compact />
+              <ResourceCard
+                key={r.id}
+                resource={r}
+                compact
+                onOpenPdf={r.kind === "pdf" ? () => setSelectedPdf(r) : undefined}
+              />
             ))}
           </div>
         </section>
@@ -181,11 +188,38 @@ export default function LibraryView({
         ) : (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             {filtered.map((r) => (
-              <ResourceCard key={r.id} resource={r} />
+              <ResourceCard
+                key={r.id}
+                resource={r}
+                onOpenPdf={r.kind === "pdf" ? () => setSelectedPdf(r) : undefined}
+              />
             ))}
           </div>
         )}
       </section>
+
+      {selectedPdf && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-black/60 backdrop-blur-sm">
+          <div className="flex items-center justify-between bg-white px-4 py-3 shadow-sm">
+            <span className="text-sm font-semibold text-gray-800 truncate max-w-[70vw]">
+              {selectedPdf.title}
+            </span>
+            <button
+              type="button"
+              onClick={() => setSelectedPdf(null)}
+              className="ml-4 flex h-8 w-8 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+              aria-label="Close PDF viewer"
+            >
+              <CloseLineIcon className="h-5 w-5" />
+            </button>
+          </div>
+          <iframe
+            src={selectedPdf.url}
+            title={selectedPdf.title}
+            className="flex-1 w-full border-0"
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -234,10 +268,24 @@ function FilterChip({
 function ResourceCard({
   resource: r,
   compact = false,
+  onOpenPdf,
 }: {
   resource: LibraryResource;
   compact?: boolean;
+  onOpenPdf?: () => void;
 }) {
+  if (onOpenPdf) {
+    return (
+      <button
+        type="button"
+        onClick={onOpenPdf}
+        className="group flex flex-col rounded-2xl border border-gray-200 bg-white p-4 text-left transition-colors hover:border-fellowship-navy/30 hover:bg-gray-50"
+      >
+        <ResourceCardBody r={r} compact={compact} />
+      </button>
+    );
+  }
+
   return (
     <a
       href={r.url}
@@ -245,46 +293,58 @@ function ResourceCard({
       rel="noopener noreferrer"
       className="group flex flex-col rounded-2xl border border-gray-200 bg-white p-4 transition-colors hover:border-fellowship-navy/30 hover:bg-gray-50"
     >
-      <div className="flex items-start gap-3">
-        <KindIcon kind={r.kind} />
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs uppercase tracking-wide text-gray-500">
-              {r.kind}
-            </span>
-            <span className="text-gray-300">·</span>
-            <span className="inline-flex items-center gap-1 text-xs text-gray-500">
-              <TimeIcon className="h-3.5 w-3.5" />
-              {r.durationMinutes} min
-            </span>
-            {r.source && (
-              <>
-                <span className="text-gray-300">·</span>
-                <span className="text-xs text-gray-500">
-                  Week {r.source.weekNumber}
-                </span>
-              </>
-            )}
-          </div>
-          <h3 className="mt-1 text-sm font-semibold text-gray-800 group-hover:text-fellowship-navy">
-            {r.title}
-          </h3>
-          {!compact && (
-            <p className="mt-1 text-sm text-gray-600">{r.description}</p>
-          )}
-          {!compact && r.tags.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {r.tags.map((t) => (
-                <Badge key={t} color="light" variant="light">
-                  {t}
-                </Badge>
-              ))}
-            </div>
+      <ResourceCardBody r={r} compact={compact} />
+    </a>
+  );
+}
+
+function ResourceCardBody({
+  r,
+  compact,
+}: {
+  r: LibraryResource;
+  compact: boolean;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <KindIcon kind={r.kind} />
+      <div className="flex-1 min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs uppercase tracking-wide text-gray-500">
+            {r.kind}
+          </span>
+          <span className="text-gray-300">·</span>
+          <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+            <TimeIcon className="h-3.5 w-3.5" />
+            {r.durationMinutes} min
+          </span>
+          {r.source && (
+            <>
+              <span className="text-gray-300">·</span>
+              <span className="text-xs text-gray-500">
+                Week {r.source.weekNumber}
+              </span>
+            </>
           )}
         </div>
-        <ChevronRightIcon className="h-4 w-4 shrink-0 text-gray-400 group-hover:text-fellowship-navy" />
+        <h3 className="mt-1 text-sm font-semibold text-gray-800 group-hover:text-fellowship-navy">
+          {r.title}
+        </h3>
+        {!compact && (
+          <p className="mt-1 text-sm text-gray-600">{r.description}</p>
+        )}
+        {!compact && r.tags.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {r.tags.map((t) => (
+              <Badge key={t} color="light" variant="light">
+                {t}
+              </Badge>
+            ))}
+          </div>
+        )}
       </div>
-    </a>
+      <ChevronRightIcon className="h-4 w-4 shrink-0 text-gray-400 group-hover:text-fellowship-navy" />
+    </div>
   );
 }
 

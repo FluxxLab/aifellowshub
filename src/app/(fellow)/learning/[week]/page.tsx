@@ -9,14 +9,12 @@ import {
   CheckCircleIcon,
   CheckLineIcon,
   CloseLineIcon,
-  DocsIcon,
-  FileIcon,
   LockIcon,
   TimeIcon,
-  VideoIcon,
 } from "@/icons";
 import { getFellowModuleServer } from "@/lib/api/fellow-learning.server";
 import LessonsList from "@/components/fellow/LessonsList";
+import ResourcesSection from "@/components/fellow/ResourcesSection";
 import LiveSessionAction from "@/components/fellow/LiveSessionAction";
 import ModuleFeedbackForm from "@/components/fellow/ModuleFeedbackForm";
 import ZoomSdkPrefetch from "@/components/fellow/ZoomSdkPrefetch";
@@ -25,7 +23,6 @@ import type {
   FellowModuleDetail,
   ModuleSession,
   ModuleAssessment,
-  ModuleResource,
 } from "@/lib/api/fellow-learning";
 
 export async function generateMetadata({
@@ -427,8 +424,8 @@ function SessionCard({
 
       {!isOnboarding && isEnded && s.attended === false && (
         <p className="mt-3 rounded-md bg-gray-50 p-3 text-xs text-gray-600">
-          Sessions are live-only — no recording is available (BRD §6.4). The
-          assessment is the alternative path to completing this module.
+          Sessions are live-only — no recording is available. The assessment
+          is the alternative path to completing this module.
         </p>
       )}
     </section>
@@ -602,54 +599,6 @@ function AssessmentCard({
   );
 }
 
-function ResourcesSection({ resources }: { resources: ModuleResource[] }) {
-  if (resources.length === 0) return null;
-  return (
-    <section className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
-      <h2 className="text-lg font-semibold text-gray-800">Reading & resources</h2>
-      <ul className="mt-4 divide-y divide-gray-100">
-        {resources.map((r) => (
-          <li key={r.id}>
-            <a
-              href={r.url}
-              className="flex items-center justify-between gap-3 py-3 transition-colors hover:bg-gray-50 rounded-md px-2 -mx-2"
-            >
-              <div className="flex items-center gap-3">
-                <ResourceIcon kind={r.kind} />
-                <span className="text-sm text-gray-800">{r.title}</span>
-              </div>
-              <span className="text-xs uppercase tracking-wide text-gray-500">
-                {r.kind}
-              </span>
-            </a>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-function ResourceIcon({ kind }: { kind: ModuleResource["kind"] }) {
-  if (kind === "pdf") {
-    return (
-      <span className="flex h-8 w-8 items-center justify-center rounded-md bg-error-50 text-error-500">
-        <FileIcon className="h-4 w-4" />
-      </span>
-    );
-  }
-  if (kind === "video") {
-    return (
-      <span className="flex h-8 w-8 items-center justify-center rounded-md bg-warning-50 text-warning-600">
-        <VideoIcon className="h-4 w-4" />
-      </span>
-    );
-  }
-  return (
-    <span className="flex h-8 w-8 items-center justify-center rounded-md bg-info-50 text-info-500">
-      <DocsIcon className="h-4 w-4" />
-    </span>
-  );
-}
 
 function PathChip({
   label,

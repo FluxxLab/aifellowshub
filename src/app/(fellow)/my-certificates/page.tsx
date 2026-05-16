@@ -6,7 +6,7 @@ import { getMyCertificateStateServer } from "@/lib/api/fellow-certificates.serve
 export const metadata: Metadata = {
   title: "My certificates · AI Fellows LMS",
   description:
-    "Your AI Fellowship completion certificate. Auto-issued when you complete the curriculum, your capstone is approved, and you attend the closing summit (BRD §6.6).",
+    "Your AI Fellowship completion certificate. Auto-issued when you complete the curriculum, your capstone is approved, and you attend the closing summit.",
 };
 
 export default async function MyCertificatesPage() {

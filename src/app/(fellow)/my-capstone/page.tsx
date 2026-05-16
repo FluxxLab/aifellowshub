@@ -6,7 +6,7 @@ import { getFellowCapstoneServer } from "@/lib/api/fellow-capstone.server";
 export const metadata: Metadata = {
   title: "My capstone · AI Fellows LMS",
   description:
-    "Your capstone draft, mentor feedback thread, milestones, and stakeholder consultations (BRD §6.10).",
+    "Your capstone draft, mentor feedback thread, milestones, and stakeholder consultations.",
 };
 
 export default async function MyCapstonePage() {

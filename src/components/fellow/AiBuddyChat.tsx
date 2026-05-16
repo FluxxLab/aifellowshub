@@ -272,8 +272,7 @@ export default function AiBuddyChat() {
             </Button>
           </form>
           <p className="mt-2 text-xs text-gray-400">
-            Enter to send · Shift+Enter for a new line · 20 messages/day per
-            fellow (BRD §6.7)
+            Enter to send · Shift+Enter for a new line · 20 messages/day
           </p>
         </div>
       </section>

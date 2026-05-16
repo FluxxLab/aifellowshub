@@ -5,7 +5,7 @@ import { getMyProfile } from "@/lib/api/profile.server";
 export const metadata: Metadata = {
   title: "My profile · AI Fellows LMS",
   description:
-    "Edit your fellowship profile, sector, bio, and notification preferences (BRD §6.1, §6.11).",
+    "Edit your fellowship profile, sector, bio, and notification preferences.",
 };
 
 export default async function MyProfilePage() {

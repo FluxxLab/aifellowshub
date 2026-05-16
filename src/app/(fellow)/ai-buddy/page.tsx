@@ -5,7 +5,7 @@ import AiBuddyTour from "@/components/fellow/tours/AiBuddyTour";
 export const metadata: Metadata = {
   title: "AI Buddy · AI Fellows LMS",
   description:
-    "Your study companion. Ask questions about the curriculum, work through assessment prep, or explore ideas for your capstone (BRD §6.7).",
+    "Your study companion. Ask questions about the curriculum, work through assessment prep, or explore ideas for your capstone.",
 };
 
 export default function AiBuddyPage() {

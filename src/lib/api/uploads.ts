@@ -24,6 +24,11 @@ export function uploadFileToSignedUrl(
     const xhr = new XMLHttpRequest();
     xhr.open("PUT", uploadUrl, true);
     xhr.setRequestHeader("Content-Type", file.type);
+    // The backend mints presigned URLs with ACL: "public-read" baked into
+    // the signature (spaces.service.ts presignUpload). DO Spaces validates
+    // that the browser PUT includes this header; omitting it causes a
+    // signature mismatch and a 403 AccessDenied.
+    xhr.setRequestHeader("x-amz-acl", "public-read");
     if (options.onProgress) {
       xhr.upload.addEventListener("progress", (e) => {
         if (e.lengthComputable) options.onProgress?.(e.loaded, e.total);
