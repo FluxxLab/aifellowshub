@@ -50,17 +50,10 @@ export default function ZoomMeetingRoom({
 }: {
   sessionId: string;
   onLeave?: () => void;
-  /**
-   * Open the meeting in fullscreen on mount. Used by the admin
-   * session-preview flow so previews get the full viewport
-   * automatically instead of opening as a small inline card the
-   * user has to expand manually.
-   */
-  startFullscreen?: boolean;
 }) {
   const user = useCurrentUser();
   const containerRef = useRef<HTMLDivElement>(null);
-  const wrapperRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null); // kept for potential future use
   const clientRef = useRef<unknown>(null);
   const [phase, setPhase] = useState<
     "loading" | "joining" | "in-meeting" | "left" | "error"
@@ -71,53 +64,6 @@ export default function ZoomMeetingRoom({
   const router = useRouter();
   const { confirm, dialog } = useConfirm();
 
-  // When the wrapper grows (entering fullscreen / window resize) ask
-  // the embedded video tile to redraw at the new size. Without this
-  // the Zoom embed stays pinned to whatever viewSizes.default it got
-  // at init, leaving a tiny meeting inside a huge black wrapper.
-  //
-  // Debounced — ResizeObserver fires 10+ times during a fullscreen
-  // transition, and an undebounced updateVideoOptions on every tick
-  // makes the SDK thrash (video tiles flicker, audio briefly drops,
-  // and on slow networks the meeting reconnects). 150ms is enough to
-  // coalesce a transition without feeling laggy.
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    let timeout: ReturnType<typeof setTimeout> | null = null;
-    const apply = () => {
-      const client = clientRef.current as
-        | {
-            updateVideoOptions?: (o: {
-              viewSizes?: { default?: { width: number; height: number } };
-            }) => void;
-          }
-        | null;
-      const rect = el.getBoundingClientRect();
-      if (rect.width <= 0 || rect.height <= 0) return;
-      try {
-        client?.updateVideoOptions?.({
-          viewSizes: {
-            default: {
-              width: Math.round(rect.width),
-              height: Math.round(rect.height),
-            },
-          },
-        });
-      } catch {
-        // SDK may not yet expose updateVideoOptions; ignored.
-      }
-    };
-    const obs = new ResizeObserver(() => {
-      if (timeout) clearTimeout(timeout);
-      timeout = setTimeout(apply, 150);
-    });
-    obs.observe(el);
-    return () => {
-      if (timeout) clearTimeout(timeout);
-      obs.disconnect();
-    };
-  }, [phase]);
 
   // Hold the latest user in a ref so start() can read the real name
   // without forcing the SDK to re-init each time the user object's
@@ -161,46 +107,11 @@ export default function ZoomMeetingRoom({
           throw new Error("Meeting container missing.");
         }
 
-        // The SDK defaults to a fixed ~600x400 render size when no
-        // viewSizes are passed, which is why the meeting tile looks
-        // tiny inside our larger wrapper. Measure the container at
-        // init time and tell the SDK to fill it. `isResizable: true`
-        // lets the SDK re-layout when we toggle fullscreen.
-        const rect = containerRef.current.getBoundingClientRect();
-        const containerWidth = rect.width || 800;
-        const containerHeight = rect.height || 600;
-
         await client.init({
           zoomAppRoot: containerRef.current,
           language: "en-US",
           patchJsMedia: true,
           leaveOnPageUnload: true,
-          customize: {
-            video: {
-              isResizable: true,
-              // No defaultViewType. We tried "speaker" to push the
-              // SDK out of its Minimized default — it did expand the
-              // single-participant tile, but Zoom's speaker view
-              // never renders the bottom toolbar (mic / camera /
-              // share / leave). Fellows couldn't mute themselves.
-              // For the cohort launch, having functional meeting
-              // controls beats having a slightly bigger placeholder
-              // tile during solo testing. With 2+ participants in a
-              // real session, Zoom auto-expands the active speaker
-              // tile via its own layout — solo testing is the only
-              // case where the tile reads as small.
-              viewSizes: {
-                default: {
-                  width: Math.round(containerWidth),
-                  height: Math.round(containerHeight),
-                },
-                ribbon: {
-                  width: 300,
-                  height: Math.round(containerHeight),
-                },
-              },
-            },
-          },
         });
         if (cancelled) return;
 
@@ -384,24 +295,9 @@ export default function ZoomMeetingRoom({
 
       <div
         ref={wrapperRef}
-        className="zoom-meeting-fill relative h-[70vh] w-full overflow-hidden rounded-2xl bg-black"
+        className="w-full overflow-hidden rounded-2xl bg-black"
       >
-        <div ref={containerRef} className="absolute inset-0" />
-        {/*
-          Earlier iterations injected CSS overrides on .video-popper
-          to force the Zoom embed to fill the wrapper. The
-          width/height: 100% nudge on its own was clean, but every
-          variant we tried (position: absolute, inset: 0, max-width:
-          none, etc.) ended up clipping Zoom's bottom toolbar —
-          fellows lost the mic / camera / share / leave row. The
-          official Zoom forum thread on filling Component View
-          confirms there's no supported CSS pattern; Zoom's
-          recommended workaround is "switch to Client View in an
-          iframe," which is a bigger architectural change. For now
-          we trust Zoom's own layout: the tile is small when alone,
-          auto-expands on multi-participant sessions, and the
-          toolbar stays where the SDK puts it.
-        */}
+        <div ref={containerRef} />
       </div>
     </div>
   );
