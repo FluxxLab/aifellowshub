@@ -47,7 +47,7 @@ export default async function ParticipantProfilePage({ params }: PageProps) {
  getFellowProfileServer(id),
  listMentorsForBrowseServer(),
  ]);
- if (!fellow) notFound();
+ if (!fellow) throw new Error("Fellow profile could not be loaded.");
 
  return (
  <div className="flex flex-col gap-4 md:gap-6">
