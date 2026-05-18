@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-
 export const dynamic = "force-dynamic";
 import Badge from "@/components/ui/badge/Badge";
 import ProfileHeader from "@/components/admin/participants/profile/ProfileHeader";
@@ -35,7 +33,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function ParticipantProfilePage({ params }: PageProps) {
  const { id } = params;
  const user = await getUserProfileServer(id);
- if (!user) notFound();
+ if (!user) throw new Error("Participant profile could not be loaded.");
 
  // Non-fellow roles get a lighter generic profile view — they don't
  // have a curriculum / attendance / capstone tied to them.
