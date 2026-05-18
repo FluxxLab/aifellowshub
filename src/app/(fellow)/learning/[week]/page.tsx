@@ -18,6 +18,7 @@ import ResourcesSection from "@/components/fellow/ResourcesSection";
 import LiveSessionAction from "@/components/fellow/LiveSessionAction";
 import ModuleFeedbackForm from "@/components/fellow/ModuleFeedbackForm";
 import ZoomSdkPrefetch from "@/components/fellow/ZoomSdkPrefetch";
+import PreFellowshipSurvey from "@/components/fellow/PreFellowshipSurvey";
 import { getMyModuleFeedbackServer } from "@/lib/api/feedback.server";
 import type {
   FellowModuleDetail,
@@ -79,6 +80,8 @@ export default async function ModuleDetailPage({
       />
 
       <ModuleHeader module={m} />
+
+      {weekNumber === 1 && <PreFellowshipSurvey />}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 md:gap-6">
         <div className="lg:col-span-2 flex flex-col gap-4 md:gap-6">
