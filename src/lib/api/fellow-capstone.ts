@@ -17,7 +17,7 @@ export type CapstoneStatus =
 
 export type CapstoneSector =
   | "Healthcare"
-  | "EdTech"
+  | "Education"
   | "Agriculture"
   | "Economic Inclusion Development";
 

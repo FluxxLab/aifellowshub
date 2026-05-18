@@ -13,21 +13,21 @@ import type { Sector, UserProfile } from "@/lib/api/participants";
 
 const SECTOR_TO_BACKEND: Record<Sector, string> = {
   Healthcare: "healthcare",
-  EdTech: "edtech",
+  Education: "edtech",
   Agriculture: "agriculture",
   "Economic Inclusion Development": "economic_inclusion_development",
 };
 
 const SECTOR_LABEL_BY_BACKEND: Record<string, Sector> = {
   healthcare: "Healthcare",
-  edtech: "EdTech",
+  edtech: "Education",
   agriculture: "Agriculture",
   economic_inclusion_development: "Economic Inclusion Development",
 };
 
 const ALL_SECTORS: Sector[] = [
   "Healthcare",
-  "EdTech",
+  "Education",
   "Agriculture",
   "Economic Inclusion Development",
 ];

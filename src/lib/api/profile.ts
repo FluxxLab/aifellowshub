@@ -60,7 +60,7 @@ export function sectorFromBackend(s: string | null | undefined): Sector {
     case "healthcare":
       return "Healthcare";
     case "edtech":
-      return "EdTech";
+      return "Education";
     case "agriculture":
       return "Agriculture";
     case "economic_inclusion_development":
@@ -73,7 +73,7 @@ function sectorToBackend(s: Sector): string {
   switch (s) {
     case "Healthcare":
       return "healthcare";
-    case "EdTech":
+    case "Education":
       return "edtech";
     case "Agriculture":
       return "agriculture";

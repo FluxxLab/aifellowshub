@@ -307,7 +307,7 @@ function prettySector(s: string | null): Sector {
     case "healthcare":
       return "Healthcare";
     case "edtech":
-      return "EdTech";
+      return "Education";
     case "agriculture":
       return "Agriculture";
     case "economic_inclusion_development":

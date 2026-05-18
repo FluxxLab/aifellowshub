@@ -136,7 +136,7 @@ function mapSector(s: string | null | undefined): CapstoneSector | null {
     case "healthcare":
       return "Healthcare";
     case "edtech":
-      return "EdTech";
+      return "Education";
     case "agriculture":
       return "Agriculture";
     case "economic_inclusion_development":

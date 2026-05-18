@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation";
 
 const SECTOR_TO_BACKEND: Record<Sector, string> = {
   Healthcare: "healthcare",
-  EdTech: "edtech",
+  Education: "edtech",
   Agriculture: "agriculture",
   "Economic Inclusion Development": "economic_inclusion_development",
 };
@@ -23,7 +23,7 @@ type InviteRole = "admin" | "faculty" | "mentor" | "fellow";
 
 const ALL_SECTORS: Sector[] = [
   "Healthcare",
-  "EdTech",
+  "Education",
   "Agriculture",
   "Economic Inclusion Development",
 ];

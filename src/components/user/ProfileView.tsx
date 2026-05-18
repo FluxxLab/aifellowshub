@@ -15,7 +15,7 @@ import { updateMyProfile, type MyProfile, type NotificationEventToggles } from "
 import type { Sector } from "@/lib/api/participants";
 import type { Role } from "@/lib/auth/useCurrentUser";
 
-const SECTORS: Sector[] = ["Healthcare","EdTech","Agriculture","Economic Inclusion Development",
+const SECTORS: Sector[] = ["Healthcare","Education","Agriculture","Economic Inclusion Development",
 ];
 
 const ROLE_LABEL: Record<Role, string> = {

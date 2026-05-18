@@ -6,7 +6,7 @@
 
 export type Sector =
   | "Healthcare"
-  | "EdTech"
+  | "Education"
   | "Agriculture"
   | "Economic Inclusion Development";
 

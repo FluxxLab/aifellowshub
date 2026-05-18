@@ -13,7 +13,7 @@ import type { FellowProfile, FellowStatus, Sector } from "@/lib/api/participants
 
 const SECTOR_TO_BACKEND: Record<Sector, string> = {
   Healthcare: "healthcare",
-  EdTech: "edtech",
+  Education: "edtech",
   Agriculture: "agriculture",
   "Economic Inclusion Development": "economic_inclusion_development",
 };
@@ -26,7 +26,7 @@ const STATUS_TO_BACKEND: Record<FellowStatus, string> = {
 
 const ALL_SECTORS: Sector[] = [
   "Healthcare",
-  "EdTech",
+  "Education",
   "Agriculture",
   "Economic Inclusion Development",
 ];

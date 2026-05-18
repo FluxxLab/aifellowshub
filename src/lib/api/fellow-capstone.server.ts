@@ -184,7 +184,7 @@ function mapSector(s: string | null): CapstoneSector | null {
   if (!s) return null;
   const norm = s.toLowerCase();
   if (norm.includes("health")) return "Healthcare";
-  if (norm.includes("ed")) return "EdTech";
+  if (norm === "edtech") return "Education";
   if (norm.includes("agric")) return "Agriculture";
   // Fintech, governance, public-policy, financial-inclusion all
   // collapse into "Economic Inclusion Development" — the LMS now

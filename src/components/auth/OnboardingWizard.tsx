@@ -12,11 +12,11 @@ import { toast } from "@/lib/toast";
 import { useRouter } from "next/navigation";
 import React, { useMemo, useState } from "react";
 
-type Sector = "Healthcare" | "EdTech" | "Agriculture" | "Economic Inclusion Development";
+type Sector = "Healthcare" | "Education" | "Agriculture" | "Economic Inclusion Development";
 
 const SECTORS: { value: Sector; description: string }[] = [
   { value: "Healthcare", description: "Diagnostics, hospital ops, public health" },
-  { value: "EdTech", description: "Learning tools, accessibility, assessment" },
+  { value: "Education", description: "Learning tools, accessibility, assessment" },
   { value: "Agriculture", description: "Yield, supply chains, climate adaptation" },
   { value: "Economic Inclusion Development", description: "Fintech, credit, financial inclusion, governance, public policy" },
 ];
