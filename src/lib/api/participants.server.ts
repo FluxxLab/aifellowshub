@@ -217,12 +217,12 @@ export async function getUserProfileServer(
     );
     if (res.status === 401 || res.status === 403) redirect("/signin");
     if (res.status === 404) return null;
-    if (!res.ok) throw new Error(`Backend error ${res.status}`);
+    if (!res.ok) return null;
     const data = (await res.json()) as { user: UserProfile };
     return data.user ?? null;
   } catch (e) {
     if ((e as { digest?: string }).digest?.startsWith("NEXT_REDIRECT")) throw e;
-    throw e;
+    return null;
   }
 }
 
@@ -236,13 +236,13 @@ export async function getFellowProfileServer(
     );
     if (res.status === 401 || res.status === 403) redirect("/signin");
     if (res.status === 404) return null;
-    if (!res.ok) throw new Error(`Backend error ${res.status}`);
+    if (!res.ok) return null;
     const data = (await res.json()) as { fellow: BackendFellowProfile };
     if (!data.fellow) return null;
     return mapFellowProfile(data.fellow);
   } catch (e) {
     if ((e as { digest?: string }).digest?.startsWith("NEXT_REDIRECT")) throw e;
-    throw e;
+    return null;
   }
 }
 

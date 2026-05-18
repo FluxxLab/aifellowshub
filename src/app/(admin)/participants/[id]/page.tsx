@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 export const dynamic = "force-dynamic";
+import Link from "next/link";
 import Badge from "@/components/ui/badge/Badge";
 import ProfileHeader from "@/components/admin/participants/profile/ProfileHeader";
 import AssignMentorCard from "@/components/admin/participants/profile/AssignMentorCard";
@@ -37,7 +38,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function ParticipantProfilePage({ params }: PageProps) {
  const { id } = params;
  const user = await getUserProfileServer(id);
- if (!user) throw new Error("Participant profile could not be loaded.");
+ if (!user) return <BackendErrorView />;
 
  // Non-fellow roles get a lighter generic profile view — they don't
  // have a curriculum / attendance / capstone tied to them.
@@ -49,7 +50,7 @@ export default async function ParticipantProfilePage({ params }: PageProps) {
  getFellowProfileServer(id),
  listMentorsForBrowseServer(),
  ]);
- if (!fellow) throw new Error("Fellow profile could not be loaded.");
+ if (!fellow) return <BackendErrorView />;
 
  return (
  <div className="flex flex-col gap-4 md:gap-6">
@@ -355,6 +356,25 @@ function dotForActivity(type: ActivityEntry["type"]): string {
  if (type ==="module-complete"|| type ==="assessment-passed") return "bg-success-400";
  if (type ==="joined"|| type ==="capstone-submitted") return "bg-fellowship-navy";
  return "bg-gray-300";
+}
+
+function BackendErrorView() {
+ return (
+ <div className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white p-12 text-center">
+ <p className="text-sm font-medium text-gray-700">
+ Could not load this profile right now.
+ </p>
+ <p className="mt-1 text-sm text-gray-500">
+ The server is under load — please wait a moment and try again.
+ </p>
+ <Link
+ href="/participants"
+ className="mt-4 text-sm font-medium text-fellowship-navy underline underline-offset-2"
+ >
+ Back to participants
+ </Link>
+ </div>
+ );
 }
 
 function relativeTime(iso: string): string {
