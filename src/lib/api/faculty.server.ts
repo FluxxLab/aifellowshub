@@ -5,7 +5,6 @@
  * (types + client mutators).
  */
 import "server-only";
-import { cache } from "react";
 import { backendFetch } from "./backend";
 import {
   backendToModuleDetail,
@@ -48,9 +47,9 @@ export async function getFacultyModules(): Promise<FacultyModuleSummary[]> {
   }
 }
 
-export const getFacultyModule = cache(async (
+export async function getFacultyModule(
   id: string,
-): Promise<FacultyModuleDetail | null> => {
+): Promise<FacultyModuleDetail | null> {
   try {
     const res = await backendFetch(`/modules/${encodeURIComponent(id)}`, {
       method: "GET",
@@ -61,7 +60,7 @@ export const getFacultyModule = cache(async (
   } catch {
     return null;
   }
-});
+}
 
 /* ---------- Admin's review queue ---------- */
 
@@ -93,9 +92,9 @@ export async function getFacultyReviewQueue(): Promise<FacultyReviewItem[]> {
   }
 }
 
-export const getFacultyReviewItem = cache(async (
+export async function getFacultyReviewItem(
   id: string,
-): Promise<FacultyReviewItem | null> => {
+): Promise<FacultyReviewItem | null> {
   try {
     const res = await backendFetch(`/modules/${encodeURIComponent(id)}`, {
       method: "GET",
@@ -106,4 +105,4 @@ export const getFacultyReviewItem = cache(async (
   } catch {
     return null;
   }
-});
+}

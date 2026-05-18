@@ -4,7 +4,6 @@
  * page renders. Returns empty groups when the backend is unreachable.
  */
 import "server-only";
-import { cache } from "react";
 import { redirect } from "next/navigation";
 import { backendFetch } from "./backend";
 import type {
@@ -208,9 +207,9 @@ type BackendFellowProfile = {
 };
 
 /** Generic profile fetcher (any role) used by /participants/:id. */
-export const getUserProfileServer = cache(async (
+export async function getUserProfileServer(
   id: string,
-): Promise<UserProfile | null> => {
+): Promise<UserProfile | null> {
   try {
     const res = await backendFetch(
       `/admin/users/${encodeURIComponent(id)}`,
@@ -225,11 +224,11 @@ export const getUserProfileServer = cache(async (
     if ((e as { digest?: string }).digest?.startsWith("NEXT_REDIRECT")) throw e;
     throw e;
   }
-});
+}
 
-export const getFellowProfileServer = cache(async (
+export async function getFellowProfileServer(
   id: string,
-): Promise<FellowProfile | null> => {
+): Promise<FellowProfile | null> {
   try {
     const res = await backendFetch(
       `/admin/fellows/${encodeURIComponent(id)}`,
@@ -245,7 +244,7 @@ export const getFellowProfileServer = cache(async (
     if ((e as { digest?: string }).digest?.startsWith("NEXT_REDIRECT")) throw e;
     throw e;
   }
-});
+}
 
 function mapCapstoneStatus(
   s: string | null | undefined,

@@ -5,7 +5,6 @@
  * eligible empty state until those domains move to the backend.
  */
 import "server-only";
-import { cache } from "react";
 import { backendFetch } from "./backend";
 import type {
   Certificate,
@@ -92,9 +91,9 @@ type BackendVerifyFail =
   | { valid: false; reason: "not_found" }
   | { valid: false; reason: "revoked"; revokedAt: string; revokedReason: string | null };
 
-export const getPublicCertificateServer = cache(async (
+export async function getPublicCertificateServer(
   serial: string,
-): Promise<PublicCertificate | null> => {
+): Promise<PublicCertificate | null> {
   try {
     const res = await backendFetch(
       `/certificates/${encodeURIComponent(serial)}/verify`,
@@ -122,7 +121,7 @@ export const getPublicCertificateServer = cache(async (
   } catch {
     return null;
   }
-});
+}
 
 function mapBackendCertificate(c: BackendCertificate): Certificate {
   return {

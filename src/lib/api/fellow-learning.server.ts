@@ -6,7 +6,6 @@
  * empty — pages render their zero-state.
  */
 import "server-only";
-import { cache } from "react";
 import { backendFetch } from "./backend";
 import type {
   FellowModuleDetail,
@@ -330,15 +329,15 @@ function mapBackendCurriculumModule(
 }
 
 /** Detail view for `/learning/[week]`. Returns null when backend unreachable or week not found. */
-export const getFellowModuleServer = cache(async (
+export async function getFellowModuleServer(
   week: number,
-): Promise<FellowModuleDetail | null> => {
+): Promise<FellowModuleDetail | null> {
   const real = await fetchCurriculum();
   if (!real) return null;
   const m = real.find((x) => x.weekNumber === week);
   if (!m) return null;
   return mapBackendCurriculumModule(m);
-});
+}
 
 /**
  * Full curriculum as `FellowModuleDetail[]` — used by `/assessments` to
@@ -362,7 +361,7 @@ export async function getFellowCurriculumDetailServer(): Promise<
  * inject a synthetic "Attended" row whenever the cohort has an
  * Onboarding module but no corresponding session in the listing.
  */
-export const getFellowSessionsServer = cache(async () => {
+export async function getFellowSessionsServer() {
   try {
     const [sessionsRes, curriculum] = await Promise.all([
       backendFetch("/me/sessions", { method: "GET" }),
@@ -388,7 +387,7 @@ export const getFellowSessionsServer = cache(async () => {
   } catch {
     return [];
   }
-});
+}
 
 /** Build a synthetic "past attended" session row for the Onboarding
  *  module so /my-sessions has a Past row to render. Date/host fields

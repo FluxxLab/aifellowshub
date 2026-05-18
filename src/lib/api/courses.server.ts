@@ -4,7 +4,6 @@
  * is unreachable.
  */
 import "server-only";
-import { cache } from "react";
 import { backendFetch } from "./backend";
 import {
   backendToCourse,
@@ -26,9 +25,9 @@ export async function getCourses(): Promise<Course[]> {
   }
 }
 
-export const getCourseDetail = cache(async (
+export async function getCourseDetail(
   id: string,
-): Promise<CourseDetail | null> => {
+): Promise<CourseDetail | null> {
   try {
     const res = await backendFetch(`/courses/${encodeURIComponent(id)}`, {
       method: "GET",
@@ -53,4 +52,4 @@ export const getCourseDetail = cache(async (
     );
     return null;
   }
-});
+}

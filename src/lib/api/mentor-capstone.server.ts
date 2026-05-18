@@ -3,7 +3,6 @@
  * `Capstone` payloads into mentor-side shapes.
  */
 import "server-only";
-import { cache } from "react";
 import { backendFetch } from "./backend";
 import type {
   CapstoneSector,
@@ -13,7 +12,7 @@ import type {
 } from "./fellow-capstone";
 import type { BackendCapstone } from "./fellow-capstone.server";
 
-export const getMentorQueueServer = cache(async (): Promise<MentorQueueEntry[]> => {
+export async function getMentorQueueServer(): Promise<MentorQueueEntry[]> {
   try {
     const res = await backendFetch("/mentor/capstones", { method: "GET" });
     if (!res.ok) return [];
@@ -22,7 +21,7 @@ export const getMentorQueueServer = cache(async (): Promise<MentorQueueEntry[]> 
   } catch {
     return [];
   }
-});
+}
 
 export type MentorCapstoneView = FellowCapstone & { backendId: string };
 
@@ -31,9 +30,9 @@ export type MentorCapstoneView = FellowCapstone & { backendId: string };
  * as its param; we fetch the queue and pick the matching entry's full
  * payload, since there's no direct GET-by-fellow endpoint yet.
  */
-export const getMentorCapstoneServer = cache(async (
+export async function getMentorCapstoneServer(
   fellowId: string,
-): Promise<MentorCapstoneView | null> => {
+): Promise<MentorCapstoneView | null> {
   try {
     const res = await backendFetch("/mentor/capstones", { method: "GET" });
     if (!res.ok) return null;
@@ -89,7 +88,7 @@ export const getMentorCapstoneServer = cache(async (
   } catch {
     return null;
   }
-});
+}
 
 function mapBackendStatus(s: BackendCapstone["status"]): CapstoneStatus {
   switch (s) {
