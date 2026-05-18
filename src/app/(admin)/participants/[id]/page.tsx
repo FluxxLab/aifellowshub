@@ -24,10 +24,14 @@ type PageProps = {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
  const { id } = params;
- const user = await getUserProfileServer(id);
- return {
- title: user ?`${user.fullName} · Participants`:"Participant · AI Fellows LMS",
- };
+ try {
+   const user = await getUserProfileServer(id);
+   return {
+     title: user ? `${user.fullName} · Participants` : "Participant · AI Fellows LMS",
+   };
+ } catch {
+   return { title: "Participant · AI Fellows LMS" };
+ }
 }
 
 export default async function ParticipantProfilePage({ params }: PageProps) {
