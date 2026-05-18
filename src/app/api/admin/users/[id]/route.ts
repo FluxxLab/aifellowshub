@@ -22,3 +22,13 @@ export async function PATCH(
   const { id } = params;
   return proxy(req, `/admin/users/${encodeURIComponent(id)}`);
 }
+
+/** Hard-delete (super_admin only). Backend guards: no self-delete,
+ *  no super_admin delete, no delete with hosted sessions / owned courses. */
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } },
+) {
+  const { id } = params;
+  return proxy(req, `/admin/users/${encodeURIComponent(id)}`);
+}

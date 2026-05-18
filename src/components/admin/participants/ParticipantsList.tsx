@@ -22,6 +22,7 @@ import { MoreDotIcon, PlusIcon } from "@/icons";
 import InviteModal from "./InviteModal";
 import { apiFetch } from "@/lib/api/client";
 import { toast } from "@/lib/toast";
+import { useCurrentUser } from "@/lib/auth/useCurrentUser";
 import type {
  Participants,
  Fellow,
@@ -55,6 +56,8 @@ type ParticipantsListProps = {
 export default function ParticipantsList({ data }: ParticipantsListProps) {
  const router = useRouter();
  const params = useSearchParams();
+ const currentUser = useCurrentUser();
+ const isSuperAdmin = currentUser.role === "super_admin";
 
  const initialTab: TabId =
  (TABS.find((t) => t.id === params.get("tab"))?.id as TabId) ??"fellows";
@@ -96,6 +99,7 @@ export default function ParticipantsList({ data }: ParticipantsListProps) {
  data={data}
  search={search}
  fellowFilter={fellowFilter}
+ isSuperAdmin={isSuperAdmin}
  />
  </div>
  <InviteModal
@@ -166,6 +170,32 @@ function deactivateAction(
  destructive: user.isActive,
  };
 }
+
+function useDeleteUser() {
+  const router = useRouter();
+  const { confirm, dialog } = useConfirm();
+  async function run(user: { id: string; fullName: string }) {
+    const ok = await confirm({
+      title: "Permanently delete this user?",
+      message: `This will remove ${user.fullName} and all their data from the system. This cannot be undone.`,
+      confirmLabel: "Delete permanently",
+      tone: "danger",
+    });
+    if (!ok) return;
+    try {
+      await apiFetch(`/admin/users/${encodeURIComponent(user.id)}`, {
+        method: "DELETE",
+      });
+      toast.success(`${user.fullName} deleted`);
+      router.refresh();
+    } catch (err) {
+      toast.errorFromException("Couldn't delete user", err);
+    }
+  }
+  return { dialog, run };
+}
+
+type DeleteRunner = ReturnType<typeof useDeleteUser>["run"];
 
 function PageHeader({ onInvite }: { onInvite: () => void }) {
  return (
@@ -281,6 +311,7 @@ type TabPanelProps = {
  data: Participants;
  search: string;
  fellowFilter: (typeof FELLOW_FILTERS)[number]["id"];
+ isSuperAdmin: boolean;
 };
 
 /** 25 rows per page across all five participant tables. Big enough
@@ -289,7 +320,7 @@ type TabPanelProps = {
  *  hitting the page-controls strip. */
 const PAGE_SIZE = 25;
 
-function TabPanel({ tab, data, search, fellowFilter }: TabPanelProps) {
+function TabPanel({ tab, data, search, fellowFilter, isSuperAdmin }: TabPanelProps) {
  const q = search.trim().toLowerCase();
  const matchesSearch = (s: string) => !q || s.toLowerCase().includes(q);
 
@@ -311,7 +342,7 @@ function TabPanel({ tab, data, search, fellowFilter }: TabPanelProps) {
      items={fellows}
      page={page}
      onPageChange={setPage}
-     render={(rows) => <FellowsTable fellows={rows} />}
+     render={(rows) => <FellowsTable fellows={rows} isSuperAdmin={isSuperAdmin} />}
    />
  );
  }
@@ -324,7 +355,7 @@ function TabPanel({ tab, data, search, fellowFilter }: TabPanelProps) {
      items={faculty}
      page={page}
      onPageChange={setPage}
-     render={(rows) => <FacultyTable faculty={rows} />}
+     render={(rows) => <FacultyTable faculty={rows} isSuperAdmin={isSuperAdmin} />}
    />
  );
  }
@@ -337,7 +368,7 @@ function TabPanel({ tab, data, search, fellowFilter }: TabPanelProps) {
      items={mentors}
      page={page}
      onPageChange={setPage}
-     render={(rows) => <MentorsTable mentors={rows} />}
+     render={(rows) => <MentorsTable mentors={rows} isSuperAdmin={isSuperAdmin} />}
    />
  );
  }
@@ -350,7 +381,7 @@ function TabPanel({ tab, data, search, fellowFilter }: TabPanelProps) {
      items={admins}
      page={page}
      onPageChange={setPage}
-     render={(rows) => <AdminsTable admins={rows} />}
+     render={(rows) => <AdminsTable admins={rows} isSuperAdmin={isSuperAdmin} />}
    />
  );
  }
@@ -518,12 +549,14 @@ function RowActions({
  );
 }
 
-function FellowsTable({ fellows }: { fellows: Fellow[] }) {
+function FellowsTable({ fellows, isSuperAdmin }: { fellows: Fellow[]; isSuperAdmin: boolean }) {
  const { dialog, run } = useDeactivateUser();
+ const { dialog: deleteDialog, run: runDelete } = useDeleteUser();
  if (fellows.length === 0) return <EmptyState label="No fellows match."/>;
  return (
  <>
  {dialog}
+ {deleteDialog}
  <MobileRowList>
  {fellows.map((f) => (
  <MobileRowCard
@@ -556,6 +589,7 @@ function FellowsTable({ fellows }: { fellows: Fellow[] }) {
  actions={[
  { label: "View profile", href: `/participants/${f.id}` },
  deactivateAction(f, run),
+ ...(isSuperAdmin ? [{ label: "Delete permanently", onClick: () => runDelete(f), destructive: true }] : []),
  ]}
  />
  }
@@ -618,6 +652,7 @@ function FellowsTable({ fellows }: { fellows: Fellow[] }) {
  actions={[
  { label:"View profile", href:`/participants/${f.id}`},
  deactivateAction(f, run),
+ ...(isSuperAdmin ? [{ label: "Delete permanently", onClick: () => runDelete(f), destructive: true }] : []),
  ]}
  />
  </ActionsCell>
@@ -636,11 +671,13 @@ function FellowStatusBadge({ status }: { status: FellowStatus }) {
  return <Badge color="light">Inactive</Badge>;
 }
 
-function FacultyTable({ faculty }: { faculty: Faculty[] }) {
+function FacultyTable({ faculty, isSuperAdmin }: { faculty: Faculty[]; isSuperAdmin: boolean }) {
  const { dialog, run } = useDeactivateUser();
+ const { dialog: deleteDialog, run: runDelete } = useDeleteUser();
  if (faculty.length === 0) return <EmptyState label="No faculty match."/>;
  return (
  <>
+ {deleteDialog}
  {dialog}
  <MobileRowList>
  {faculty.map((f) => (
@@ -696,6 +733,7 @@ function FacultyTable({ faculty }: { faculty: Faculty[] }) {
  { label: "View profile", href: `/participants/${f.id}` },
  { label: "View courses", href: `/courses?owner=${f.id}` },
  deactivateAction(f, run),
+ ...(isSuperAdmin ? [{ label: "Delete permanently", onClick: () => runDelete(f), destructive: true }] : []),
  ]}
  />
  }
@@ -777,11 +815,13 @@ function FacultyTable({ faculty }: { faculty: Faculty[] }) {
  );
 }
 
-function MentorsTable({ mentors }: { mentors: Mentor[] }) {
+function MentorsTable({ mentors, isSuperAdmin }: { mentors: Mentor[]; isSuperAdmin: boolean }) {
  const { dialog, run } = useDeactivateUser();
+ const { dialog: deleteDialog, run: runDelete } = useDeleteUser();
  if (mentors.length === 0) return <EmptyState label="No mentors match."/>;
  return (
  <>
+ {deleteDialog}
  {dialog}
  <MobileRowList>
  {mentors.map((m) => (
@@ -836,6 +876,7 @@ function MentorsTable({ mentors }: { mentors: Mentor[] }) {
  actions={[
  { label: "View profile", href: `/participants/${m.id}` },
  deactivateAction(m, run),
+ ...(isSuperAdmin ? [{ label: "Delete permanently", onClick: () => runDelete(m), destructive: true }] : []),
  ]}
  />
  }
@@ -906,6 +947,7 @@ function MentorsTable({ mentors }: { mentors: Mentor[] }) {
  actions={[
  { label: "View profile", href: `/participants/${m.id}` },
  deactivateAction(m, run),
+ ...(isSuperAdmin ? [{ label: "Delete permanently", onClick: () => runDelete(m), destructive: true }] : []),
  ]}
  />
  </ActionsCell>
@@ -918,11 +960,13 @@ function MentorsTable({ mentors }: { mentors: Mentor[] }) {
  );
 }
 
-function AdminsTable({ admins }: { admins: AdminUser[] }) {
+function AdminsTable({ admins, isSuperAdmin }: { admins: AdminUser[]; isSuperAdmin: boolean }) {
  const { dialog, run } = useDeactivateUser();
+ const { dialog: deleteDialog, run: runDelete } = useDeleteUser();
  if (admins.length === 0) return <EmptyState label="No admins match."/>;
  return (
  <>
+ {deleteDialog}
  {dialog}
  <MobileRowList>
  {admins.map((a) => (
@@ -966,6 +1010,7 @@ function AdminsTable({ admins }: { admins: AdminUser[] }) {
  actions={[
  { label: "View profile", href: `/participants/${a.id}` },
  deactivateAction(a, run),
+ ...(isSuperAdmin ? [{ label: "Delete permanently", onClick: () => runDelete(a), destructive: true }] : []),
  ]}
  />
  }
@@ -1024,6 +1069,7 @@ function AdminsTable({ admins }: { admins: AdminUser[] }) {
  actions={[
  { label: "View profile", href: `/participants/${a.id}` },
  deactivateAction(a, run),
+ ...(isSuperAdmin ? [{ label: "Delete permanently", onClick: () => runDelete(a), destructive: true }] : []),
  ]}
  />
  </ActionsCell>
