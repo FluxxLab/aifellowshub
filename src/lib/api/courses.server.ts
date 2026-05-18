@@ -3,6 +3,8 @@
  * only import from server pages. Returns `[]` / `null` when the backend
  * is unreachable.
  */
+import "server-only";
+import { cache } from "react";
 import { backendFetch } from "./backend";
 import {
   backendToCourse,
@@ -24,9 +26,9 @@ export async function getCourses(): Promise<Course[]> {
   }
 }
 
-export async function getCourseDetail(
+export const getCourseDetail = cache(async (
   id: string,
-): Promise<CourseDetail | null> {
+): Promise<CourseDetail | null> => {
   try {
     const res = await backendFetch(`/courses/${encodeURIComponent(id)}`, {
       method: "GET",
@@ -51,4 +53,4 @@ export async function getCourseDetail(
     );
     return null;
   }
-}
+});

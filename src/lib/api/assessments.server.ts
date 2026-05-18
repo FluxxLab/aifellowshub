@@ -4,6 +4,7 @@
  * `Assessment` / `AssessmentDetail` shapes the admin pages render.
  */
 import "server-only";
+import { cache } from "react";
 import { backendFetch } from "./backend";
 import type {
   Assessment,
@@ -113,9 +114,9 @@ export async function getAssessmentsServer(): Promise<Assessment[]> {
   }
 }
 
-export async function getAssessmentServer(
+export const getAssessmentServer = cache(async (
   id: string,
-): Promise<AssessmentDetail | null> {
+): Promise<AssessmentDetail | null> => {
   try {
     const res = await backendFetch(`/assessments/${encodeURIComponent(id)}`, {
       method: "GET",
@@ -126,7 +127,7 @@ export async function getAssessmentServer(
   } catch {
     return null;
   }
-}
+});
 
 function mapRow(r: BackendAssessmentRow): Assessment {
   // Total points isn't precomputed yet — questionCount × default points (1)

@@ -6,6 +6,7 @@
  * the admin pages already render, so no UI rewrite is needed.
  */
 import "server-only";
+import { cache } from "react";
 import { backendFetch } from "./backend";
 import type {
   AttendanceRecord,
@@ -104,9 +105,9 @@ type BackendAdminSession = {
 
 /** Fetch the admin/faculty roster view for a session. Returns `null` on
  *  unreachable backend so the page can fall back to the mock detail. */
-export async function getSessionAdminServer(
+export const getSessionAdminServer = cache(async (
   sessionId: string,
-): Promise<SessionDetail | null> {
+): Promise<SessionDetail | null> => {
   try {
     const res = await backendFetch(
       `/sessions/${encodeURIComponent(sessionId)}/admin`,
@@ -118,7 +119,7 @@ export async function getSessionAdminServer(
   } catch {
     return null;
   }
-}
+});
 
 function mapToSessionDetail(s: BackendAdminSession): SessionDetail {
   const expectedCount = s.attendance.length;
