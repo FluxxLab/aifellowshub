@@ -16,6 +16,7 @@ import { getFellowModuleServer } from "@/lib/api/fellow-learning.server";
 import LessonsList from "@/components/fellow/LessonsList";
 import ResourcesSection from "@/components/fellow/ResourcesSection";
 import LiveSessionAction from "@/components/fellow/LiveSessionAction";
+import SurveyGatedSessionAction from "@/components/fellow/SurveyGatedSessionAction";
 import ModuleFeedbackForm from "@/components/fellow/ModuleFeedbackForm";
 import ZoomSdkPrefetch from "@/components/fellow/ZoomSdkPrefetch";
 import PreFellowshipSurvey from "@/components/fellow/PreFellowshipSurvey";
@@ -124,6 +125,7 @@ export default async function ModuleDetailPage({
             session={m.session}
             weekNumber={m.weekNumber}
             moduleTitle={m.title}
+            requiresSurvey={weekNumber === 1}
           />
         </div>
       </div>
@@ -329,10 +331,12 @@ function SessionCard({
   session: s,
   weekNumber,
   moduleTitle,
+  requiresSurvey,
 }: {
   session: ModuleSession;
   weekNumber: number;
   moduleTitle: string;
+  requiresSurvey?: boolean;
 }) {
   const start = new Date(s.startsAt);
   const dateLabel = start.toLocaleDateString(undefined, {
@@ -415,7 +419,7 @@ function SessionCard({
           happened outside the LMS, so there's nothing to action. */}
       {!isOnboarding && (
         <div className="mt-5">
-          <SessionAction session={s} />
+          <SessionAction session={s} requiresSurvey={requiresSurvey} />
           {(s.status === "live" || s.status === "upcoming") && (
             <p className="mt-2 text-center text-xs text-gray-500">
               Hosted on Zoom · attendance auto-credited if you stay ≥{" "}
@@ -452,7 +456,14 @@ function SessionStatusBadge({
   );
 }
 
-function SessionAction({ session: s }: { session: ModuleSession }) {
+function SessionAction({
+  session: s,
+  requiresSurvey,
+}: {
+  session: ModuleSession;
+  requiresSurvey?: boolean;
+}) {
+  if (requiresSurvey) return <SurveyGatedSessionAction session={s} />;
   return <LiveSessionAction session={s} />;
 }
 

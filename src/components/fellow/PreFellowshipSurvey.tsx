@@ -368,6 +368,7 @@ export default function PreFellowshipSurvey() {
 
   return (
     <form
+      id="pre-fellowship-survey"
       onSubmit={handleSubmit}
       className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6"
     >
@@ -447,7 +448,7 @@ export default function PreFellowshipSurvey() {
 
 function SurveyDone() {
   return (
-    <div className="rounded-2xl border border-success-200 bg-success-50 p-5 md:p-6">
+    <div id="pre-fellowship-survey" className="rounded-2xl border border-success-200 bg-success-50 p-5 md:p-6">
       <div className="flex items-center gap-3">
         <CheckCircleIcon className="h-6 w-6 text-success-600" />
         <div>
