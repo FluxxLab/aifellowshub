@@ -8,7 +8,7 @@ import type { Lesson } from "@/lib/api/fellow-learning";
 /**
  * Fellow-facing lessons list.
  *
- * Click a lesson's `Start` / `Resume` / `Re-read` button to expand
+ * Click a lesson's `Start` / `Resume` / `Re-watch` / `Re-read` button to expand
  * the row inline and render the uploaded content (video player /
  * PDF iframe / image) via `<LessonContent>`. Re-clicking the same
  * row collapses it; opening another lesson swaps the expanded one
@@ -83,7 +83,9 @@ export default function LessonsList({ lessons }: { lessons: Lesson[] }) {
                     {isOpen
                       ? "Close"
                       : l.status === "completed"
-                      ? "Re-read"
+                      ? l.kind === "video"
+                        ? "Re-watch"
+                        : "Re-read"
                       : l.status === "in-progress"
                       ? "Resume"
                       : "Start"}

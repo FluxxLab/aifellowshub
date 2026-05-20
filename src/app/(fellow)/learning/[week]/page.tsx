@@ -154,8 +154,7 @@ function LockedView({ module: m }: { module: FellowModuleDetail }) {
         </p>
         <h1 className="mt-1 text-2xl font-bold text-gray-700">{m.title}</h1>
         <p className="mx-auto mt-3 max-w-md text-sm text-gray-600">
-          This module unlocks when Week {previousWeek}&apos;s session is attended{" "}
-          <span className="font-semibold">or</span> its assessment is passed.
+          This module unlocks when Week {previousWeek}&apos;s session is attended.
         </p>
         <div className="mt-6">
           <Link href={`/learning/${previousWeek}`}>

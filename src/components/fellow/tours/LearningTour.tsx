@@ -43,9 +43,9 @@ export default function LearningTour() {
     {
       element: '[data-tour="learning-modules"] > li:first-child',
       popover: {
-        title: "Two paths to unlock the next module",
+        title: "How to unlock the next module",
         description:
-          "Attend the live session OR pass the assessment. Either path counts — that way a missed session never blocks you.",
+          "Attend the live session to unlock the next module. Miss one? You can watch the recording and still complete the module.",
         side: "right",
         align: "center",
       },

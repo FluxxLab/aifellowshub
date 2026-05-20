@@ -17,7 +17,7 @@ import type { FellowModuleSummary } from "@/lib/api/fellow-learning";
 export const metadata: Metadata = {
   title: "Modules · AI Fellows LMS",
   description:
-    "Your cohort curriculum. The next module unlocks when you attend the live session or pass the assessment.",
+    "Your cohort curriculum. The next module unlocks when you attend the live session.",
 };
 
 export default async function LearningPage() {
@@ -49,9 +49,7 @@ export default async function LearningPage() {
         <h1 className="text-3xl font-bold text-gray-800 sm:text-4xl">Curriculum</h1>
         <p className="mt-2 text-gray-600">
           Your modules across the Fellowship. The next module unlocks when you
-          attend that week&apos;s live session{" "}
-          <span className="font-semibold text-fellowship-navy">or</span> pass
-          its assessment.
+          attend that week&apos;s live session.
         </p>
       </div>
 
@@ -235,8 +233,7 @@ function ModuleCard({ module: m, previous }: ModuleCardProps) {
               <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-gray-500">
                 <LockIcon className="h-3.5 w-3.5" />
                 Unlocks when Week {previous.weekNumber}&apos;s session is
-                attended <span className="font-semibold">or</span> its
-                assessment is passed.
+                attended.
               </p>
             )}
           </div>
