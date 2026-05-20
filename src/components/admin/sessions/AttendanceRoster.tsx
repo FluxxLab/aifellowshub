@@ -71,6 +71,7 @@ export default function AttendanceRoster({ sessionId, session }: AttendanceRoste
  const setOverride = async (
  fellowId: string,
  override: AttendanceOverride | null,
+ minutesAttended?: number,
  ) => {
  // Optimistic UI update — settle/rollback after the request finishes.
  const previous = records;
@@ -80,9 +81,8 @@ export default function AttendanceRoster({ sessionId, session }: AttendanceRoste
  ? {
  ...r,
  override,
- // When a real round-trip succeeds we'll get the backend truth back;
- // until then mirror the override on autoCredited so the badge flips.
  autoCredited: override === "attended" ? true : r.autoCredited,
+ totalMinutesPresent: minutesAttended ?? r.totalMinutesPresent,
  }
  : r,
  ),
@@ -95,24 +95,25 @@ export default function AttendanceRoster({ sessionId, session }: AttendanceRoste
  ? "missed"
  : null;
  if (!backendStatus || sessionId.startsWith("session-")) {
- // No real backend (mock id) or "excused" — UI-only.
  return;
  }
 
  setBusyFellow(fellowId);
  try {
+ const body: Record<string, unknown> = { fellowId, status: backendStatus };
+ if (minutesAttended !== undefined) body.minutesAttended = minutesAttended;
  const res = await fetch(
  `/api/sessions/${encodeURIComponent(sessionId)}/mark-attendance`,
  {
  method: "POST",
  headers: { "Content-Type": "application/json" },
  credentials: "include",
- body: JSON.stringify({ fellowId, status: backendStatus }),
+ body: JSON.stringify(body),
  },
  );
  if (!res.ok) {
- const body = (await res.json().catch(() => ({}))) as { message?: string };
- throw new Error(body.message ?? `Save failed (${res.status})`);
+ const errBody = (await res.json().catch(() => ({}))) as { message?: string };
+ throw new Error(errBody.message ?? `Save failed (${res.status})`);
  }
  } catch (err) {
  setRecords(previous);
@@ -203,8 +204,9 @@ export default function AttendanceRoster({ sessionId, session }: AttendanceRoste
  key={r.fellowId}
  record={r}
  busy={busyFellow === r.fellowId}
- onOverride={(o) => {
- void setOverride(r.fellowId, o);
+ sessionDurationMinutes={session.durationMinutes}
+ onOverride={(o, mins) => {
+ void setOverride(r.fellowId, o, mins);
  }}
  />
  ))}
@@ -225,14 +227,26 @@ export default function AttendanceRoster({ sessionId, session }: AttendanceRoste
 function Row({
  record,
  busy,
+ sessionDurationMinutes,
  onOverride,
 }: {
  record: AttendanceRecord;
  busy: boolean;
- onOverride: (o: AttendanceOverride | null) => void;
+ sessionDurationMinutes: number;
+ onOverride: (o: AttendanceOverride | null, minutes?: number) => void;
 }) {
  const [open, setOpen] = useState(false);
+ const [markingAttended, setMarkingAttended] = useState(false);
+ const [minutesInput, setMinutesInput] = useState("");
  const final = finalStatusOf(record);
+
+ function submitAttended() {
+  const mins = minutesInput.trim() === "" ? undefined : Number(minutesInput);
+  onOverride("attended", mins);
+  setMarkingAttended(false);
+  setMinutesInput("");
+  setOpen(false);
+ }
 
  return (
  <TableRow className="hover:bg-gray-50">
@@ -259,24 +273,54 @@ function Row({
  <button
  type="button" aria-label={`Override attendance for ${record.fellowName}`}
  aria-haspopup="menu" aria-expanded={open}
- onClick={() => setOpen((v) => !v)}
+ onClick={() => { setOpen((v) => !v); setMarkingAttended(false); setMinutesInput(""); }}
  disabled={busy}
  className="dropdown-toggle inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800 disabled:opacity-50">
  <MoreDotIcon className="h-5 w-5"/>
  </button>
  <Dropdown
  isOpen={open}
- onClose={() => setOpen(false)}
+ onClose={() => { setOpen(false); setMarkingAttended(false); setMinutesInput(""); }}
  portal
- className="w-48 p-1">
+ className="w-56 p-1">
+ {markingAttended ? (
+  <div className="px-3 py-2">
+   <p className="mb-1.5 text-xs font-semibold text-gray-600">
+    Minutes attended (0–{sessionDurationMinutes})
+   </p>
+   <div className="flex gap-1.5">
+    <input
+     type="number"
+     min={0}
+     max={sessionDurationMinutes}
+     value={minutesInput}
+     onChange={(e) => setMinutesInput(e.target.value)}
+     onKeyDown={(e) => { if (e.key === "Enter") submitAttended(); if (e.key === "Escape") { setMarkingAttended(false); setMinutesInput(""); } }}
+     placeholder={String(sessionDurationMinutes)}
+     autoFocus
+     className="w-20 rounded border border-gray-300 px-2 py-1 text-sm focus:border-fellowship-navy focus:outline-none"
+    />
+    <button
+     type="button"
+     onClick={submitAttended}
+     className="rounded bg-fellowship-navy px-2.5 py-1 text-xs font-semibold text-white hover:bg-fellowship-navy/90"
+    >
+     Save
+    </button>
+    <button
+     type="button"
+     onClick={() => { setMarkingAttended(false); setMinutesInput(""); }}
+     className="rounded border border-gray-200 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50"
+    >
+     ✕
+    </button>
+   </div>
+   <p className="mt-1.5 text-xs text-gray-400">Leave blank to keep current ({record.totalMinutesPresent} min)</p>
+  </div>
+ ) : (
  <ul role="menu" className="flex flex-col gap-0.5">
- <Item
- onClick={() => {
- onOverride("attended");
- setOpen(false);
- }}
- >
- Mark attended
+ <Item onClick={() => setMarkingAttended(true)}>
+  Mark attended…
  </Item>
  <Item
  onClick={() => {
@@ -295,6 +339,7 @@ function Row({
  Mark excused (local)
  </Item>
  </ul>
+ )}
  </Dropdown>
  </div>
  </Td>
