@@ -46,6 +46,9 @@ export default function AttendanceRoster({ sessionId, session }: AttendanceRoste
  const [filter, setFilter] = useState<(typeof FILTERS)[number]["id"]>("all");
  const [search, setSearch] = useState("");
  const [busyFellow, setBusyFellow] = useState<string | null>(null);
+ const [bulkOpen, setBulkOpen] = useState(false);
+ const [bulkMinutes, setBulkMinutes] = useState("");
+ const [bulkBusy, setBulkBusy] = useState(false);
 
  const counts = useMemo(() => {
  const attended = records.filter((r) => finalStatusOf(r) ==="attended").length;
@@ -122,6 +125,41 @@ export default function AttendanceRoster({ sessionId, session }: AttendanceRoste
  setBusyFellow(null);
  };
 
+ const bulkSetMinutes = async () => {
+  const mins = parseInt(bulkMinutes, 10);
+  if (!Number.isFinite(mins) || mins < 0 || mins > session.durationMinutes) return;
+  if (sessionId.startsWith("session-")) { setBulkOpen(false); return; }
+  setBulkBusy(true);
+  const attended = records.filter((r) => finalStatusOf(r) === "attended");
+  const previous = records;
+  setRecords((prev) =>
+   prev.map((r) =>
+    finalStatusOf(r) === "attended" ? { ...r, totalMinutesPresent: mins } : r,
+   ),
+  );
+  try {
+   await Promise.all(
+    attended.map((r) =>
+     fetch(`/api/sessions/${encodeURIComponent(sessionId)}/mark-attendance`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ fellowId: r.fellowId, status: "attended", minutesAttended: mins }),
+     }).then((res) => {
+      if (!res.ok) throw new Error(`Failed for ${r.fellowName}`);
+     }),
+    ),
+   );
+   toast.success("Minutes updated", `Set ${mins} min for ${attended.length} attended fellows.`);
+   setBulkOpen(false);
+   setBulkMinutes("");
+  } catch {
+   setRecords(previous);
+   toast.error("Bulk update failed", "Some records may not have saved — try again.");
+  }
+  setBulkBusy(false);
+ };
+
  if (session.status ==="scheduled") {
  return (
  <EmptyRoster
@@ -154,6 +192,46 @@ export default function AttendanceRoster({ sessionId, session }: AttendanceRoste
  <Tally tone="success" label="Attended" value={counts.attended} />
  <Tally tone="info" label="Excused" value={counts.excused} />
  <Tally tone="error" label="Missed" value={counts.missed} />
+ {session.status === "ended" && (
+  bulkOpen ? (
+   <div className="flex items-center gap-1.5">
+    <input
+     type="number"
+     min={0}
+     max={session.durationMinutes}
+     value={bulkMinutes}
+     onChange={(e) => setBulkMinutes(e.target.value)}
+     onKeyDown={(e) => { if (e.key === "Enter") void bulkSetMinutes(); if (e.key === "Escape") { setBulkOpen(false); setBulkMinutes(""); } }}
+     placeholder={`0–${session.durationMinutes}`}
+     autoFocus
+     className="w-24 rounded border border-gray-300 px-2 py-1 text-sm focus:border-fellowship-navy focus:outline-none"
+    />
+    <button
+     type="button"
+     onClick={() => void bulkSetMinutes()}
+     disabled={bulkBusy || bulkMinutes === ""}
+     className="rounded bg-fellowship-navy px-2.5 py-1 text-xs font-semibold text-white hover:bg-fellowship-navy/90 disabled:opacity-50"
+    >
+     {bulkBusy ? "Saving…" : `Set for all ${counts.attended} attended`}
+    </button>
+    <button
+     type="button"
+     onClick={() => { setBulkOpen(false); setBulkMinutes(""); }}
+     className="rounded border border-gray-200 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50"
+    >
+     Cancel
+    </button>
+   </div>
+  ) : (
+   <button
+    type="button"
+    onClick={() => setBulkOpen(true)}
+    className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50"
+   >
+    Set minutes for all attended
+   </button>
+  )
+ )}
  </div>
  </header>
 
