@@ -45,7 +45,14 @@ const ADMIN_NAV: NavSection[] = [
     label: "MAIN",
     items: [
       { title: "Dashboard", icon: GridIcon as SvgComponent, url: "/dashboard", items: [] },
-      { title: "Participants", icon: UsersRoundIcon as SvgComponent, url: "/participants", items: [] },
+      {
+        title: "Participants",
+        icon: UsersRoundIcon as SvgComponent,
+        items: [
+          { title: "All participants", url: "/participants" },
+          { title: "Survey responses", url: "/participants/survey-responses" },
+        ],
+      },
     ],
   },
   {
