@@ -287,7 +287,25 @@ export default function PreFellowshipSurvey() {
 
   useEffect(() => {
     setMounted(true);
-    setDone(localStorage.getItem(STORAGE_KEY) === "true");
+    const localDone = localStorage.getItem(STORAGE_KEY) === "true";
+    if (!localDone) { setDone(false); return; }
+    // localStorage says done — verify the backend actually has the record.
+    // If the submission failed silently (e.g. backend wasn't live yet),
+    // clear the flag so the fellow can resubmit.
+    fetch("/api/me/pre-fellowship-survey", { credentials: "include" })
+      .then((r) => r.json())
+      .then((data: { submitted?: boolean }) => {
+        if (!data.submitted) {
+          localStorage.removeItem(STORAGE_KEY);
+          setDone(false);
+        } else {
+          setDone(true);
+        }
+      })
+      .catch(() => {
+        // Network error — trust localStorage so offline UX still works.
+        setDone(true);
+      });
   }, []);
 
   // Avoid hydration mismatch — nothing renders until localStorage is read.
