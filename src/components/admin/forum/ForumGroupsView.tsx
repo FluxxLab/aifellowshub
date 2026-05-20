@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Breadcrumbs from "@/components/common/Breadcrumbs";
 import Button from "@/components/ui/button/Button";
 import Badge from "@/components/ui/badge/Badge";
@@ -10,10 +10,12 @@ import {
   addForumGroupMember,
   createForumGroup,
   deleteForumGroup,
+  listForumGroupMembers,
   listForumGroups,
   removeForumGroupMember,
   updateForumGroup,
   type ForumGroup,
+  type ForumGroupMember,
 } from "@/lib/api/fellow-forum";
 
 type AdminUser = {
@@ -48,14 +50,21 @@ export default function ForumGroupsView({
     initialGroups[0]?.id ?? null,
   );
   const [creating, setCreating] = useState(false);
+  const [members, setMembers] = useState<ForumGroupMember[]>([]);
+  const [loadingMembers, setLoadingMembers] = useState(false);
 
   const selected = groups.find((g) => g.id === selectedId) ?? null;
 
-  // Members of the selected group — fetched lazily once per selection.
-  // For now we approximate by intersecting `users` against an external
-  // GET (skipped for v1 — the count we already have is enough to drive
-  // the directory; a per-group member list endpoint can be added later
-  // when the membership UI grows beyond add/remove).
+  // Fetch actual group members whenever the selected group changes.
+  useEffect(() => {
+    if (!selectedId) { setMembers([]); return; }
+    setLoadingMembers(true);
+    listForumGroupMembers(selectedId)
+      .then(setMembers)
+      .catch(() => setMembers([]))
+      .finally(() => setLoadingMembers(false));
+  }, [selectedId]);
+
   const refresh = async () => {
     try {
       const fresh = await listForumGroups();
@@ -125,10 +134,19 @@ export default function ForumGroupsView({
     }
   };
 
+  const refreshMembers = async (groupId: string) => {
+    try {
+      const fresh = await listForumGroupMembers(groupId);
+      setMembers(fresh);
+    } catch {
+      // non-fatal
+    }
+  };
+
   const onAddMember = async (groupId: string, userId: string) => {
     try {
       await addForumGroupMember(groupId, userId);
-      await refresh();
+      await Promise.all([refresh(), refreshMembers(groupId)]);
       toast.success("Member added");
     } catch (err) {
       toast.errorFromException("Couldn't add member", err);
@@ -138,7 +156,7 @@ export default function ForumGroupsView({
   const onRemoveMember = async (groupId: string, userId: string) => {
     try {
       await removeForumGroupMember(groupId, userId);
-      await refresh();
+      await Promise.all([refresh(), refreshMembers(groupId)]);
       toast.success("Member removed");
     } catch (err) {
       toast.errorFromException("Couldn't remove member", err);
@@ -220,6 +238,8 @@ export default function ForumGroupsView({
           <GroupDetailPane
             group={selected}
             users={users}
+            members={members}
+            loadingMembers={loadingMembers}
             onSave={(patch) => onSavePatch(selected.id, patch)}
             onDelete={() => onDelete(selected)}
             onAddMember={(uid) => onAddMember(selected.id, uid)}
@@ -330,6 +350,8 @@ function CreateGroupCard({
 function GroupDetailPane({
   group,
   users,
+  members,
+  loadingMembers,
   onSave,
   onDelete,
   onAddMember,
@@ -337,6 +359,8 @@ function GroupDetailPane({
 }: {
   group: ForumGroup;
   users: AdminUser[];
+  members: ForumGroupMember[];
+  loadingMembers: boolean;
   onSave: (patch: { name?: string; description?: string; isPrivate?: boolean }) => Promise<void>;
   onDelete: () => Promise<void>;
   onAddMember: (userId: string) => Promise<void>;
@@ -371,23 +395,21 @@ function GroupDetailPane({
     setSavingMeta(false);
   };
 
-  // The directory list doesn't include per-group members, so the
-  // "current members" view here lists everyone the admin has the
-  // option to remove. v2 should add a `GET /forum/groups/:id/members`
-  // endpoint to populate this exactly; for now we offer add/remove
-  // controls per user without showing a list (admins know who they
-  // added).
-  const filteredUsers = useMemo(() => {
+  const memberIds = useMemo(() => new Set(members.map((m) => m.userId)), [members]);
+
+  // Only show non-members in the "Add" picker.
+  const filteredNonMembers = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return users.slice(0, 30);
-    return users
+    const nonMembers = users.filter((u) => !memberIds.has(u.id));
+    if (!q) return nonMembers.slice(0, 30);
+    return nonMembers
       .filter(
         (u) =>
           u.fullName.toLowerCase().includes(q) ||
           u.email.toLowerCase().includes(q),
       )
       .slice(0, 30);
-  }, [users, search]);
+  }, [users, search, memberIds]);
 
   return (
     <section className="flex flex-col gap-4">
@@ -473,25 +495,61 @@ function GroupDetailPane({
         </div>
       </div>
 
-      {/* Membership */}
+      {/* Current members */}
       <div className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
-        <h3 className="text-base font-semibold text-gray-800">Members</h3>
-        <p className="mt-1 text-sm text-gray-500">
-          Add or remove fellows, mentors, faculty, or admins. The
-          system shows the {group.memberCount} current members in
-          aggregate; per-user listing is coming.
-        </p>
+        <h3 className="text-base font-semibold text-gray-800">
+          Current members
+          <span className="ml-2 text-sm font-normal text-gray-500">
+            ({members.length})
+          </span>
+        </h3>
 
+        {loadingMembers ? (
+          <p className="mt-3 text-sm text-gray-400">Loading…</p>
+        ) : members.length === 0 ? (
+          <p className="mt-3 text-sm text-gray-400">No members yet.</p>
+        ) : (
+          <ul className="mt-3 flex flex-col gap-2">
+            {members.map((m) => (
+              <li
+                key={m.userId}
+                className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-gray-800">
+                    {m.user.fullName}
+                  </p>
+                  <p className="truncate text-xs text-gray-500">
+                    {m.user.email} · {m.user.role}
+                  </p>
+                </div>
+                {!group.isDefault && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onRemoveMember(m.userId)}
+                  >
+                    Remove
+                  </Button>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* Add members */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
+        <h3 className="text-base font-semibold text-gray-800">Add members</h3>
         <input
           type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by name or email…"
-          className={`mt-4 ${inputCls}`}
+          className={`mt-3 ${inputCls}`}
         />
-
         <ul className="mt-3 flex flex-col gap-2">
-          {filteredUsers.map((u) => (
+          {filteredNonMembers.map((u) => (
             <li
               key={u.id}
               className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2"
@@ -511,20 +569,11 @@ function GroupDetailPane({
               >
                 Add
               </Button>
-              {!group.isDefault && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onRemoveMember(u.id)}
-                >
-                  Remove
-                </Button>
-              )}
             </li>
           ))}
-          {filteredUsers.length === 0 && (
+          {filteredNonMembers.length === 0 && (
             <li className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-3 py-4 text-center text-xs text-gray-500">
-              No matches.
+              {search ? "No matches." : "All users are already members."}
             </li>
           )}
         </ul>

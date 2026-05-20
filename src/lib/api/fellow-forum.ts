@@ -197,6 +197,22 @@ export async function deleteForumGroup(id: string): Promise<void> {
   });
 }
 
+export type ForumGroupMember = {
+  userId: string;
+  role: ForumGroupRole;
+  joinedAt: string;
+  user: { id: string; fullName: string; email: string; role: string };
+};
+
+export async function listForumGroupMembers(
+  groupId: string,
+): Promise<ForumGroupMember[]> {
+  const data = await apiFetch<{ members: ForumGroupMember[] }>(
+    `/forum/groups/${encodeURIComponent(groupId)}/members`,
+  );
+  return data.members;
+}
+
 export async function addForumGroupMember(
   groupId: string,
   userId: string,
