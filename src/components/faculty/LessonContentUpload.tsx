@@ -4,7 +4,6 @@ import {
   LESSON_UPLOAD_MAX_BYTES,
   isAllowedLessonMime,
   uploadLessonContent,
-  uploadLessonContentMultipart,
   type FacultyLesson,
 } from "@/lib/api/faculty";
 import { toast } from "@/lib/toast";
@@ -61,18 +60,7 @@ export default function LessonContentUpload({
     setProgress(0);
     setFilename(file.name);
     try {
-      // Multipart for anything over 50 MB — chunked, resumable per
-      // chunk, immune to single-network-blip failures. Smaller files
-      // use the single-PUT path: one HTTP round trip, faster setup,
-      // and no need for the multipart overhead. The threshold is well
-      // below S3's 5 MB minimum-part-size limit so the multipart path
-      // is never asked to handle a file too small for itself.
-      const MULTIPART_THRESHOLD = 50 * 1024 * 1024;
-      const upload =
-        file.size >= MULTIPART_THRESHOLD
-          ? uploadLessonContentMultipart
-          : uploadLessonContent;
-      const next = await upload(lesson.id, file, {
+      const next = await uploadLessonContent(lesson.id, file, {
         onProgress: (loaded, total) =>
           setProgress(total === 0 ? 0 : Math.round((loaded / total) * 100)),
       });
