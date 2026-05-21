@@ -50,14 +50,13 @@ export default function FellowHomeMetrics({ metrics }: Props) {
         href="/ai-buddy"
         tourAnchor="ai-buddy"
         icon={<BoltIcon className="text-fellowship-navy size-5" />}
-        label="AI Buddy today"
+        label="AI Buddy Credit"
         valueNode={
           <>
             <CountUp value={metrics.aiBuddyRemaining.value} /> /{" "}
             {metrics.aiBuddyRemaining.dailyLimit}
           </>
         }
-        hint="messages left"
       />
       <MetricCard
         href="/my-capstone"
