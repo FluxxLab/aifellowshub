@@ -301,9 +301,16 @@ export default function ZoomMeetingRoom({
         </div>
       )}
 
+      {/*
+        overflow-hidden on the wrapper was intercepting pointer events for
+        the SDK's absolutely-positioned chat and participants panels —
+        they were visible but unclickable. Removed it; border-radius on
+        the wrapper is purely cosmetic and still applies without clipping.
+        The zoom-room class scopes the SDK isolation CSS in globals.css.
+      */}
       <div
         ref={wrapperRef}
-        className="w-full overflow-hidden rounded-2xl bg-black"
+        className="zoom-room w-full rounded-2xl bg-black"
       >
         <div ref={containerRef} />
       </div>

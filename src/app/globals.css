@@ -316,8 +316,8 @@
   @apply !fill-gray-700 dark:!fill-gray-400;
 }
 
-.apexcharts-tooltip.apexcharts-theme-light {
-  @apply gap-1 !rounded-lg !border-gray-200 p-3 !shadow-theme-sm dark:!border-gray-800 dark:!bg-gray-900;
+.apexcharts-tooltip {
+  @apply gap-1 !rounded-lg !border-gray-200 p-3 !shadow-theme-sm !bg-white dark:!border-gray-800 dark:!bg-gray-900;
 }
 
 .apexcharts-legend-text {
@@ -325,6 +325,7 @@
 }
 .apexcharts-tooltip-series-group {
   @apply !p-0;
+  background-color: transparent !important;
 }
 .apexcharts-tooltip-y-group {
   @apply !p-0;
@@ -764,4 +765,33 @@ span.flatpickr-weekday,
     0 1px 2px 0 rgba(16, 24, 40, 0.06);
   opacity: 0.8;
   cursor: grabbing; /* Changes the cursor to indicate dragging */
+}
+
+/* ── Zoom Meeting SDK Component View ──────────────────────────────────────
+   The .zoom-room wrapper must NOT have overflow:hidden — that intercepts
+   pointer events for the SDK's absolutely-positioned chat and participants
+   panels (visible but unclickable). Scoped resets below undo Tailwind's
+   base styles inside the SDK so buttons, inputs, and scroll areas work
+   as the SDK expects.
+   ───────────────────────────────────────────────────────────────────────── */
+.zoom-room {
+  position: relative;
+  isolation: isolate;
+}
+
+.zoom-room *,
+.zoom-room *::before,
+.zoom-room *::after {
+  box-sizing: content-box;
+}
+
+.zoom-room button {
+  cursor: pointer;
+}
+
+.zoom-room input,
+.zoom-room textarea {
+  pointer-events: auto;
+  user-select: text;
+  -webkit-user-select: text;
 }
