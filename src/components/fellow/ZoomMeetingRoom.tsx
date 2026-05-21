@@ -76,10 +76,18 @@ export default function ZoomMeetingRoom({
   // fire 'leave' if we actually joined (avoids spurious leave pings on
   // error paths). keepalive: true ensures the request survives tab close.
   const attendJoinedRef = useRef(false);
+  const creditTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  function recordAttend(action: "join" | "leave") {
+  function recordAttend(action: "join" | "leave" | "credit") {
     if (action === "leave" && !attendJoinedRef.current) return;
-    attendJoinedRef.current = action === "join";
+    if (action === "join") attendJoinedRef.current = true;
+    if (action === "leave") {
+      attendJoinedRef.current = false;
+      if (creditTimerRef.current) {
+        clearTimeout(creditTimerRef.current);
+        creditTimerRef.current = null;
+      }
+    }
     fetch(`/api/sessions/${encodeURIComponent(sessionId)}/attend`, {
       method: "POST",
       credentials: "include",
@@ -195,6 +203,11 @@ export default function ZoomMeetingRoom({
         if (cancelled) return;
         setPhase("in-meeting");
         recordAttend("join");
+        // Silently credit after 30 minutes — no UI feedback, fellows
+        // don't know when the threshold fires.
+        creditTimerRef.current = setTimeout(() => {
+          recordAttend("credit");
+        }, 30 * 60 * 1000);
 
         // Earlier iterations called client.setViewType("speaker") here
         // to re-nudge the SDK out of Minimized. That call landed during
