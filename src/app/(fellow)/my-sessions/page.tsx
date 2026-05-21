@@ -193,8 +193,7 @@ function SessionCard({
               <span className="text-gray-300">·</span>
               <span className="inline-flex items-center gap-1 text-xs text-gray-500">
                 <TimeIcon className="h-3.5 w-3.5" />
-                {s.durationMinutes} min · {s.attendanceThresholdMinutes}{" "}
-                min for credit
+                {s.durationMinutes} min
               </span>
             </div>
             <h3 className="mt-1 text-lg font-semibold text-gray-800">

@@ -421,8 +421,7 @@ function SessionCard({
           <SessionAction session={s} requiresSurvey={requiresSurvey} />
           {(s.status === "live" || s.status === "upcoming") && (
             <p className="mt-2 text-center text-xs text-gray-500">
-              Hosted on Zoom · attendance auto-credited if you stay ≥{" "}
-              {Math.round(s.durationMinutes / 2)} min
+              Hosted on Zoom · attendance auto-credited
             </p>
           )}
         </div>

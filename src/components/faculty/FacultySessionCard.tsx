@@ -154,7 +154,7 @@ export default function FacultySessionCard({
                 attendanceThresholdMinutes: e.target.value,
               })
             }
-            placeholder={`default: ${Math.floor(Number(draft.durationMinutes || 90) / 2)}`}
+            placeholder="default: 30"
             className={input}
           />
         </Field>
