@@ -72,6 +72,23 @@ export default function ZoomMeetingRoom({
   const userRef = useRef(user);
   userRef.current = user;
 
+  // Tracks whether we have an unmatched 'join' in flight so we only
+  // fire 'leave' if we actually joined (avoids spurious leave pings on
+  // error paths). keepalive: true ensures the request survives tab close.
+  const attendJoinedRef = useRef(false);
+
+  function recordAttend(action: "join" | "leave") {
+    if (action === "leave" && !attendJoinedRef.current) return;
+    attendJoinedRef.current = action === "join";
+    fetch(`/api/sessions/${encodeURIComponent(sessionId)}/attend`, {
+      method: "POST",
+      credentials: "include",
+      keepalive: true,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action }),
+    }).catch(() => {});
+  }
+
   useEffect(() => {
     let cancelled = false;
     let cleanup: (() => void) | null = null;
@@ -177,6 +194,7 @@ export default function ZoomMeetingRoom({
         });
         if (cancelled) return;
         setPhase("in-meeting");
+        recordAttend("join");
 
         // Earlier iterations called client.setViewType("speaker") here
         // to re-nudge the SDK out of Minimized. That call landed during
@@ -188,6 +206,7 @@ export default function ZoomMeetingRoom({
         // the user-gesture fullscreen-enter path.
 
         cleanup = () => {
+          recordAttend("leave");
           try {
             client.leaveMeeting?.();
           } catch {
@@ -234,6 +253,7 @@ export default function ZoomMeetingRoom({
     if (!ok) return;
     setEndingSession(true);
     try {
+      recordAttend("leave");
       await apiFetch(`/sessions/${encodeURIComponent(sessionId)}/end`, {
         method: "POST",
       });
@@ -281,6 +301,7 @@ export default function ZoomMeetingRoom({
                 size="sm"
                 variant="outline"
                 onClick={() => {
+                  recordAttend("leave");
                   setPhase("left");
                   onLeave?.();
                 }}
