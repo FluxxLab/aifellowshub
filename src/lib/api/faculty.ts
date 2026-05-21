@@ -11,7 +11,6 @@
 import { apiFetch } from "./client";
 import {
   uploadFileToSignedUrl,
-  uploadFileViaMultipartPost,
   type SignedUploadResponse,
 } from "./uploads";
 
@@ -565,7 +564,7 @@ export async function uploadLessonContent(
   }
   if (file.size > LESSON_UPLOAD_MAX_BYTES) {
     throw new Error(
-      `File is too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Max is 500 MB.`,
+      `File is too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Max is ${Math.round(LESSON_UPLOAD_MAX_BYTES / 1024 / 1024)} MB.`,
     );
   }
   const signed = await getLessonUploadUrl(lessonId, {
