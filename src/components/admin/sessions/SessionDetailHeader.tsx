@@ -8,7 +8,7 @@ import Button from "@/components/ui/button/Button";
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import { CalenderIcon, ChevronLeftIcon, MoreDotIcon } from "@/icons";
-import type { SessionDetail, SessionStatus } from "@/lib/api/sessions";
+import type { AttendanceRecord, SessionDetail, SessionStatus } from "@/lib/api/sessions";
 
 // Lazy-loaded so the ~3MB Zoom Meeting SDK bundle stays out of the admin
 // list view. SSR off because the SDK reaches for `window` on import.
@@ -46,7 +46,7 @@ export default function SessionDetailHeader({
  minute:"2-digit",
  });
 
- const actions = buildActions(session.status);
+ const actions = buildActions(session.status, session.title, session.attendance);
 
  return (
  <div className="flex flex-col gap-4">
@@ -123,7 +123,7 @@ export default function SessionDetailHeader({
  {actions.map((a, i) => (
  <li key={i} role="none">
  <DropdownItem
- onItemClick={() => setMenuOpen(false)}
+ onItemClick={() => { a.onClick?.(); setMenuOpen(false); }}
  baseClassName="block w-full rounded-md text-left px-3 py-2 text-sm font-medium transition-colors" className={
  a.destructive
  ?"text-error-600 hover:bg-error-50":"text-gray-700 hover:bg-gray-100 hover:text-gray-900"}
@@ -165,21 +165,69 @@ export default function SessionDetailHeader({
  );
 }
 
-function buildActions(status: SessionStatus): {
- label: string;
- destructive?: boolean;
-}[] {
- if (status ==="scheduled"|| status ==="live") {
- return [
- { label:"Reschedule"},
- { label:"Reassign host"},
- { label:"Cancel session", destructive: true },
- ];
- }
- if (status ==="ended") {
- return [{ label:"Export attendance CSV"}];
- }
- return [];
+function buildActions(
+  status: SessionStatus,
+  sessionTitle: string,
+  attendance: AttendanceRecord[],
+): { label: string; destructive?: boolean; onClick?: () => void }[] {
+  if (status === "scheduled" || status === "live") {
+    return [
+      { label: "Reschedule" },
+      { label: "Reassign host" },
+      { label: "Cancel session", destructive: true },
+    ];
+  }
+  if (status === "ended") {
+    return [
+      {
+        label: "Export attendance CSV",
+        onClick: () => exportAttendanceCSV(sessionTitle, attendance),
+      },
+    ];
+  }
+  return [];
+}
+
+function exportAttendanceCSV(
+  sessionTitle: string,
+  attendance: AttendanceRecord[],
+): void {
+  const header = ["Fellow Name", "Joined At", "Left At", "Minutes Present", "Status", "Auto-credited", "Override"];
+
+  const rows = attendance.map((r) => {
+    const status =
+      r.override === "attended" || r.autoCredited
+        ? "Attended"
+        : r.override === "excused"
+          ? "Excused"
+          : "Missed";
+    return [
+      r.fellowName,
+      r.joinedAt
+        ? new Date(r.joinedAt).toLocaleString(undefined, { timeZone: "Africa/Lagos" })
+        : "",
+      r.leftAt
+        ? new Date(r.leftAt).toLocaleString(undefined, { timeZone: "Africa/Lagos" })
+        : "",
+      String(r.totalMinutesPresent),
+      status,
+      r.autoCredited ? "Yes" : "No",
+      r.override ?? "",
+    ];
+  });
+
+  const csv = [header, ...rows]
+    .map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(","))
+    .join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const safe = sessionTitle.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+  a.href = url;
+  a.download = `attendance-${safe}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 function SessionStatusBadge({ status }: { status: SessionStatus }) {
