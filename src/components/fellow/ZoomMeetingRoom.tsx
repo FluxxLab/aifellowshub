@@ -344,7 +344,7 @@ export default function ZoomMeetingRoom({
       */}
       <div
         ref={wrapperRef}
-        className="zoom-room w-full rounded-2xl bg-black"
+        className="zoom-room w-full min-h-[65vh] rounded-2xl bg-black"
       >
         <div ref={containerRef} />
       </div>

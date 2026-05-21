@@ -60,7 +60,7 @@ export default async function FellowSessionMeetingPage({
         </div>
       </div>
 
-      <div className="rounded-2xl border border-gray-200 bg-gray-900 p-4 sm:p-5">
+      <div className="relative min-h-[72vh] rounded-2xl border border-gray-200 bg-gray-900 p-3">
         <ZoomMeetingRoom sessionId={session.id!} />
       </div>
     </div>
