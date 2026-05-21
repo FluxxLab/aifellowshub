@@ -23,6 +23,9 @@ export default function SurveyGatedSessionAction({
 
   useEffect(() => {
     setSurveyed(localStorage.getItem(STORAGE_KEY) === "true");
+    const onDone = () => setSurveyed(true);
+    window.addEventListener("pic:survey-done", onDone);
+    return () => window.removeEventListener("pic:survey-done", onDone);
   }, []);
 
   // Avoid layout shift before localStorage is read.

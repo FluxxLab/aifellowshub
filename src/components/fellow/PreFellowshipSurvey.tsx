@@ -374,6 +374,7 @@ export default function PreFellowshipSurvey() {
     }
 
     localStorage.setItem(STORAGE_KEY, "true");
+    window.dispatchEvent(new CustomEvent("pic:survey-done"));
     setDone(true);
     toast.success(
       "Survey submitted",
