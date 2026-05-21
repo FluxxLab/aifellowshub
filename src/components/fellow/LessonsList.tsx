@@ -82,12 +82,12 @@ export default function LessonsList({ lessons }: { lessons: Lesson[] }) {
                   >
                     {isOpen
                       ? "Close"
-                      : l.status === "completed"
-                      ? l.kind === "video"
-                        ? "Re-watch"
-                        : "Re-read"
                       : l.status === "in-progress"
                       ? "Resume"
+                      : l.kind === "video"
+                      ? "Re-watch"
+                      : l.status === "completed"
+                      ? "Re-read"
                       : "Start"}
                     <ChevronDownIcon
                       className={`h-3.5 w-3.5 transition-transform duration-200 ${
