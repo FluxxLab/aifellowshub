@@ -49,6 +49,7 @@ export default function AttendanceRoster({ sessionId, session }: AttendanceRoste
  const [bulkOpen, setBulkOpen] = useState(false);
  const [bulkMinutes, setBulkMinutes] = useState("");
  const [bulkBusy, setBulkBusy] = useState(false);
+ const [syncBusy, setSyncBusy] = useState(false);
 
  const counts = useMemo(() => {
  const attended = records.filter((r) => finalStatusOf(r) ==="attended").length;
@@ -160,6 +161,33 @@ export default function AttendanceRoster({ sessionId, session }: AttendanceRoste
   setBulkBusy(false);
  };
 
+ const syncFromZoom = async () => {
+  if (sessionId.startsWith("session-")) return;
+  setSyncBusy(true);
+  try {
+   const res = await fetch(
+    `/api/sessions/${encodeURIComponent(sessionId)}/reconcile-attendance`,
+    { method: "POST", credentials: "include" },
+   );
+   if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { message?: string };
+    throw new Error(body.message ?? `Sync failed (${res.status})`);
+   }
+   const data = (await res.json()) as { reconciled: number; unresolved: number };
+   toast.success(
+    "Synced from Zoom",
+    data.reconciled > 0
+     ? `${data.reconciled} records updated${data.unresolved > 0 ? ` · ${data.unresolved} unresolved (check logs)` : ""}.`
+     : "No new data — Zoom may still be processing. Try again in a few minutes.",
+   );
+   // Reload the page so the roster reflects the updated records.
+   window.location.reload();
+  } catch (err) {
+   toast.errorFromException("Sync failed", err);
+  }
+  setSyncBusy(false);
+ };
+
  if (session.status ==="scheduled") {
  return (
  <EmptyRoster
@@ -192,6 +220,17 @@ export default function AttendanceRoster({ sessionId, session }: AttendanceRoste
  <Tally tone="success" label="Attended" value={counts.attended} />
  <Tally tone="info" label="Excused" value={counts.excused} />
  <Tally tone="error" label="Missed" value={counts.missed} />
+ {session.status === "ended" && (
+  <button
+   type="button"
+   onClick={() => void syncFromZoom()}
+   disabled={syncBusy}
+   title="Pull participant data from Zoom and fill any missing attendance records"
+   className="rounded-full border border-brand-500 bg-white px-3 py-1.5 text-xs font-semibold text-brand-600 hover:bg-brand-50 disabled:opacity-50"
+  >
+   {syncBusy ? "Syncing…" : "Sync from Zoom"}
+  </button>
+ )}
  {session.status === "ended" && (
   bulkOpen ? (
    <div className="flex items-center gap-1.5">
