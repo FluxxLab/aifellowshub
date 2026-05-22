@@ -61,6 +61,7 @@ type BackendDashboard = {
     country: string | null;
     sector: string | null;
   }[];
+  cohortProgress: { weekNumber: number; avgCompletionPercent: number }[];
   sectorDistribution: { sector: string; count: number }[];
 };
 
@@ -175,7 +176,10 @@ function mapDashboard(
         deltaPercent: 0,
       },
     },
-    cohortProgress: [],
+    cohortProgress: (data.cohortProgress ?? []).map((w) => ({
+      weekNumber: w.weekNumber,
+      avgCompletionPercent: w.avgCompletionPercent,
+    })),
     moduleCompletion,
     engagementTrend: [],
     cohortBySector,
