@@ -74,7 +74,7 @@ const nextConfig = {
       // this entry the upload XHR fires as `(blocked)` with 0 ms even
       // though the bucket CORS allows the origin.
       `connect-src 'self' ${backendOrigin} https://*.digitaloceanspaces.com https://challenges.cloudflare.com https://source.zoom.us https://zoom.us https://*.zoom.us wss://*.zoom.us https://*.cloudfront.net`,
-      `frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://challenges.cloudflare.com https://zoom.us https://*.zoom.us`,
+      `frame-src 'self' https://*.digitaloceanspaces.com https://www.youtube.com https://www.youtube-nocookie.com https://challenges.cloudflare.com https://zoom.us https://*.zoom.us`,
       `worker-src 'self' blob:`,
       `media-src 'self' blob: https://*.digitaloceanspaces.com`,
       `object-src 'none'`,
