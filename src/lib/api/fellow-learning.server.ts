@@ -151,9 +151,12 @@ export async function getFellowCurriculumServer(): Promise<FellowModuleSummary[]
     const my = m.myAttempts;
     const passed = my.bestStatus === "passed";
     const failed = my.bestStatus === "failed";
+    // A module is completed when the fellow attended its session OR passed the
+    // assessment — mirrors the unlock cascade in the backend (BRD §6.3).
+    const isCompleted = passed || m.sessionAttended;
     let status: FellowModuleSummary["status"];
     if (!m.unlocked) status = "locked";
-    else if (passed) status = "completed";
+    else if (isCompleted) status = "completed";
     else if (my.attemptsUsed > 0) status = "in-progress";
     else status = "available";
 
@@ -234,9 +237,10 @@ function mapBackendCurriculumModule(
   const my = m.myAttempts;
   const passed = my.bestStatus === "passed";
   const failed = my.bestStatus === "failed";
+  const isCompleted = passed || m.sessionAttended;
   let status: FellowModuleSummary["status"];
   if (!m.unlocked) status = "locked";
-  else if (passed) status = "completed";
+  else if (isCompleted) status = "completed";
   else if (my.attemptsUsed > 0) status = "in-progress";
   else status = "available";
 
