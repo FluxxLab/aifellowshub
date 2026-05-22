@@ -65,7 +65,7 @@ export default async function ModuleDetailPage({
   // Only fetch the existing submission when the form would actually
   // render; saves a backend round-trip on every module page load.
   const existingFeedback =
-    completionMet && !m.feedbackSubmitted && m.id
+    completionMet && m.feedbackSubmitted && m.id
       ? await getMyModuleFeedbackServer(m.id)
       : null;
 
