@@ -151,9 +151,13 @@ export async function getFellowCurriculumServer(): Promise<FellowModuleSummary[]
     const my = m.myAttempts;
     const passed = my.bestStatus === "passed";
     const failed = my.bestStatus === "failed";
-    // A module is completed when the fellow attended its session OR passed the
-    // assessment — mirrors the unlock cascade in the backend (BRD §6.3).
-    const isCompleted = passed || m.sessionAttended;
+    // A module is completed via one of two paths (BRD §6.3):
+    //   Path 1 (live): attended the session (all sessions for this module have run)
+    //   Path 2 (async): passed the post-quiz AND submitted end-of-module feedback
+    // Feedback submission is the final gate on the async path — it's what
+    // actually trips the backend unlock cascade, so it's the reliable signal
+    // that the full assessment path was completed (not just the post-quiz alone).
+    const isCompleted = m.sessionAttended || (passed && m.feedbackSubmitted);
     let status: FellowModuleSummary["status"];
     if (!m.unlocked) status = "locked";
     else if (isCompleted) status = "completed";
@@ -237,7 +241,7 @@ function mapBackendCurriculumModule(
   const my = m.myAttempts;
   const passed = my.bestStatus === "passed";
   const failed = my.bestStatus === "failed";
-  const isCompleted = passed || m.sessionAttended;
+  const isCompleted = m.sessionAttended || (passed && m.feedbackSubmitted);
   let status: FellowModuleSummary["status"];
   if (!m.unlocked) status = "locked";
   else if (isCompleted) status = "completed";
