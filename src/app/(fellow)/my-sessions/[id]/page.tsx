@@ -36,10 +36,15 @@ export default async function FellowSessionMeetingPage({
   
   if (!session) notFound();
 
+  const joinCutoffMs =
+    new Date(session.startsAt).getTime() +
+    session.attendanceThresholdMinutes * 60_000;
+  const joinWindowClosed = Date.now() > joinCutoffMs;
+
   return (
     <div className="flex flex-col gap-4 md:gap-6">
-      <ZoomSdkPrefetch />
-      
+      {!joinWindowClosed && <ZoomSdkPrefetch />}
+
       <Link
         href="/my-sessions" className="inline-flex w-fit items-center gap-1 text-sm text-gray-500 transition-colors hover:text-gray-700">
         <ChevronLeftIcon className="h-4 w-4"/>
@@ -60,9 +65,26 @@ export default async function FellowSessionMeetingPage({
         </div>
       </div>
 
-      <div className="relative min-h-[72vh] rounded-2xl border border-gray-200 bg-gray-900 p-3">
-        <ZoomMeetingRoom sessionId={session.id!} />
-      </div>
+      {joinWindowClosed ? (
+        <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white p-10 text-center">
+          <p className="text-4xl">🔒</p>
+          <h2 className="mt-4 text-lg font-bold text-gray-800">
+            Join window has closed
+          </h2>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-gray-500">
+            The {session.attendanceThresholdMinutes}-minute join window for this session has passed.
+            Contact your facilitator if you believe this is an error.
+          </p>
+          <Link href="/my-sessions" className="mt-6 inline-flex items-center gap-1 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            <ChevronLeftIcon className="h-4 w-4" />
+            Back to sessions
+          </Link>
+        </div>
+      ) : (
+        <div className="relative min-h-[72vh] rounded-2xl border border-gray-200 bg-gray-900 p-3">
+          <ZoomMeetingRoom sessionId={session.id!} />
+        </div>
+      )}
     </div>
   );
 }
