@@ -3,7 +3,7 @@ import React, { useMemo, useState } from "react";
 import Badge from "@/components/ui/badge/Badge";
 import { cn } from "@/lib/utils";
 import { formatCohortShortDate } from "@/lib/datetime";
-import { ChevronDownIcon } from "@/icons";
+import { ChevronDownIcon, DownloadIcon } from "@/icons";
 import type { SurveyResponseRow } from "@/lib/api/survey-responses.server";
 
 const QUESTION_LABELS: Record<string, string> = {
@@ -24,6 +24,68 @@ const QUESTION_LABELS: Record<string, string> = {
   q15: "Intended application of fellowship knowledge",
   q16: "Current AI ethics/governance challenge",
 };
+
+function formatAnswer(
+  value: unknown,
+  otherVal: string | undefined,
+): string {
+  if (Array.isArray(value)) {
+    return (value as string[])
+      .map((v) => (v === "Other" && otherVal ? `Other — ${otherVal}` : v))
+      .join(" | ");
+  }
+  const str = String(value ?? "");
+  if (str === "Other" && otherVal) return `Other — ${otherVal}`;
+  return str;
+}
+
+function exportSurveyToCsv(rows: SurveyResponseRow[]) {
+  const QUESTION_KEYS = Object.keys(QUESTION_LABELS);
+  const headers = [
+    "Name",
+    "Email",
+    "Sector",
+    "Country",
+    "Submitted",
+    ...QUESTION_KEYS.map((k) => QUESTION_LABELS[k]),
+  ];
+
+  const escape = (v: string) =>
+    v.includes(",") || v.includes('"') || v.includes("\n")
+      ? `"${v.replace(/"/g, '""')}"`
+      : v;
+
+  const dataRows = rows.map((r) =>
+    [
+      r.fellow.fullName,
+      r.fellow.email,
+      r.fellow.sector?.replace(/_/g, " ") ?? "",
+      r.fellow.country ?? "",
+      new Date(r.submittedAt).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }),
+      ...QUESTION_KEYS.map((k) => {
+        const val = r.answers[k];
+        const other = r.answers[`${k}_other`] as string | undefined;
+        return formatAnswer(val, other);
+      }),
+    ].map(escape),
+  );
+
+  const csv =
+    "﻿" + // UTF-8 BOM for Excel
+    [headers.map(escape), ...dataRows].map((row) => row.join(",")).join("\r\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "pre-fellowship-survey.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export default function SurveyResponsesView({
   responses,
@@ -57,8 +119,17 @@ export default function SurveyResponsesView({
             individual answers.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Badge color="info">{responses.length} submitted</Badge>
+          <button
+            type="button"
+            onClick={() => exportSurveyToCsv(responses)}
+            disabled={responses.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <DownloadIcon className="h-3.5 w-3.5" />
+            Export to Excel
+          </button>
         </div>
       </header>
 
