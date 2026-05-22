@@ -34,6 +34,11 @@ type BackendDashboard = {
     averageScore: number | null;
     attendanceRate: number | null;
     sessionsEnded: number;
+    deltas?: {
+      activeFellowsDelta: number;
+      attendanceRateDelta: number;
+      capstonesDelta: number;
+    };
   };
   modulePerformance: {
     weekNumber: number;
@@ -151,6 +156,24 @@ function mapDashboard(
     lastActiveAt: new Date().toISOString(),
   }));
 
+  const d = hero.deltas;
+  const progressValues = (data.cohortProgress ?? []).map(
+    (w) => w.avgCompletionPercent,
+  );
+  const avgProgress =
+    progressValues.length === 0
+      ? 0
+      : Math.round(
+          progressValues.reduce((a, b) => a + b, 0) / progressValues.length,
+        );
+  const progressDelta =
+    progressValues.length >= 2
+      ? +(
+          progressValues[progressValues.length - 1] -
+          progressValues[progressValues.length - 2]
+        ).toFixed(1)
+      : 0;
+
   return {
     cohort: {
       id: "cohort-2026",
@@ -162,18 +185,18 @@ function mapDashboard(
     metrics: {
       activeFellows: {
         value: hero.fellowsActive,
-        deltaPercent: 0,
+        deltaPercent: d?.activeFellowsDelta ?? 0,
         capacity,
       },
       mentorsTotal: { value: hero.mentors, deltaPercent: 0 },
-      avgProgressPercent: { value: 0, deltaPercent: 0 },
+      avgProgressPercent: { value: avgProgress, deltaPercent: progressDelta },
       attendanceRatePercent: {
         value: hero.attendanceRate ?? 0,
-        deltaPercent: 0,
+        deltaPercent: d?.attendanceRateDelta ?? 0,
       },
       capstonesAwaitingReview: {
         value: hero.capstonesPendingReview,
-        deltaPercent: 0,
+        deltaPercent: d?.capstonesDelta ?? 0,
       },
     },
     cohortProgress: (data.cohortProgress ?? []).map((w) => ({
