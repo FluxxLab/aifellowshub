@@ -113,11 +113,17 @@ export async function getFellowHomeServer(): Promise<FellowHome> {
   // Attendance rate: derive from curriculum data directly rather than
   // cross-joining the sessions list. Each curriculum module already carries
   // session.myAttendance, so the join is unnecessary and fragile (breaks
-  // when s.module is null or weekNumbers drift). Count only modules whose
-  // session has actually ended (status === "ended" AND startsAt in the past,
-  // or myAttendance is "attended"/"missed" — either signal means it ran).
+  // when s.module is null or weekNumbers drift).
+  //
+  // Onboarding (Week 0) was conducted in-person outside the LMS — it has no
+  // Zoom session row, but every fellow is credited. Include it as one
+  // attended session so the rate isn't 0% before the first LMS session ends.
+  // For all other modules, count only those whose session has actually ended
+  // (status === "ended" AND startsAt in the past) or whose attendance row has
+  // already been settled (attended / attended_recording / missed).
   const modulesWithPastSession = modules.filter((m) => {
-    if (isOnboarding(m) || !m.session) return false;
+    if (isOnboarding(m)) return true; // always-attended in-person session
+    if (!m.session) return false;
     const sessionEnded =
       m.session.status === "ended" &&
       new Date(m.session.startsAt).getTime() < Date.now();
@@ -127,8 +133,10 @@ export async function getFellowHomeServer(): Promise<FellowHome> {
       m.session.myAttendance?.status === "missed";
     return sessionEnded || attendanceSettled;
   });
-  const attendedCount = modulesWithPastSession.filter((m) =>
-    attendedStatuses.has(m.session!.myAttendance?.status ?? ""),
+  const attendedCount = modulesWithPastSession.filter(
+    (m) =>
+      isOnboarding(m) || // onboarding always credited
+      attendedStatuses.has(m.session!.myAttendance?.status ?? ""),
   ).length;
   const attendanceRatePercent =
     modulesWithPastSession.length === 0
