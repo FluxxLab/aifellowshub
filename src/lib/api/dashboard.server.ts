@@ -40,6 +40,7 @@ type BackendDashboard = {
     moduleId: string;
     title: string;
     attempts: number;
+    attendanceRate: number | null;
     passRate: number | null;
     averageScore: number | null;
   }[];
@@ -129,7 +130,7 @@ function mapDashboard(
     (m) => ({
       weekNumber: m.weekNumber,
       shortTitle: m.title.slice(0, 40),
-      attendedPercent: m.passRate ?? 0,
+      attendedPercent: m.attendanceRate ?? 0,
       assessmentPassedPercent: m.passRate ?? 0,
     }),
   );
