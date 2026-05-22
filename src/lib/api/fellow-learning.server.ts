@@ -53,6 +53,8 @@ type BackendCurriculumModule = {
   preAssessment: BackendAssessment | null;
   postAssessment: BackendAssessment | null;
   session: BackendSession | null;
+  /** True if the fellow attended ANY session for this module (all sessions checked, not just the primary). */
+  sessionAttended: boolean;
   myAttempts: {
     attemptsUsed: number;
     attemptsAllowed: number;
@@ -177,20 +179,20 @@ export async function getFellowCurriculumServer(): Promise<FellowModuleSummary[]
     //     rescheduled future session never shows as Missed.
     const isOnboarding =
       m.weekNumber <= 0 && /onboarding/i.test(m.title);
+    // Use the backend's pre-computed sessionAttended which checks ALL sessions
+    // for the module. Falling back to the primary session's myAttendance would
+    // miss attendance when a newer upcoming session shadows a past attended one.
     let sessionAttended: boolean | null = null;
     if (isOnboarding) {
+      sessionAttended = true;
+    } else if (m.sessionAttended) {
       sessionAttended = true;
     } else if (m.session) {
       const myAttStatus = m.session.myAttendance?.status ?? null;
       const sessionEnded =
         m.session.status === "ended" &&
         new Date(m.session.startsAt).getTime() < Date.now();
-      if (
-        myAttStatus === "attended" ||
-        myAttStatus === "attended_recording"
-      ) {
-        sessionAttended = true;
-      } else if (myAttStatus === "missed" && sessionEnded) {
+      if (myAttStatus === "missed" && sessionEnded) {
         sessionAttended = false;
       }
     }

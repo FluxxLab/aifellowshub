@@ -49,6 +49,8 @@ type BackendCurriculumModule = {
       status: "rsvpd" | "attended" | "attended_recording" | "missed";
     } | null;
   } | null;
+  /** True if the fellow attended ANY session for this module (all sessions checked, not just the primary). */
+  sessionAttended: boolean;
   unlocked: boolean;
 };
 
@@ -96,12 +98,10 @@ export async function getFellowHomeServer(): Promise<FellowHome> {
   // already applied in the curriculum + sessions mappers.
   const isOnboarding = (m: BackendCurriculumModule) =>
     m.weekNumber <= 0 && /onboarding/i.test(m.title);
-  const attendedStatuses = new Set(["attended", "attended_recording"]);
   const isCompleted = (m: BackendCurriculumModule) =>
     isOnboarding(m) ||
     m.myAttempts.bestStatus === "passed" ||
-    (m.session?.myAttendance?.status != null &&
-      attendedStatuses.has(m.session.myAttendance.status));
+    m.sessionAttended;
   const completed = modules.filter(isCompleted).length;
   const currentModule = pickCurrentModule(modules, isCompleted);
   // Clamp to the curriculum's range so "Week 1 of 0" never happens.
@@ -121,22 +121,16 @@ export async function getFellowHomeServer(): Promise<FellowHome> {
   // For all other modules, count only those whose session has actually ended
   // (status === "ended" AND startsAt in the past) or whose attendance row has
   // already been settled (attended / attended_recording / missed).
-  const modulesWithPastSession = modules.filter((m) => {
-    if (isOnboarding(m)) return true; // always-attended in-person session
-    if (!m.session) return false;
-    const sessionEnded =
-      m.session.status === "ended" &&
-      new Date(m.session.startsAt).getTime() < Date.now();
-    const attendanceSettled =
-      m.session.myAttendance?.status === "attended" ||
-      m.session.myAttendance?.status === "attended_recording" ||
-      m.session.myAttendance?.status === "missed";
-    return sessionEnded || attendanceSettled;
-  });
+  // Count modules whose session has happened: onboarding (always), or any
+  // module where the fellow has a settled attendance row (attended/missed)
+  // on ANY session. Uses sessionAttended from the backend which checks all
+  // sessions for the module, not just the primary one surfaced in `session`.
+  const modulesWithPastSession = modules.filter(
+    (m) => isOnboarding(m) || m.sessionAttended ||
+      m.session?.myAttendance?.status === "missed",
+  );
   const attendedCount = modulesWithPastSession.filter(
-    (m) =>
-      isOnboarding(m) || // onboarding always credited
-      attendedStatuses.has(m.session!.myAttendance?.status ?? ""),
+    (m) => isOnboarding(m) || m.sessionAttended,
   ).length;
   const attendanceRatePercent =
     modulesWithPastSession.length === 0
@@ -182,8 +176,7 @@ export async function getFellowHomeServer(): Promise<FellowHome> {
           // the quiz saw a stale 0% on the card.
           progressPercent: isCompleted(currentModule)
             ? 100
-            : (currentModule.session?.myAttendance?.status != null &&
-                attendedStatuses.has(currentModule.session.myAttendance.status)) ||
+            : currentModule.sessionAttended ||
               currentModule.myAttempts.attemptsUsed > 0
             ? 50
             : 0,
