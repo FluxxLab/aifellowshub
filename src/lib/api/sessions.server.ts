@@ -134,7 +134,7 @@ function mapToSessionDetail(s: BackendAdminSession): SessionDetail {
     leftAt: a.leftAt,
     totalMinutesPresent: a.minutesAttended ?? 0,
     autoCredited: a.status === "attended",
-    inSession: a.joinedAt !== null && a.leftAt === null && a.status !== "attended",
+    inSession: a.joinedAt !== null && a.leftAt === null,
     override: null,
   }));
 

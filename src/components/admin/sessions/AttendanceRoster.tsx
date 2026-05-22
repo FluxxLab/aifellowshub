@@ -25,8 +25,8 @@ type FinalStatus = "attended" | "excused" | "in_session" | "missed";
 function finalStatusOf(r: AttendanceRecord): FinalStatus {
   if (r.override === "attended") return "attended";
   if (r.override === "excused") return "excused";
-  if (r.autoCredited) return "attended";
   if (r.inSession) return "in_session";
+  if (r.autoCredited) return "attended";
   return "missed";
 }
 
