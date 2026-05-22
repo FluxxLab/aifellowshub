@@ -180,5 +180,7 @@ export type FellowSession = ModuleSession & {
    * the Zoom meeting (BRD §6.4 default = 50% of duration).
    */
   attendanceThresholdMinutes: number;
+  /** ISO timestamp of when this fellow first joined, null if never joined. */
+  joinedAt: string | null;
 };
 

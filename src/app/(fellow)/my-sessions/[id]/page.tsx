@@ -39,11 +39,14 @@ export default async function FellowSessionMeetingPage({
   const joinCutoffMs =
     new Date(session.startsAt).getTime() +
     session.attendanceThresholdMinutes * 60_000;
-  const joinWindowClosed = Date.now() > joinCutoffMs;
+  const hasJoinedBefore = Boolean(session.joinedAt);
+  // Block only first-time joiners past the cutoff. Fellows who already
+  // joined before the window closed can rejoin freely (connection drops, etc).
+  const blocked = Date.now() > joinCutoffMs && !hasJoinedBefore;
 
   return (
     <div className="flex flex-col gap-4 md:gap-6">
-      {!joinWindowClosed && <ZoomSdkPrefetch />}
+      {!blocked && <ZoomSdkPrefetch />}
 
       <Link
         href="/my-sessions" className="inline-flex w-fit items-center gap-1 text-sm text-gray-500 transition-colors hover:text-gray-700">
@@ -65,7 +68,7 @@ export default async function FellowSessionMeetingPage({
         </div>
       </div>
 
-      {joinWindowClosed ? (
+      {blocked ? (
         <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white p-10 text-center">
           <p className="text-4xl">🔒</p>
           <h2 className="mt-4 text-lg font-bold text-gray-800">

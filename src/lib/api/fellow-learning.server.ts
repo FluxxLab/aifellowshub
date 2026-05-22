@@ -420,6 +420,7 @@ function synthOnboardingSession(m: BackendCurriculumModule): FellowSession {
     recordingWatchedSeconds: 0,
     joinUrl: "#",
     attendanceThresholdMinutes: 0,
+    joinedAt: null,
   };
 }
 
@@ -473,6 +474,7 @@ function mapBackendListedSession(b: BackendListedSession): FellowSession {
     recordingWatchedSeconds: b.myAttendance?.recordingWatchedSeconds ?? 0,
     joinUrl: b.joinUrl ?? "#",
     attendanceThresholdMinutes: b.attendanceThresholdMinutes,
+    joinedAt: b.myAttendance?.joinedAt ?? null,
   };
 }
 
