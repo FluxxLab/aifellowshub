@@ -330,12 +330,14 @@ function mapBackendCurriculumModule(
   };
 }
 
-/** Detail view for `/learning/[week]`. Returns null when backend unreachable or week not found. */
+/** Detail view for `/learning/[week]`.
+ *  Returns null when the week number isn't in the curriculum (→ 404).
+ *  Throws when the backend is unreachable (→ error.tsx boundary). */
 export async function getFellowModuleServer(
   week: number,
 ): Promise<FellowModuleDetail | null> {
   const real = await fetchCurriculum();
-  if (!real) return null;
+  if (!real) throw new Error("Could not load module — please try again.");
   const m = real.find((x) => x.weekNumber === week);
   if (!m) return null;
   return mapBackendCurriculumModule(m);
