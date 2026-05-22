@@ -23,6 +23,7 @@ export default function ModuleCompletionChart({
  stacked: false,
  toolbar: { show: false },
  },
+ responsive: [{ breakpoint: 640, options: { chart: { height: 240 }, plotOptions: { bar: { columnWidth: "80%" } } } }],
  plotOptions: {
  bar: {
  horizontal: false,
@@ -90,14 +91,12 @@ export default function ModuleCompletionChart({
  </p>
  </div>
  </div>
- <div className="max-w-full overflow-x-auto custom-scrollbar">
- <div className="-ml-2 min-w-[520px] sm:min-w-[700px] xl:min-w-full pb-2">
+ <div className="-ml-2 pb-2">
  <ReactApexChart
  options={options}
  series={series}
  type="bar" height={320}
  />
- </div>
  </div>
  </div>
  );

@@ -24,6 +24,7 @@ export default function EngagementTrendChart({
  toolbar: { show: false },
  zoom: { enabled: false },
  },
+ responsive: [{ breakpoint: 640, options: { chart: { height: 200 } } }],
  stroke: { curve:"smooth", width: 2 },
  fill: {
  type:"gradient",
@@ -85,14 +86,12 @@ export default function EngagementTrendChart({
  </p>
  </div>
  </div>
- <div className="max-w-full overflow-x-auto custom-scrollbar">
- <div className="-ml-2 min-w-[480px] sm:min-w-[600px] xl:min-w-full pb-2">
+ <div className="-ml-2 pb-2">
  <ReactApexChart
  options={options}
  series={series}
  type="area" height={280}
  />
- </div>
  </div>
  </div>
  );

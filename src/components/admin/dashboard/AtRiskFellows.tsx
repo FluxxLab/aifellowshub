@@ -36,7 +36,7 @@ export default function AtRiskFellows({ fellows }: AtRiskFellowsProps) {
  </div>
 
  <div className="mt-4 max-w-full overflow-x-auto">
- <Table>
+ <Table className="min-w-[560px]">
  <TableHeader className="border-b border-gray-100">
  <TableRow>
  <TableCell

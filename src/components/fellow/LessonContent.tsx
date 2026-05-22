@@ -91,7 +91,7 @@ export default function LessonContent({
         <iframe
           src={contentUrl}
           title={title ?? "Lesson PDF"}
-          className="block h-[70vh] w-full"
+          className="block h-[50vh] w-full sm:h-[60vh] md:h-[70vh]"
         />
       </div>
     );

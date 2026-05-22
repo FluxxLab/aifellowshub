@@ -50,7 +50,7 @@ export default function ResourcesSection({
                     <iframe
                       src={r.url}
                       title={r.title}
-                      className="h-[70vh] w-full"
+                      className="h-[50vh] w-full sm:h-[60vh] md:h-[70vh]"
                     />
                   </div>
                 )}

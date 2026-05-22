@@ -25,6 +25,7 @@ export default function CohortProgressChart({
  toolbar: { show: false },
  zoom: { enabled: false },
  },
+ responsive: [{ breakpoint: 640, options: { chart: { height: 200 } } }],
  stroke: {
  curve:"smooth",
  width: 3,
@@ -85,14 +86,12 @@ export default function CohortProgressChart({
  </p>
  </div>
  </div>
- <div className="max-w-full overflow-x-auto custom-scrollbar">
- <div className="-ml-2 min-w-[480px] sm:min-w-[600px] xl:min-w-full">
+ <div className="-ml-2">
  <ReactApexChart
  options={options}
  series={series}
  type="line" height={280}
  />
- </div>
  </div>
  </div>
  );
