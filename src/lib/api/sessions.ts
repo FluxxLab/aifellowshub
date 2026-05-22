@@ -51,8 +51,10 @@ export type AttendanceRecord = {
   fellowName: string;
   /** ISO timestamp the fellow joined the Zoom meeting. Null = never joined. */
   joinedAt: string | null;
-  /** ISO timestamp the fellow left. Null if never joined. */
+  /** ISO timestamp the fellow left. Null while still in the meeting or never joined. */
   leftAt: string | null;
+  /** True when the fellow has joined but not yet left (session is live). */
+  inSession: boolean;
   totalMinutesPresent: number;
   /** True if the fellow crossed the auto-credit threshold (BRD §6.4). */
   autoCredited: boolean;

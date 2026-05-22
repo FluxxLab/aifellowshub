@@ -134,9 +134,7 @@ function mapToSessionDetail(s: BackendAdminSession): SessionDetail {
     leftAt: a.leftAt,
     totalMinutesPresent: a.minutesAttended ?? 0,
     autoCredited: a.status === "attended",
-    // The "missed" status from the admin override flips override → "missed"-like;
-    // the existing UI only models "attended"/"excused" overrides — we keep null
-    // here and rely on `autoCredited` + status to compute the badge.
+    inSession: a.joinedAt !== null && a.leftAt === null && a.status !== "attended",
     override: null,
   }));
 

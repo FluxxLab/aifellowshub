@@ -20,20 +20,22 @@ import type {
  SessionDetail,
 } from "@/lib/api/sessions";
 
-type FinalStatus ="attended"|"excused"|"missed";
+type FinalStatus = "attended" | "excused" | "in_session" | "missed";
 
 function finalStatusOf(r: AttendanceRecord): FinalStatus {
- if (r.override ==="attended") return "attended";
- if (r.override ==="excused") return "excused";
- if (r.autoCredited) return "attended";
- return "missed";
+  if (r.override === "attended") return "attended";
+  if (r.override === "excused") return "excused";
+  if (r.autoCredited) return "attended";
+  if (r.inSession) return "in_session";
+  return "missed";
 }
 
-const FILTERS: { id:"all"| FinalStatus; label: string }[] = [
- { id:"all", label:"All"},
- { id:"attended", label:"Attended"},
- { id:"excused", label:"Excused"},
- { id:"missed", label:"Missed"},
+const FILTERS: { id: "all" | FinalStatus; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "attended", label: "Attended" },
+  { id: "in_session", label: "In session" },
+  { id: "excused", label: "Excused" },
+  { id: "missed", label: "Missed" },
 ];
 
 type AttendanceRosterProps = {
@@ -51,12 +53,13 @@ export default function AttendanceRoster({ sessionId, session }: AttendanceRoste
  const [bulkBusy, setBulkBusy] = useState(false);
  const [syncBusy, setSyncBusy] = useState(false);
 
- const counts = useMemo(() => {
- const attended = records.filter((r) => finalStatusOf(r) ==="attended").length;
- const excused = records.filter((r) => finalStatusOf(r) ==="excused").length;
- const missed = records.filter((r) => finalStatusOf(r) ==="missed").length;
- return { attended, excused, missed, total: records.length };
- }, [records]);
+  const counts = useMemo(() => {
+    const attended = records.filter((r) => finalStatusOf(r) === "attended").length;
+    const inSession = records.filter((r) => finalStatusOf(r) === "in_session").length;
+    const excused = records.filter((r) => finalStatusOf(r) === "excused").length;
+    const missed = records.filter((r) => finalStatusOf(r) === "missed").length;
+    return { attended, inSession, excused, missed, total: records.length };
+  }, [records]);
 
  const visible = useMemo(() => {
  const q = search.trim().toLowerCase();
@@ -216,10 +219,13 @@ export default function AttendanceRoster({ sessionId, session }: AttendanceRoste
  of the {session.durationMinutes}-min session.
  </p>
  </div>
- <div className="flex flex-wrap items-center gap-2 text-sm">
- <Tally tone="success" label="Attended" value={counts.attended} />
- <Tally tone="info" label="Excused" value={counts.excused} />
- <Tally tone="error" label="Missed" value={counts.missed} />
+  <div className="flex flex-wrap items-center gap-2 text-sm">
+    <Tally tone="success" label="Attended" value={counts.attended} />
+    {counts.inSession > 0 && (
+      <Tally tone="live" label="In session" value={counts.inSession} />
+    )}
+    <Tally tone="info" label="Excused" value={counts.excused} />
+    <Tally tone="error" label="Missed" value={counts.missed} />
  {session.status === "ended" && (
   <button
    type="button"
@@ -465,22 +471,26 @@ function Row({
 }
 
 function FinalStatusBadge({
- status,
- overridden,
+  status,
+  overridden,
 }: {
- status: FinalStatus;
- overridden: boolean;
+  status: FinalStatus;
+  overridden: boolean;
 }) {
- return (
- <span className="inline-flex items-center gap-2">
- {status ==="attended"&& <Badge color="success">Attended</Badge>}
- {status ==="excused"&& <Badge color="info">Excused</Badge>}
- {status ==="missed"&& <Badge color="error">Missed</Badge>}
- {overridden && (
- <span className="text-xs text-gray-400">override</span>
- )}
- </span>
- );
+  return (
+    <span className="inline-flex items-center gap-2">
+      {status === "attended" && <Badge color="success">Attended</Badge>}
+      {status === "excused" && <Badge color="info">Excused</Badge>}
+      {status === "in_session" && (
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-700">
+          <span className="h-1.5 w-1.5 rounded-full bg-brand-500 animate-pulse" />
+          In session
+        </span>
+      )}
+      {status === "missed" && <Badge color="error">Missed</Badge>}
+      {overridden && <span className="text-xs text-gray-400">override</span>}
+    </span>
+  );
 }
 
 function Th({
@@ -540,22 +550,28 @@ function Dim({ children }: { children: React.ReactNode }) {
 }
 
 function Tally({
- tone,
- label,
- value,
+  tone,
+  label,
+  value,
 }: {
- tone:"success"|"info"|"error";
- label: string;
- value: number;
+  tone: "success" | "info" | "live" | "error";
+  label: string;
+  value: number;
 }) {
- const dot =
- tone ==="success"?"bg-success-500": tone ==="info"?"bg-blue-light-500":"bg-error-500";
- return (
- <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600">
- <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
- {label} <span className="font-semibold text-gray-800 tabular-nums">{value}</span>
- </span>
- );
+  const dot =
+    tone === "success"
+      ? "bg-success-500"
+      : tone === "info"
+      ? "bg-blue-light-500"
+      : tone === "live"
+      ? "bg-brand-500 animate-pulse"
+      : "bg-error-500";
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600">
+      <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
+      {label} <span className="font-semibold text-gray-800 tabular-nums">{value}</span>
+    </span>
+  );
 }
 
 function EmptyRoster({ title, body }: { title: string; body: string }) {
