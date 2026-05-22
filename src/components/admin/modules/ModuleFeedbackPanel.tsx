@@ -1,4 +1,5 @@
 import { getModuleFeedbackAggregateServer } from "@/lib/api/feedback.server";
+import FeedbackExportButton from "./FeedbackExportButton";
 
 /**
  * Admin / faculty / super_admin view of a module's feedback. Server
@@ -27,16 +28,22 @@ export default async function ModuleFeedbackPanel({
             required for fellows before the next module unlocks.
           </p>
         </div>
-        <p className="text-xs font-medium text-gray-500">
-          {data.count} {data.count === 1 ? "response" : "responses"}
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="text-xs font-medium text-gray-500">
+            {data.count} {data.count === 1 ? "response" : "responses"}
+          </p>
+          <FeedbackExportButton
+            submissions={data.submissions}
+            moduleId={moduleId}
+          />
+        </div>
       </header>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <AverageTile label="Overall" value={data.averages.overall} />
         <AverageTile label="Content" value={data.averages.content} />
         <AverageTile label="Sessions" value={data.averages.sessions} />
-        <AverageTile label="Mentor" value={data.averages.mentor} />
+        <AverageTile label="Facilitator" value={data.averages.mentor} />
       </div>
 
       {data.submissions.length === 0 ? (
@@ -64,7 +71,7 @@ export default async function ModuleFeedbackPanel({
                 </span>
                 <span>·</span>
                 <span>
-                  Mentor <strong className="text-gray-800">{s.mentorRating}</strong>/5
+                  Facilitator <strong className="text-gray-800">{s.mentorRating}</strong>/5
                 </span>
                 <span className="ml-auto">
                   {new Date(s.submittedAt).toLocaleDateString(undefined, {

@@ -36,7 +36,7 @@ const RATING_FIELDS: {
   },
   {
     key: "mentorRating",
-    label: "Mentor support",
+    label: "Facilitator support",
     hint: "Responsiveness and quality of feedback.",
   },
 ];
@@ -243,7 +243,7 @@ function ReadOnlyFeedback({ feedback }: { feedback: ModuleFeedback }) {
               { label: "Overall", value: feedback.overallRating },
               { label: "Content", value: feedback.contentRating },
               { label: "Sessions", value: feedback.sessionRating },
-              { label: "Mentor", value: feedback.mentorRating },
+              { label: "Facilitator", value: feedback.mentorRating },
             ].map((r) => (
               <div key={r.label}>
                 <dt className="text-xs text-gray-500">{r.label}</dt>
