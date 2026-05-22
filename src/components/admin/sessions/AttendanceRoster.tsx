@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
  Table,
  TableBody,
@@ -363,6 +363,30 @@ function Row({
  const [minutesInput, setMinutesInput] = useState("");
  const final = finalStatusOf(record);
 
+ // Live elapsed-minute counter for fellows currently in the room.
+ // Fires every 30 s so the display stays current without hammering the server.
+ const [liveMinutes, setLiveMinutes] = useState<number | null>(null);
+ useEffect(() => {
+  if (!record.inSession || !record.joinedAt) {
+   setLiveMinutes(null);
+   return;
+  }
+  const compute = () => {
+   const elapsed = Math.floor(
+    (Date.now() - new Date(record.joinedAt!).getTime()) / 60_000,
+   );
+   setLiveMinutes(Math.max(record.totalMinutesPresent, elapsed));
+  };
+  compute();
+  const id = setInterval(compute, 30_000);
+  return () => clearInterval(id);
+ }, [record.inSession, record.joinedAt, record.totalMinutesPresent]);
+
+ const displayMinutes =
+  record.inSession && liveMinutes !== null
+   ? liveMinutes
+   : record.totalMinutesPresent;
+
  function submitAttended() {
   const mins = minutesInput.trim() === "" ? undefined : Number(minutesInput);
   onOverride("attended", mins);
@@ -385,7 +409,7 @@ function Row({
  <Td>{record.leftAt ? formatTime(record.leftAt) : <Dim>—</Dim>}</Td>
  <Td>
  <span className="text-sm text-gray-700 tabular-nums">
- {record.totalMinutesPresent}
+ {displayMinutes}
  </span>
  </Td>
  <Td>
