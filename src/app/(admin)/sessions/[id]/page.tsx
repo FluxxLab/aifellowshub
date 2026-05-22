@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import SessionDetailHeader from "@/components/admin/sessions/SessionDetailHeader";
 import AttendanceRoster from "@/components/admin/sessions/AttendanceRoster";
+import AiAttendanceReport from "@/components/admin/sessions/AiAttendanceReport";
 import { getSession } from "@/lib/api/sessions";
 import { getSessionAdminServer } from "@/lib/api/sessions.server";
 
@@ -37,6 +38,9 @@ export default async function SessionDetailPage({ params }: PageProps) {
     <div className="flex flex-col gap-4 md:gap-6">
       <SessionDetailHeader session={session} />
       <AttendanceRoster sessionId={session.id} session={session} />
+      {session.status === "ended" && (
+        <AiAttendanceReport sessionId={session.id} />
+      )}
     </div>
   );
 }
