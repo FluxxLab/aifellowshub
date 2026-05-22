@@ -43,7 +43,11 @@ type BackendCurriculumModule = {
     attemptsUsed: number;
   };
   session: {
-    myAttendance: { status: "rsvpd" | "attended" | "missed" } | null;
+    status: "scheduled" | "live" | "ended" | "cancelled";
+    startsAt: string;
+    myAttendance: {
+      status: "rsvpd" | "attended" | "attended_recording" | "missed";
+    } | null;
   } | null;
   unlocked: boolean;
 };
@@ -92,10 +96,12 @@ export async function getFellowHomeServer(): Promise<FellowHome> {
   // already applied in the curriculum + sessions mappers.
   const isOnboarding = (m: BackendCurriculumModule) =>
     m.weekNumber <= 0 && /onboarding/i.test(m.title);
+  const attendedStatuses = new Set(["attended", "attended_recording"]);
   const isCompleted = (m: BackendCurriculumModule) =>
     isOnboarding(m) ||
     m.myAttempts.bestStatus === "passed" ||
-    m.session?.myAttendance?.status === "attended";
+    (m.session?.myAttendance?.status != null &&
+      attendedStatuses.has(m.session.myAttendance.status));
   const completed = modules.filter(isCompleted).length;
   const currentModule = pickCurrentModule(modules, isCompleted);
   // Clamp to the curriculum's range so "Week 1 of 0" never happens.
@@ -104,14 +110,32 @@ export async function getFellowHomeServer(): Promise<FellowHome> {
     currentModule?.weekNumber ??
     Math.min(totalWeeks, Math.max(0, completed + 1));
 
-  const sessionList = sessions?.sessions ?? [];
-  const past = sessionList.filter((s) => s.status === "ended");
-  const attended = past.filter(
-    (s) => modules.find((m) => m.session && s.module?.weekNumber === m.weekNumber)?.session?.myAttendance?.status === "attended",
+  // Attendance rate: derive from curriculum data directly rather than
+  // cross-joining the sessions list. Each curriculum module already carries
+  // session.myAttendance, so the join is unnecessary and fragile (breaks
+  // when s.module is null or weekNumbers drift). Count only modules whose
+  // session has actually ended (status === "ended" AND startsAt in the past,
+  // or myAttendance is "attended"/"missed" — either signal means it ran).
+  const modulesWithPastSession = modules.filter((m) => {
+    if (isOnboarding(m) || !m.session) return false;
+    const sessionEnded =
+      m.session.status === "ended" &&
+      new Date(m.session.startsAt).getTime() < Date.now();
+    const attendanceSettled =
+      m.session.myAttendance?.status === "attended" ||
+      m.session.myAttendance?.status === "attended_recording" ||
+      m.session.myAttendance?.status === "missed";
+    return sessionEnded || attendanceSettled;
+  });
+  const attendedCount = modulesWithPastSession.filter((m) =>
+    attendedStatuses.has(m.session!.myAttendance?.status ?? ""),
   ).length;
   const attendanceRatePercent =
-    past.length === 0 ? 0 : Math.round((attended / past.length) * 100);
+    modulesWithPastSession.length === 0
+      ? 0
+      : Math.round((attendedCount / modulesWithPastSession.length) * 100);
 
+  const sessionList = sessions?.sessions ?? [];
   const upcoming = sessionList
     .filter((s) => s.status === "scheduled" || s.status === "live")
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt))[0];
@@ -150,7 +174,8 @@ export async function getFellowHomeServer(): Promise<FellowHome> {
           // the quiz saw a stale 0% on the card.
           progressPercent: isCompleted(currentModule)
             ? 100
-            : currentModule.session?.myAttendance?.status === "attended" ||
+            : (currentModule.session?.myAttendance?.status != null &&
+                attendedStatuses.has(currentModule.session.myAttendance.status)) ||
               currentModule.myAttempts.attemptsUsed > 0
             ? 50
             : 0,
