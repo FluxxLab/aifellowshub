@@ -134,7 +134,10 @@ function mapToSessionDetail(s: BackendAdminSession): SessionDetail {
     leftAt: a.leftAt,
     totalMinutesPresent: a.minutesAttended ?? 0,
     autoCredited: a.status === "attended",
-    inSession: a.joinedAt !== null && a.leftAt === null,
+    // Only show "In session" while the meeting is live. Once ended the
+    // Zoom leave webhook may never have fired for everyone — suppress
+    // the flag so the roster shows their real credited status instead.
+    inSession: a.joinedAt !== null && a.leftAt === null && s.status !== "ended",
     override: null,
   }));
 
