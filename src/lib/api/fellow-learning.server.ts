@@ -323,6 +323,10 @@ function mapBackendCurriculumModule(
       m.weekNumber <= 0 && /onboarding/i.test(m.title)
         ? true
         : session.attended,
+    sessionEnded:
+      m.weekNumber <= 0 && /onboarding/i.test(m.title)
+        ? true
+        : session.status === "ended",
     assessmentPassed: passed ? true : failed ? false : null,
     assessmentScore: my.bestScore,
     hasAssessment,
