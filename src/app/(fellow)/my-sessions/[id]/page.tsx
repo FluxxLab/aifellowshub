@@ -36,17 +36,29 @@ export default async function FellowSessionMeetingPage({
   
   if (!session) notFound();
 
+  const isLive = session.status === "live";
+  const isEnded = session.status === "ended" || session.status === "cancelled";
+
   const joinCutoffMs =
     new Date(session.startsAt).getTime() +
     session.attendanceThresholdMinutes * 60_000;
   const hasJoinedBefore = Boolean(session.joinedAt);
   // Block only first-time joiners past the cutoff. Fellows who already
   // joined before the window closed can rejoin freely (connection drops, etc).
-  const blocked = Date.now() > joinCutoffMs && !hasJoinedBefore;
+  const blocked = isLive && Date.now() > joinCutoffMs && !hasJoinedBefore;
+
+  const scheduledTime = new Date(session.startsAt).toLocaleString("en-NG", {
+    timeZone: "Africa/Lagos",
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 
   return (
     <div className="flex flex-col gap-4 md:gap-6">
-      {!blocked && <ZoomSdkPrefetch />}
+      {isLive && !blocked && <ZoomSdkPrefetch />}
 
       <Link
         href="/my-sessions" className="inline-flex w-fit items-center gap-1 text-sm text-gray-500 transition-colors hover:text-gray-700">
@@ -68,9 +80,40 @@ export default async function FellowSessionMeetingPage({
         </div>
       </div>
 
-      {blocked ? (
+      {!isLive && !isEnded && (
         <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white p-10 text-center">
-          <p className="text-4xl">🔒</p>
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-50">
+            <svg className="h-7 w-7 text-brand-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z" />
+            </svg>
+          </div>
+          <h2 className="mt-4 text-lg font-bold text-gray-800">Session hasn&apos;t started yet</h2>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-gray-500">
+            This session is scheduled for <span className="font-semibold text-gray-700">{scheduledTime}</span>.
+            Come back then and this page will let you join.
+          </p>
+          <Link href="/my-sessions" className="mt-6 inline-flex items-center gap-1 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            <ChevronLeftIcon className="h-4 w-4" />
+            Back to sessions
+          </Link>
+        </div>
+      )}
+
+      {isEnded && (
+        <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white p-10 text-center">
+          <h2 className="text-lg font-bold text-gray-800">Session has ended</h2>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-gray-500">
+            This session is no longer active. Your attendance has been recorded.
+          </p>
+          <Link href="/my-sessions" className="mt-6 inline-flex items-center gap-1 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            <ChevronLeftIcon className="h-4 w-4" />
+            Back to sessions
+          </Link>
+        </div>
+      )}
+
+      {isLive && blocked && (
+        <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white p-10 text-center">
           <h2 className="mt-4 text-lg font-bold text-gray-800">
             Join window has closed
           </h2>
@@ -83,7 +126,9 @@ export default async function FellowSessionMeetingPage({
             Back to sessions
           </Link>
         </div>
-      ) : (
+      )}
+
+      {isLive && !blocked && (
         <div className="relative min-h-[72vh] rounded-2xl border border-gray-200 bg-gray-900 p-3">
           <ZoomMeetingRoom sessionId={session.id!} />
         </div>
