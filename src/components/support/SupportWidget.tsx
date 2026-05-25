@@ -15,6 +15,7 @@ import {
   createSupportTicket,
   getSupportTicket,
   listMySupportTickets,
+  resolveMyTicket,
   replyToSupportTicket,
   type SupportTicket,
 } from "@/lib/api/support";
@@ -378,6 +379,7 @@ function ThreadView({
   const [loading, setLoading] = useState(true);
   const [reply, setReply] = useState("");
   const [sending, setSending] = useState(false);
+  const [resolving, setResolving] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -409,6 +411,21 @@ function ThreadView({
       toast.errorFromException("Couldn't send your reply", err);
     } finally {
       setSending(false);
+    }
+  };
+
+  const markResolved = async () => {
+    if (!ticket || resolving) return;
+    setResolving(true);
+    try {
+      const updated = await resolveMyTicket(ticketId);
+      setTicket(updated);
+      await onUpdated();
+      toast.success("Ticket closed", "Glad we could help!");
+    } catch (err) {
+      toast.errorFromException("Couldn't close ticket", err);
+    } finally {
+      setResolving(false);
     }
   };
 
@@ -456,6 +473,21 @@ function ThreadView({
           );
         })}
       </div>
+      {ticket.status === "open" && ticket.replies.some((r) => r.isAiReply) && (
+        <div className="mx-5 mb-1 flex items-center justify-between gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3">
+          <p className="text-xs text-green-800">Did this answer your question?</p>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={markResolved}
+            disabled={resolving}
+            className="shrink-0 border-green-600 text-green-700 hover:bg-green-100"
+          >
+            {resolving ? "Closing…" : "Yes, close ticket"}
+          </Button>
+        </div>
+      )}
+
       <div className="border-t border-gray-100 px-5 py-3">
         <textarea
           rows={3}

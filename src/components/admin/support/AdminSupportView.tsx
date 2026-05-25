@@ -122,11 +122,18 @@ export default function AdminSupportView({
                         {t.requester?.fullName ?? "Unknown"} ·{" "}
                         {t.requester?.role ?? "—"}
                       </p>
-                      <p className="text-xs text-gray-400">
-                        {t.replies.length} repl
-                        {t.replies.length === 1 ? "y" : "ies"} ·{" "}
-                        {relativeTime(lastAt)}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs text-gray-400">
+                          {t.replies.length} repl
+                          {t.replies.length === 1 ? "y" : "ies"} ·{" "}
+                          {relativeTime(lastAt)}
+                        </p>
+                        {t.replies.some((r) => r.isAiReply) && (
+                          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-600">
+                            AI replied
+                          </span>
+                        )}
+                      </div>
                     </button>
                   </li>
                 );

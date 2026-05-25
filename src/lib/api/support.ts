@@ -74,6 +74,14 @@ export async function replyToSupportTicket(
   return data.ticket;
 }
 
+export async function resolveMyTicket(id: string): Promise<SupportTicket> {
+  const data = await apiFetch<{ ticket: SupportTicket }>(
+    `/me/support/tickets/${encodeURIComponent(id)}/resolve`,
+    { method: "PATCH" },
+  );
+  return data.ticket;
+}
+
 export async function setSupportTicketStatus(
   id: string,
   status: SupportTicketStatus,
