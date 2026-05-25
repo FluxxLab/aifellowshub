@@ -12,6 +12,7 @@ export type SupportTicketStatus = "open" | "closed";
 export type SupportTicketReply = {
   id: string;
   message: string;
+  isAiReply: boolean;
   createdAt: string;
   author: {
     id: string;

@@ -276,12 +276,15 @@ function TicketDetail({
         />
         {ticket.replies.map((r) => {
           const fromAdmin =
-            r.author?.role === "admin" || r.author?.role === "super_admin";
+            r.isAiReply ||
+            r.author?.role === "admin" ||
+            r.author?.role === "super_admin";
           return (
             <ThreadBubble
               key={r.id}
               fromAdmin={fromAdmin}
-              author={r.author?.fullName ?? "—"}
+              isAi={r.isAiReply}
+              author={r.isAiReply ? "Support" : (r.author?.fullName ?? "—")}
               message={r.message}
               at={r.createdAt}
             />
@@ -316,11 +319,13 @@ function TicketDetail({
 
 function ThreadBubble({
   fromAdmin,
+  isAi = false,
   author,
   message,
   at,
 }: {
   fromAdmin: boolean;
+  isAi?: boolean;
   author: string;
   message: string;
   at: string;
@@ -344,7 +349,7 @@ function ThreadBubble({
           {author}
           {fromAdmin && (
             <span className="ml-2 text-[10px] font-medium uppercase tracking-wide text-gray-400">
-              Support team
+              {isAi ? "AI · Support team" : "Support team"}
             </span>
           )}
         </span>
