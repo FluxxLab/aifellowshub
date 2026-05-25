@@ -20,6 +20,9 @@ export type FellowModuleSummary = {
   progressPercent: number;
   /** Did the fellow attend that week's live session? null = upcoming. */
   sessionAttended: boolean | null;
+  /** True when the session has already ended (past its scheduled window).
+   *  Combines with sessionAttended===null to show "Catch up" instead of "Upcoming". */
+  sessionEnded: boolean;
   /** Did the fellow pass the assessment? null = not attempted. */
   assessmentPassed: boolean | null;
   assessmentScore: number | null;

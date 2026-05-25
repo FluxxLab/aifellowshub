@@ -195,7 +195,7 @@ function ModuleCard({ module: m, previous }: ModuleCardProps) {
                   state={
                     m.sessionAttended === true
                       ? "good"
-                      : m.sessionAttended === false
+                      : m.sessionAttended === false || m.sessionEnded
                       ? "bad"
                       : "pending"
                   }
@@ -204,6 +204,8 @@ function ModuleCard({ module: m, previous }: ModuleCardProps) {
                       ? "Attended"
                       : m.sessionAttended === false
                       ? "Missed"
+                      : m.sessionEnded
+                      ? "Catch up"
                       : "Upcoming"
                   }
                 />

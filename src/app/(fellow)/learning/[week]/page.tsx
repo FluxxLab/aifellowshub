@@ -215,7 +215,7 @@ function ModuleHeader({ module: m }: { module: FellowModuleDetail }) {
           state={
             m.sessionAttended === true
               ? "good"
-              : m.sessionAttended === false
+              : m.sessionAttended === false || m.sessionEnded
               ? "bad"
               : "pending"
           }
@@ -224,6 +224,8 @@ function ModuleHeader({ module: m }: { module: FellowModuleDetail }) {
               ? "Attended"
               : m.sessionAttended === false
               ? "Missed"
+              : m.sessionEnded
+              ? "Catch up"
               : "Upcoming"
           }
         />

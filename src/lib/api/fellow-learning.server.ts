@@ -190,16 +190,19 @@ export async function getFellowCurriculumServer(): Promise<FellowModuleSummary[]
     // for the module. Falling back to the primary session's myAttendance would
     // miss attendance when a newer upcoming session shadows a past attended one.
     let sessionAttended: boolean | null = null;
+    let sessionEnded = false;
     if (isOnboarding) {
       sessionAttended = true;
+      sessionEnded = true;
     } else if (m.sessionAttended) {
       sessionAttended = true;
+      sessionEnded = true;
     } else if (m.session) {
       const myAttStatus = m.session.myAttendance?.status ?? null;
-      const sessionEnded =
+      sessionEnded =
         m.session.status === "ended" &&
         new Date(m.session.startsAt).getTime() < Date.now();
-      if (myAttStatus === "missed" && sessionEnded) {
+      if (sessionEnded && (myAttStatus === "missed" || myAttStatus === null)) {
         sessionAttended = false;
       }
     }
@@ -226,6 +229,7 @@ export async function getFellowCurriculumServer(): Promise<FellowModuleSummary[]
       progressPercent:
         status === "completed" ? 100 : status === "in-progress" ? 50 : 0,
       sessionAttended,
+      sessionEnded,
       assessmentPassed: passed ? true : failed ? false : null,
       assessmentScore: my.bestScore,
       hasAssessment,
