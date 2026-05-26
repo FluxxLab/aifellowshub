@@ -555,8 +555,21 @@ function ThreadBubble({
         </span>
         <span className="text-gray-400">{relativeTime(at)}</span>
       </div>
-      <p className="whitespace-pre-wrap text-sm text-gray-700">{message}</p>
+      {isAi ? (
+        <p className="whitespace-pre-wrap text-sm text-gray-700">
+          {renderBold(message)}
+        </p>
+      ) : (
+        <p className="whitespace-pre-wrap text-sm text-gray-700">{message}</p>
+      )}
     </div>
+  );
+}
+
+function renderBold(text: string): React.ReactNode[] {
+  const parts = text.split(/\*\*(.+?)\*\*/gs);
+  return parts.map((part, i) =>
+    i % 2 === 1 ? <strong key={i}>{part}</strong> : part,
   );
 }
 
