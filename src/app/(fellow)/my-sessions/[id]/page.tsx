@@ -36,7 +36,11 @@ export default async function FellowSessionMeetingPage({
   
   if (!session) notFound();
 
-  const isLive = session.status === "live";
+  const startsAtMs = new Date(session.startsAt).getTime();
+  const earlyOpenMs = startsAtMs - 15 * 60_000;
+  const isLive =
+    session.status === "live" ||
+    (session.status === "scheduled" && Date.now() >= earlyOpenMs);
   const isEnded = session.status === "ended" || session.status === "cancelled";
 
   const joinCutoffMs =
@@ -47,14 +51,15 @@ export default async function FellowSessionMeetingPage({
   // joined before the window closed can rejoin freely (connection drops, etc).
   const blocked = isLive && Date.now() > joinCutoffMs && !hasJoinedBefore;
 
-  const scheduledTime = new Date(session.startsAt).toLocaleString("en-NG", {
-    timeZone: "Africa/Lagos",
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  const scheduledTime =
+    new Date(session.startsAt).toLocaleString("en-NG", {
+      timeZone: "Africa/Lagos",
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    }) + " WAT";
 
   return (
     <div className="flex flex-col gap-4 md:gap-6">
