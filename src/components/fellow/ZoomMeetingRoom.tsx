@@ -46,18 +46,15 @@ type SignatureResponse = {
  */
 export default function ZoomMeetingRoom({
   sessionId,
-  joinUrl,
   onLeave,
 }: {
   sessionId: string;
-  joinUrl?: string;
   onLeave?: () => void;
 }) {
   const user = useCurrentUser();
   const containerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null); // kept for potential future use
   const clientRef = useRef<unknown>(null);
-  const [isMobile, setIsMobile] = useState(false);
   const [phase, setPhase] = useState<
     "loading" | "joining" | "in-meeting" | "left" | "error"
   >("loading");
@@ -67,10 +64,6 @@ export default function ZoomMeetingRoom({
   const router = useRouter();
   const { confirm, dialog } = useConfirm();
 
-
-  useEffect(() => {
-    setIsMobile(/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
-  }, []);
 
   // Hold the latest user in a ref so start() can read the real name
   // without forcing the SDK to re-init each time the user object's
@@ -292,36 +285,6 @@ export default function ZoomMeetingRoom({
     } finally {
       setEndingSession(false);
     }
-  }
-
-  if (isMobile) {
-    return (
-      <div className="flex flex-col items-center gap-4 rounded-2xl bg-gray-900 p-8 text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/10">
-          <svg className="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
-          </svg>
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold text-white">Join on Zoom</h3>
-          <p className="mt-1 text-sm text-gray-400">
-            For the best audio and video experience on mobile, open the session in the Zoom app.
-          </p>
-        </div>
-        {joinUrl && joinUrl !== "#" ? (
-          <a
-            href={joinUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-600"
-          >
-            Open in Zoom app
-          </a>
-        ) : (
-          <p className="text-sm text-gray-500">Join link not available yet.</p>
-        )}
-      </div>
-    );
   }
 
   return (
