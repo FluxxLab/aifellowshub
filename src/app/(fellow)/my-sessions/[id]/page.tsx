@@ -95,9 +95,19 @@ export default async function FellowSessionMeetingPage({
           <h2 className="mt-4 text-lg font-bold text-gray-800">Session hasn&apos;t started yet</h2>
           <p className="mx-auto mt-2 max-w-sm text-sm text-gray-500">
             This session is scheduled for <span className="font-semibold text-gray-700">{scheduledTime}</span>.
-            Come back then and this page will let you join.
+            The room opens here 15 minutes before start.
           </p>
-          <Link href="/my-sessions" className="mt-6 inline-flex items-center gap-1 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+          {session.joinUrl && session.joinUrl !== "#" && (
+            <a
+              href={session.joinUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-5 inline-flex items-center gap-2 rounded-lg bg-fellowship-navy px-4 py-2 text-sm font-semibold text-white hover:bg-fellowship-navy/90"
+            >
+              Open in Zoom app
+            </a>
+          )}
+          <Link href="/my-sessions" className="mt-3 inline-flex items-center gap-1 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
             <ChevronLeftIcon className="h-4 w-4" />
             Back to sessions
           </Link>
