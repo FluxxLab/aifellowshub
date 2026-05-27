@@ -135,7 +135,7 @@ export default async function FellowSessionMeetingPage({
 
       {isLive && !blocked && (
         <div className="relative min-h-[72vh] rounded-2xl border border-gray-200 bg-gray-900 p-3">
-          <ZoomMeetingRoom sessionId={session.id!} />
+          <ZoomMeetingRoom sessionId={session.id!} joinUrl={session.joinUrl ?? undefined} />
         </div>
       )}
     </div>
