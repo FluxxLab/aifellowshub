@@ -140,9 +140,15 @@ export default function ZoomMeetingRoom({
           customize: {
             video: {
               // SuspensionViewType is a const enum — cast needed to pass string literal
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            defaultViewType: "gallery" as any,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              defaultViewType: "gallery" as any,
               isResizable: true,
+              // Lower the ribbon-mode threshold so the SDK stays in wide
+              // gallery layout on normal laptop/desktop content-area widths.
+              // Default SDK threshold is 1040px; setting 640px means ribbon
+              // only kicks in on very narrow viewports.
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              viewSizes: { default: { width: 640, height: 480 } } as any,
             },
           },
         });
@@ -346,7 +352,7 @@ export default function ZoomMeetingRoom({
         ref={wrapperRef}
         className="zoom-room w-full min-h-[65vh] rounded-2xl bg-black"
       >
-        <div ref={containerRef} />
+        <div ref={containerRef} className="w-full" />
       </div>
     </div>
   );
