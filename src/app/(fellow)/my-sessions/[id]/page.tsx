@@ -40,7 +40,7 @@ export default async function FellowSessionMeetingPage({
   const earlyOpenMs = startsAtMs - 15 * 60_000;
   const isLive =
     session.status === "live" ||
-    (session.status === "scheduled" && Date.now() >= earlyOpenMs);
+    (session.status === "upcoming" && Date.now() >= earlyOpenMs);
   const isEnded = session.status === "ended" || session.status === "cancelled";
 
   const joinCutoffMs =
