@@ -141,7 +141,7 @@ export default function ZoomMeetingRoom({
             video: {
               // SuspensionViewType is a const enum — cast needed to pass string literal
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              defaultViewType: "speaker" as any,
+              defaultViewType: "gallery" as any,
               isResizable: true,
             },
           },
