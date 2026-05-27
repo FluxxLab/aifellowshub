@@ -143,12 +143,6 @@ export default function ZoomMeetingRoom({
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               defaultViewType: "gallery" as any,
               isResizable: true,
-              // Lower the ribbon-mode threshold so the SDK stays in wide
-              // gallery layout on normal laptop/desktop content-area widths.
-              // Default SDK threshold is 1040px; setting 640px means ribbon
-              // only kicks in on very narrow viewports.
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              viewSizes: { default: { width: 640, height: 480 } } as any,
             },
           },
         });
@@ -350,9 +344,10 @@ export default function ZoomMeetingRoom({
       */}
       <div
         ref={wrapperRef}
-        className="zoom-room w-full min-h-[65vh] rounded-2xl bg-black"
+        className="zoom-room w-full rounded-2xl bg-black"
+        style={{ height: "72vh" }}
       >
-        <div ref={containerRef} className="w-full" />
+        <div ref={containerRef} style={{ width: "100%", height: "100%" }} />
       </div>
     </div>
   );
