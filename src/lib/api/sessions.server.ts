@@ -79,6 +79,8 @@ type BackendAdminAttendance = {
   minutesAttended: number | null;
   joinedAt: string | null;
   leftAt: string | null;
+  recordingWatchedSeconds: number | null;
+  recordingCreditedAt: string | null;
 };
 
 type BackendAdminSession = {
@@ -139,6 +141,8 @@ function mapToSessionDetail(s: BackendAdminSession): SessionDetail {
     // the flag so the roster shows their real credited status instead.
     inSession: a.joinedAt !== null && a.leftAt === null && s.status !== "ended",
     override: null,
+    recordingWatchedSeconds: a.recordingWatchedSeconds ?? 0,
+    recordingCreditedAt: a.recordingCreditedAt ?? null,
   }));
 
   const scheduledStart = s.startsAt;

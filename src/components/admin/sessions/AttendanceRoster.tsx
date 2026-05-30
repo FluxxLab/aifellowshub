@@ -308,13 +308,14 @@ export default function AttendanceRoster({ sessionId, session }: AttendanceRoste
    columns from collapsing into illegible widths.
  */}
  <div className="w-full">
- <Table className="min-w-[640px]">
+ <Table className="min-w-[800px]">
  <TableHeader className="border-y border-gray-100 bg-gray-50">
  <TableRow>
  <Th>Fellow</Th>
  <Th>Joined</Th>
  <Th>Left</Th>
  <Th>Minutes</Th>
+ <Th>Recording</Th>
  <Th>Status</Th>
  <Th right>
  <span className="sr-only">Override</span>
@@ -411,6 +412,13 @@ function Row({
  <span className="text-sm text-gray-700 tabular-nums">
  {displayMinutes}
  </span>
+ </Td>
+ <Td>
+   <RecordingWatchCell
+     watchedSeconds={record.recordingWatchedSeconds}
+     creditedAt={record.recordingCreditedAt}
+     sessionDurationMinutes={sessionDurationMinutes}
+   />
  </Td>
  <Td>
  <FinalStatusBadge status={final} overridden={record.override !== null} />
@@ -514,6 +522,49 @@ function FinalStatusBadge({
       {status === "missed" && <Badge color="error">Missed</Badge>}
       {overridden && <span className="text-xs text-gray-400">override</span>}
     </span>
+  );
+}
+
+function RecordingWatchCell({
+  watchedSeconds,
+  creditedAt,
+  sessionDurationMinutes,
+}: {
+  watchedSeconds: number;
+  creditedAt: string | null;
+  sessionDurationMinutes: number;
+}) {
+  const durationSeconds = sessionDurationMinutes * 60;
+  const pct = durationSeconds > 0
+    ? Math.min(100, Math.round((watchedSeconds / durationSeconds) * 100))
+    : 0;
+
+  if (watchedSeconds === 0 && !creditedAt) {
+    return <span className="text-sm text-gray-400">—</span>;
+  }
+
+  const mins = Math.floor(watchedSeconds / 60);
+  const totalMins = sessionDurationMinutes;
+
+  return (
+    <div className="flex flex-col gap-1 min-w-[100px]">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs tabular-nums text-gray-700">
+          {mins}/{totalMins} min ({pct}%)
+        </span>
+        {creditedAt && (
+          <span className="rounded-full bg-success-50 px-1.5 py-0.5 text-[10px] font-semibold text-success-700">
+            Credited
+          </span>
+        )}
+      </div>
+      <div className="h-1 w-full overflow-hidden rounded-full bg-gray-100">
+        <div
+          className={`h-full rounded-full ${creditedAt ? "bg-success-500" : "bg-fellowship-navy"}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
   );
 }
 

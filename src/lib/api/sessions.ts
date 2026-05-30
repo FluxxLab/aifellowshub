@@ -60,6 +60,10 @@ export type AttendanceRecord = {
   autoCredited: boolean;
   /** Admin override, if any, that supersedes the auto-credit decision. */
   override: AttendanceOverride | null;
+  /** Seconds of recording the fellow has watched (0 if never opened). */
+  recordingWatchedSeconds: number;
+  /** ISO timestamp when recording half-credit was awarded, or null. */
+  recordingCreditedAt: string | null;
 };
 
 export type SessionDetail = LiveSession & {

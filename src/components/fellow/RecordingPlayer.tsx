@@ -36,12 +36,14 @@ export default function RecordingPlayer({
   sessionId,
   videoUrl,
   durationSeconds,
+  initialWatchedSeconds = 0,
 }: {
   isOpen: boolean;
   onClose: () => void;
   sessionId: string;
   videoUrl: string;
   durationSeconds: number | null;
+  initialWatchedSeconds?: number;
 }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const watchedRef = useRef(0); // accumulated seconds (anti-cheat)
@@ -52,11 +54,9 @@ export default function RecordingPlayer({
   const [credited, setCredited] = useState(false);
   const [watched, setWatched] = useState(0);
 
-  // Mirror the backend rule: must watch ≥95% of the recording end-to-end
-  // to earn the half-credit. The 5% slack accounts for buffering jitter
-  // and any trailing silence in the export.
+  // Match the backend threshold (90%) so the progress bar reflects the real requirement.
   const fullThreshold = durationSeconds
-    ? Math.floor(durationSeconds * 0.95)
+    ? Math.floor(durationSeconds * 0.90)
     : null;
 
   async function postProgress(seconds: number) {
@@ -85,14 +85,26 @@ export default function RecordingPlayer({
 
   useEffect(() => {
     if (!isOpen) {
-      // Reset on close so a fresh open doesn't reuse stale state.
+      // Flush any progress not yet sent before resetting. Handles the
+      // case where the fellow watched to 90%+ then clicked Close before
+      // the 15s heartbeat or the video's ended event fired.
+      const toFlush = Math.floor(watchedRef.current);
       watchedRef.current = 0;
       lastTimeRef.current = 0;
       lastWallRef.current = Date.now();
-      lastSentRef.current = 0;
+      lastSentRef.current = 0; // reset first so postProgress check passes
       setCredited(false);
       setWatched(0);
+      if (toFlush > 0) void postProgress(toFlush);
+    } else {
+      // Seed from server-saved progress so the bar shows cumulative state.
+      const saved = initialWatchedSeconds ?? 0;
+      watchedRef.current = saved;
+      lastSentRef.current = saved;
+      setWatched(saved);
+      if (fullThreshold !== null && saved >= fullThreshold) setCredited(true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   // Periodic heartbeat — sends the latest watched count every 15s

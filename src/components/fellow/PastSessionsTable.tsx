@@ -31,6 +31,7 @@ export default function PastSessionsTable({
     sessionId: string;
     videoUrl: string;
     durationSeconds: number | null;
+    initialWatchedSeconds: number;
   } | null>(null);
 
   async function watchRecording(s: FellowSession) {
@@ -47,6 +48,7 @@ export default function PastSessionsTable({
         sessionId: s.id,
         videoUrl: res.url,
         durationSeconds: s.recordingDurationSeconds,
+        initialWatchedSeconds: s.recordingWatchedSeconds ?? 0,
       });
     } catch (err) {
       toast.errorFromException("Couldn't load recording", err);
@@ -138,6 +140,7 @@ export default function PastSessionsTable({
           sessionId={open.sessionId}
           videoUrl={open.videoUrl}
           durationSeconds={open.durationSeconds}
+          initialWatchedSeconds={open.initialWatchedSeconds}
         />
       )}
     </>
