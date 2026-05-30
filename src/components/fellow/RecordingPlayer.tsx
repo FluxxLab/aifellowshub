@@ -21,14 +21,12 @@ type ProgressResponse = {
  * Inline session-recording player with attendance crediting. Plays the
  * MP4 from a short-lived signed URL and heartbeats watched-seconds to
  * the backend so the fellow earns half-credit attendance after they've
- * watched ≥50% of the recording.
+ * watched ≥90% of the recording.
  *
  * Anti-cheat:
- *   - Watched seconds is accumulated only when the playhead actually
- *     moves forward at ≤1.5× wall-clock time (so seeking ahead doesn't
- *     count, and a paused tab in the background doesn't earn credit).
- *   - The cumulative counter is never decreased — rewinding is fine,
- *     credit doesn't double up.
+ *   - Watched seconds accumulates only on forward playback at ≤1.5×
+ *     wall-clock speed. Seeking ahead is detected, warned, and ignored.
+ *   - The cumulative counter never decreases — rewinding is fine.
  */
 export default function RecordingPlayer({
   isOpen,
@@ -46,15 +44,18 @@ export default function RecordingPlayer({
   initialWatchedSeconds?: number;
 }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const watchedRef = useRef(0); // accumulated seconds (anti-cheat)
-  const lastTimeRef = useRef(0); // playhead position at last tick
-  const lastWallRef = useRef(Date.now()); // real time at last tick
-  const lastSentRef = useRef(0); // most recent value posted to backend
+  const watchedRef = useRef(0);
+  const lastTimeRef = useRef(0);
+  const lastWallRef = useRef(Date.now());
+  const lastSentRef = useRef(0);
+  const lastWarnRef = useRef(0); // wall-clock ms of last skip warning
 
   const [credited, setCredited] = useState(false);
   const [watched, setWatched] = useState(0);
+  const [skipCount, setSkipCount] = useState(0);
+  const [showSkipWarning, setShowSkipWarning] = useState(false);
 
-  // Match the backend threshold (90%) so the progress bar reflects the real requirement.
+  // Match the backend threshold (90%).
   const fullThreshold = durationSeconds
     ? Math.floor(durationSeconds * 0.90)
     : null;
@@ -79,25 +80,24 @@ export default function RecordingPlayer({
         );
       }
     } catch {
-      // Heartbeat failure is non-fatal — try again on the next tick.
+      // Non-fatal — retry on next heartbeat.
     }
   }
 
   useEffect(() => {
     if (!isOpen) {
-      // Flush any progress not yet sent before resetting. Handles the
-      // case where the fellow watched to 90%+ then clicked Close before
-      // the 15s heartbeat or the video's ended event fired.
       const toFlush = Math.floor(watchedRef.current);
       watchedRef.current = 0;
       lastTimeRef.current = 0;
       lastWallRef.current = Date.now();
-      lastSentRef.current = 0; // reset first so postProgress check passes
+      lastSentRef.current = 0;
+      lastWarnRef.current = 0;
       setCredited(false);
       setWatched(0);
+      setSkipCount(0);
+      setShowSkipWarning(false);
       if (toFlush > 0) void postProgress(toFlush);
     } else {
-      // Seed from server-saved progress so the bar shows cumulative state.
       const saved = initialWatchedSeconds ?? 0;
       watchedRef.current = saved;
       lastSentRef.current = saved;
@@ -107,8 +107,6 @@ export default function RecordingPlayer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  // Periodic heartbeat — sends the latest watched count every 15s
-  // while the modal is open. Avoids spam from per-frame timeupdate.
   useEffect(() => {
     if (!isOpen) return;
     const t = window.setInterval(() => {
@@ -129,8 +127,6 @@ export default function RecordingPlayer({
     lastWallRef.current = now;
     lastTimeRef.current = v.currentTime;
 
-    // Only credit forward playback at ≤1.5× speed. Skips, jumps, and
-    // background playback that runs faster than wall time get ignored.
     if (playDelta > 0 && playDelta <= wallDelta * 1.5 + 0.5) {
       watchedRef.current += playDelta;
       setWatched(watchedRef.current);
@@ -138,10 +134,23 @@ export default function RecordingPlayer({
   }
 
   function handleSeeking() {
-    // Reset the wall clock so the next timeupdate doesn't get a
-    // monstrous wallDelta after a long pause.
-    lastWallRef.current = Date.now();
-    if (videoRef.current) lastTimeRef.current = videoRef.current.currentTime;
+    const v = videoRef.current;
+    const now = Date.now();
+    // A forward jump > 5 s counts as a skip.
+    if (v && v.currentTime > lastTimeRef.current + 5) {
+      setSkipCount((n) => n + 1);
+      setShowSkipWarning(true);
+      // Toast at most once every 30 s to avoid spamming.
+      if (now - lastWarnRef.current > 30_000) {
+        lastWarnRef.current = now;
+        toast.error(
+          "Skipping doesn't count",
+          "Skipped sections won't be credited. Watch continuously to reach 90%.",
+        );
+      }
+    }
+    lastWallRef.current = now;
+    if (v) lastTimeRef.current = v.currentTime;
   }
 
   function handleEnded() {
@@ -156,9 +165,20 @@ export default function RecordingPlayer({
         Session recording
       </h2>
       <p className="mt-1 text-sm text-gray-500">
-        Watch the full recording to earn half-credit attendance for this
-        session. Skipping ahead doesn&apos;t count.
+        Watch continuously to earn half-credit. Skipping ahead doesn&apos;t count toward your 90%.
       </p>
+
+      {showSkipWarning && !credited && (
+        <div className="mt-3 flex items-start gap-2 rounded-lg border border-warning-200 bg-warning-50 px-3 py-2 text-xs text-warning-700">
+          <svg className="mt-0.5 h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+          </svg>
+          <span>
+            <strong>Skipped sections won&apos;t be credited.</strong> Watch the full recording without skipping to earn attendance credit.
+            {skipCount > 1 && ` (${skipCount} skips detected so far)`}
+          </span>
+        </div>
+      )}
 
       <video
         ref={videoRef}
@@ -175,12 +195,16 @@ export default function RecordingPlayer({
         <div className="flex items-center justify-between text-xs text-gray-500">
           <span>
             Watched {formatDuration(Math.floor(watched))}
-            {durationSeconds &&
-              ` of ${formatDuration(durationSeconds)}`}
+            {durationSeconds && ` of ${formatDuration(durationSeconds)}`}
+            {skipCount > 0 && !credited && (
+              <span className="ml-2 text-warning-600">· {skipCount} skip{skipCount !== 1 ? "s" : ""}</span>
+            )}
           </span>
           {fullThreshold !== null && !credited && (
             <span>
-              Watch {formatDuration(Math.max(0, fullThreshold - Math.floor(watched)))} more to earn half-credit
+              {Math.floor(watched) >= fullThreshold
+                ? "Qualifying — credit will be saved shortly"
+                : `${formatDuration(Math.max(0, fullThreshold - Math.floor(watched)))} more to earn half-credit`}
             </span>
           )}
           {credited && (
@@ -194,10 +218,7 @@ export default function RecordingPlayer({
             <div
               className="h-full rounded-full bg-fellowship-navy transition-all"
               style={{
-                width: `${Math.min(
-                  100,
-                  Math.round((watched / fullThreshold) * 100),
-                )}%`,
+                width: `${Math.min(100, Math.round((watched / fullThreshold) * 100))}%`,
               }}
             />
           </div>
