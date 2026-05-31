@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Archivo } from 'next/font/google';
 import * as Sentry from "@sentry/nextjs";
 import { Toaster } from "sonner";
+import ErrorModal from "@/components/ui/ErrorModal";
 import './globals.css';
 import "flatpickr/dist/flatpickr.css";
 
@@ -46,6 +47,7 @@ export default function RootLayout({
     <html lang="en" className={archivo.variable}>
       <body className="font-archivo">
         {children}
+        <ErrorModal />
         <Toaster
           position="top-right"
           richColors

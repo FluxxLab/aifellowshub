@@ -7,6 +7,7 @@
  */
 import { toast as sonner } from "sonner";
 import { ApiError } from "./api/client";
+import { emitError } from "./error-modal";
 
 export const toast = {
   success(title: string, description?: string) {
@@ -14,7 +15,7 @@ export const toast = {
   },
 
   error(title: string, description?: string) {
-    sonner.error(title, { description });
+    emitError(title, description);
   },
 
   info(title: string, description?: string) {
@@ -22,7 +23,7 @@ export const toast = {
   },
 
   /**
-   * Format any thrown value into an error toast. Use it in catch blocks so
+   * Format any thrown value into an error modal. Use it in catch blocks so
    * the call site stays one line:
    *
    *   catch (err) { toast.errorFromException("Couldn't save", err) }
@@ -33,13 +34,13 @@ export const toast = {
   errorFromException(title: string, err: unknown) {
     if (err instanceof ApiError) {
       if (err.status === 401) return;
-      sonner.error(title, { description: err.message });
+      emitError(title, err.message);
       return;
     }
     if (err instanceof Error) {
-      sonner.error(title, { description: err.message });
+      emitError(title, err.message);
       return;
     }
-    sonner.error(title, { description: "Please try again." });
+    emitError(title, "Please try again.");
   },
 };
