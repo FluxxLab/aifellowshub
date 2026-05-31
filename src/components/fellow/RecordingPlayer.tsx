@@ -3,7 +3,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import Button from "@/components/ui/button/Button";
 import { apiFetch } from "@/lib/api/client";
-import { toast } from "@/lib/toast";
 
 type ProgressResponse = {
   attendance: {
@@ -54,6 +53,7 @@ export default function RecordingPlayer({
   const [watched, setWatched] = useState(0);
   const [skipCount, setSkipCount] = useState(0);
   const [showSkipWarning, setShowSkipWarning] = useState(false);
+  const [skipModalOpen, setSkipModalOpen] = useState(false);
 
   // Match the backend threshold (90%).
   const fullThreshold = durationSeconds
@@ -96,6 +96,7 @@ export default function RecordingPlayer({
       setWatched(0);
       setSkipCount(0);
       setShowSkipWarning(false);
+      setSkipModalOpen(false);
       if (toFlush > 0) void postProgress(toFlush);
     } else {
       const saved = initialWatchedSeconds ?? 0;
@@ -140,13 +141,11 @@ export default function RecordingPlayer({
     if (v && v.currentTime > lastTimeRef.current + 5) {
       setSkipCount((n) => n + 1);
       setShowSkipWarning(true);
-      // Toast at most once every 30 s to avoid spamming.
+      // Show modal at most once every 30 s; pause video so they read it.
       if (now - lastWarnRef.current > 30_000) {
         lastWarnRef.current = now;
-        toast.error(
-          "Skipping doesn't count",
-          "Skipped sections won't be credited. Watch continuously to reach 90%.",
-        );
+        v.pause();
+        setSkipModalOpen(true);
       }
     }
     lastWallRef.current = now;
@@ -159,7 +158,37 @@ export default function RecordingPlayer({
     }
   }
 
+  function dismissSkipModal() {
+    setSkipModalOpen(false);
+    videoRef.current?.play();
+  }
+
   return (
+    <>
+    <Modal
+      isOpen={skipModalOpen}
+      onClose={dismissSkipModal}
+      className="m-4 max-w-sm p-6 text-center"
+    >
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-warning-50">
+        <svg className="h-7 w-7 text-warning-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+        </svg>
+      </div>
+      <h3 className="mt-4 text-base font-bold text-gray-800">Skipping doesn&apos;t count</h3>
+      <p className="mt-2 text-sm text-gray-500">
+        Sections you skip are <strong>not</strong> credited toward your 90% watch requirement. Watch the recording continuously from start to finish to earn half-credit attendance.
+      </p>
+      <Button
+        variant="fellowship"
+        size="sm"
+        className="mt-5 w-full"
+        onClick={dismissSkipModal}
+      >
+        OK, I&apos;ll watch without skipping
+      </Button>
+    </Modal>
+
     <Modal isOpen={isOpen} onClose={onClose} className="m-4 max-w-3xl p-4 sm:p-6">
       <h2 className="text-title-sm font-bold text-gray-800">
         Session recording
@@ -231,6 +260,7 @@ export default function RecordingPlayer({
         </Button>
       </div>
     </Modal>
+    </>
   );
 }
 
