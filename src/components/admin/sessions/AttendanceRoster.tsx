@@ -417,6 +417,7 @@ function Row({
    <RecordingWatchCell
      watchedSeconds={record.recordingWatchedSeconds}
      creditedAt={record.recordingCreditedAt}
+     skipCount={record.recordingSkipCount}
      sessionDurationMinutes={sessionDurationMinutes}
    />
  </Td>
@@ -528,10 +529,12 @@ function FinalStatusBadge({
 function RecordingWatchCell({
   watchedSeconds,
   creditedAt,
+  skipCount,
   sessionDurationMinutes,
 }: {
   watchedSeconds: number;
   creditedAt: string | null;
+  skipCount: number;
   sessionDurationMinutes: number;
 }) {
   const durationSeconds = sessionDurationMinutes * 60;
@@ -552,11 +555,18 @@ function RecordingWatchCell({
         <span className="text-xs tabular-nums text-gray-700">
           {mins}/{totalMins} min ({pct}%)
         </span>
-        {creditedAt && (
-          <span className="rounded-full bg-success-50 px-1.5 py-0.5 text-[10px] font-semibold text-success-700">
-            Credited
-          </span>
-        )}
+        <div className="flex items-center gap-1">
+          {skipCount > 0 && (
+            <span className="rounded-full bg-warning-50 px-1.5 py-0.5 text-[10px] font-semibold text-warning-700">
+              {skipCount} skip{skipCount !== 1 ? "s" : ""}
+            </span>
+          )}
+          {creditedAt && (
+            <span className="rounded-full bg-success-50 px-1.5 py-0.5 text-[10px] font-semibold text-success-700">
+              Credited
+            </span>
+          )}
+        </div>
       </div>
       <div className="h-1 w-full overflow-hidden rounded-full bg-gray-100">
         <div

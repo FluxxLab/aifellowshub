@@ -64,6 +64,8 @@ export type AttendanceRecord = {
   recordingWatchedSeconds: number;
   /** ISO timestamp when recording half-credit was awarded, or null. */
   recordingCreditedAt: string | null;
+  /** Number of forward skips (>5 s) detected across all watch sessions. */
+  recordingSkipCount: number;
 };
 
 export type SessionDetail = LiveSession & {

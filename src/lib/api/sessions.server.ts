@@ -81,6 +81,7 @@ type BackendAdminAttendance = {
   leftAt: string | null;
   recordingWatchedSeconds: number | null;
   recordingCreditedAt: string | null;
+  recordingSkipCount: number | null;
 };
 
 type BackendAdminSession = {
@@ -143,6 +144,7 @@ function mapToSessionDetail(s: BackendAdminSession): SessionDetail {
     override: null,
     recordingWatchedSeconds: a.recordingWatchedSeconds ?? 0,
     recordingCreditedAt: a.recordingCreditedAt ?? null,
+    recordingSkipCount: a.recordingSkipCount ?? 0,
   }));
 
   const scheduledStart = s.startsAt;

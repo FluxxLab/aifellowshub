@@ -67,7 +67,7 @@ export default function RecordingPlayer({
     try {
       const res = await apiFetch<ProgressResponse>(
         `/sessions/${encodeURIComponent(sessionId)}/recording-progress`,
-        { method: "POST", body: { secondsWatched: seconds } },
+        { method: "POST", body: { secondsWatched: seconds, skipCount } },
       );
       if (
         res.attendance.status === "attended_recording" &&
