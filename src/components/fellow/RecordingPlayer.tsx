@@ -54,6 +54,7 @@ export default function RecordingPlayer({
   const [skipCount, setSkipCount] = useState(0);
   const [showSkipWarning, setShowSkipWarning] = useState(false);
   const [skipModalOpen, setSkipModalOpen] = useState(false);
+  const [leaveModalOpen, setLeaveModalOpen] = useState(false);
 
   // Match the backend threshold (90%).
   const fullThreshold = durationSeconds
@@ -97,6 +98,7 @@ export default function RecordingPlayer({
       setSkipCount(0);
       setShowSkipWarning(false);
       setSkipModalOpen(false);
+      setLeaveModalOpen(false);
       if (toFlush > 0) void postProgress(toFlush);
     } else {
       const saved = initialWatchedSeconds ?? 0;
@@ -158,6 +160,16 @@ export default function RecordingPlayer({
     }
   }
 
+  function handleRequestClose() {
+    // If already credited or nothing watched yet, close freely.
+    if (credited || Math.floor(watchedRef.current) === 0) {
+      onClose();
+      return;
+    }
+    videoRef.current?.pause();
+    setLeaveModalOpen(true);
+  }
+
   function dismissSkipModal() {
     setSkipModalOpen(false);
     videoRef.current?.play();
@@ -189,7 +201,44 @@ export default function RecordingPlayer({
       </Button>
     </Modal>
 
-    <Modal isOpen={isOpen} onClose={onClose} className="m-4 max-w-3xl p-4 sm:p-6">
+    <Modal
+      isOpen={leaveModalOpen}
+      onClose={() => { setLeaveModalOpen(false); videoRef.current?.play(); }}
+      className="m-4 max-w-sm p-6 text-center"
+    >
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-error-50">
+        <svg className="h-7 w-7 text-error-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
+        </svg>
+      </div>
+      <h3 className="mt-4 text-base font-bold text-gray-800">Leave the recording?</h3>
+      <p className="mt-2 text-sm text-gray-500">
+        You&apos;ve watched <strong>{formatDuration(Math.floor(watched))}</strong>
+        {durationSeconds ? ` of ${formatDuration(durationSeconds)}` : ""}.
+        {fullThreshold !== null && Math.floor(watched) < fullThreshold
+          ? ` You need ${formatDuration(Math.max(0, fullThreshold - Math.floor(watched)))} more to earn half-credit — your progress is saved if you come back.`
+          : " Your progress is saved."}
+      </p>
+      <div className="mt-5 flex flex-col gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full"
+          onClick={() => { setLeaveModalOpen(false); videoRef.current?.play(); }}
+        >
+          Keep watching
+        </Button>
+        <button
+          type="button"
+          onClick={() => { setLeaveModalOpen(false); onClose(); }}
+          className="w-full rounded-lg px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700"
+        >
+          Leave anyway
+        </button>
+      </div>
+    </Modal>
+
+    <Modal isOpen={isOpen} onClose={handleRequestClose} className="m-4 max-w-3xl p-4 sm:p-6">
       <h2 className="text-title-sm font-bold text-gray-800">
         Session recording
       </h2>
@@ -255,7 +304,7 @@ export default function RecordingPlayer({
       </div>
 
       <div className="mt-5 flex justify-end">
-        <Button variant="outline" size="sm" onClick={onClose}>
+        <Button variant="outline" size="sm" onClick={handleRequestClose}>
           Close
         </Button>
       </div>
