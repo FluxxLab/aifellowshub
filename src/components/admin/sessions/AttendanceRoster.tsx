@@ -70,11 +70,6 @@ export default function AttendanceRoster({ sessionId, session }: AttendanceRoste
  });
  }, [records, filter, search]);
 
- // Map UI override → backend status. The backend models attended/missed/rsvpd.
- // "excused" is a UI-only concept that the backend doesn't yet persist; we
- // record it locally so the badge updates but the change won't survive a
- // reload. Real "Mark attended" / "Mark missed" round-trips through
- // POST /sessions/:id/mark-attendance.
  const setOverride = async (
  fellowId: string,
  override: AttendanceOverride | null,
@@ -88,7 +83,7 @@ export default function AttendanceRoster({ sessionId, session }: AttendanceRoste
  ? {
  ...r,
  override,
- autoCredited: override === "attended" ? true : r.autoCredited,
+ autoCredited: override === "attended" || override === "excused" ? true : r.autoCredited,
  totalMinutesPresent: minutesAttended ?? r.totalMinutesPresent,
  }
  : r,
@@ -98,6 +93,8 @@ export default function AttendanceRoster({ sessionId, session }: AttendanceRoste
  const backendStatus =
  override === "attended"
  ? "attended"
+ : override === "excused"
+ ? "excused"
  : override === null
  ? "missed"
  : null;

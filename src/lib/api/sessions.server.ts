@@ -75,7 +75,7 @@ function mapToLiveSession(s: BackendAdminListSession): LiveSession {
 type BackendAdminAttendance = {
   id: string;
   fellow: { id: string; fullName: string; email: string };
-  status: "rsvpd" | "attended" | "missed";
+  status: "rsvpd" | "attended" | "excused" | "missed";
   minutesAttended: number | null;
   joinedAt: string | null;
   leftAt: string | null;
@@ -136,7 +136,7 @@ function mapToSessionDetail(s: BackendAdminSession): SessionDetail {
     joinedAt: a.joinedAt,
     leftAt: a.leftAt,
     totalMinutesPresent: a.minutesAttended ?? 0,
-    autoCredited: a.status === "attended",
+    autoCredited: a.status === "attended" || a.status === "excused",
     // Only show "In session" while the meeting is live. Once ended the
     // Zoom leave webhook may never have fired for everyone — suppress
     // the flag so the roster shows their real credited status instead.
