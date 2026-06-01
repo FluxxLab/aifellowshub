@@ -54,24 +54,24 @@ export default function AssignMentorCard({
     setSubmitting(null);
   }
 
-  async function clearOverride() {
+  async function removeMentor() {
     const ok = await confirm({
-      title: "Clear mentor override?",
+      title: "Remove mentor?",
       message:
-        "This fellow will fall back to the sector-matched mentor (or no mentor if none exists for their sector).",
-      confirmLabel: "Clear override",
+        "This fellow will have no mentor assigned. You can assign one again at any time.",
+      confirmLabel: "Remove",
       tone: "danger",
     });
     if (!ok) return;
     try {
       await apiFetch(
         `/admin/fellows/${encodeURIComponent(fellowId)}/mentor`,
-        { method: "PATCH", body: { mentorId: null } },
+        { method: "PATCH", body: { mentorId: null, remove: true } },
       );
-      toast.success("Override cleared");
+      toast.success("Mentor removed");
       router.refresh();
     } catch (err) {
-      toast.errorFromException("Couldn't clear override", err);
+      toast.errorFromException("Couldn't remove mentor", err);
     }
   }
 
@@ -112,15 +112,13 @@ export default function AssignMentorCard({
             >
               Reassign
             </button>
-            {hasOverride && (
-              <button
-                type="button"
-                onClick={clearOverride}
-                className="text-xs font-semibold text-gray-500 hover:text-gray-700"
-              >
-                Clear override
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={removeMentor}
+              className="text-xs font-semibold text-error-600 hover:text-error-700"
+            >
+              Remove mentor
+            </button>
           </div>
         </div>
       ) : (
