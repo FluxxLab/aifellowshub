@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import Button from "@/components/ui/button/Button";
 import { apiFetch } from "@/lib/api/client";
+import { toast } from "@/lib/toast";
 
 type ProgressResponse = {
   attendance: {
