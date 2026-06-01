@@ -136,12 +136,14 @@ function mapToSessionDetail(s: BackendAdminSession): SessionDetail {
     joinedAt: a.joinedAt,
     leftAt: a.leftAt,
     totalMinutesPresent: a.minutesAttended ?? 0,
-    autoCredited: a.status === "attended" || a.status === "excused",
+    autoCredited: a.status === "attended",
     // Only show "In session" while the meeting is live. Once ended the
     // Zoom leave webhook may never have fired for everyone — suppress
     // the flag so the roster shows their real credited status instead.
     inSession: a.joinedAt !== null && a.leftAt === null && s.status !== "ended",
-    override: null,
+    // Seed the override from the DB status so "Excused" badge persists
+    // across page reloads without needing a separate override column.
+    override: a.status === "excused" ? "excused" : null,
     recordingWatchedSeconds: a.recordingWatchedSeconds ?? 0,
     recordingCreditedAt: a.recordingCreditedAt ?? null,
     recordingSkipCount: a.recordingSkipCount ?? 0,

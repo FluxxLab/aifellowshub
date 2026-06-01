@@ -83,7 +83,7 @@ export default function AttendanceRoster({ sessionId, session }: AttendanceRoste
  ? {
  ...r,
  override,
- autoCredited: override === "attended" || override === "excused" ? true : r.autoCredited,
+ autoCredited: override === "attended" ? true : r.autoCredited,
  totalMinutesPresent: minutesAttended ?? r.totalMinutesPresent,
  }
  : r,
