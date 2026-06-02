@@ -17,6 +17,7 @@
  * the "is it loading?" confusion).
  */
 import Image from "next/image";
+import LessonVideoPlayer from "@/components/fellow/LessonVideoPlayer";
 
 type Props = {
   contentUrl: string | null;
@@ -50,38 +51,12 @@ export default function LessonContent({
 
   if (mime.startsWith("video/")) {
     return (
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-black">
-        <video
-          src={contentUrl}
-          poster={posterUrl ?? undefined}
-          controls
-          // `crossorigin="anonymous"` is required because the page
-          // sets `Cross-Origin-Embedder-Policy: require-corp` (for
-          // the Zoom Meeting SDK's SharedArrayBuffer) — without it,
-          // the browser refuses to fetch the cross-origin Spaces URL.
-          // Spaces' bucket CORS already allows GET from this origin,
-          // so the CORS path succeeds and playback works.
-          crossOrigin="anonymous"
-          // `preload="metadata"` fetches duration + first frame only —
-          // saves bandwidth for fellows who scroll past the lesson
-          // without playing it. Range requests fill in the rest.
-          preload="metadata"
-          // `controlsList="nodownload"` is a hint, not enforcement —
-          // any fellow can capture the URL from devtools. Real DRM
-          // would require a different storage backend (Mux, etc.).
-          // We lean on the audit log + RLS-style backend gating
-          // for misuse signals.
-          controlsList="nodownload"
-          className="w-full max-h-[70vh]"
-        >
-          {title ? <track kind="captions" /> : null}
-          Your browser doesn&apos;t support inline video. {" "}
-          <a href={contentUrl} className="underline">
-            Open the file
-          </a>
-          .
-        </video>
-      </div>
+      <LessonVideoPlayer
+        src={contentUrl}
+        poster={posterUrl ?? undefined}
+        title={title}
+        crossOrigin="anonymous"
+      />
     );
   }
 
