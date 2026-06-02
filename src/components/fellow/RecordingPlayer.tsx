@@ -51,7 +51,8 @@ export default function RecordingPlayer({
   const lastTimeRef = useRef(0);
   const lastWallRef = useRef(Date.now());
   const lastSentRef = useRef(0);
-  const lastWarnRef = useRef(0); // wall-clock ms of last skip warning
+  const lastWarnRef = useRef(0);
+  const pauseAfterSeekRef = useRef(false);
 
   const [credited, setCredited] = useState(false);
   const [watched, setWatched] = useState(0);
@@ -188,7 +189,7 @@ export default function RecordingPlayer({
       // Show modal at most once every 30 s; pause video so they read it.
       if (now - lastWarnRef.current > 30_000) {
         lastWarnRef.current = now;
-        v.pause();
+        pauseAfterSeekRef.current = true;
         setSkipModalOpen(true);
       }
     }
@@ -213,7 +214,15 @@ export default function RecordingPlayer({
     setLeaveModalOpen(true);
   }
 
+  function handleSeeked() {
+    if (pauseAfterSeekRef.current) {
+      videoRef.current?.pause();
+      pauseAfterSeekRef.current = false;
+    }
+  }
+
   function dismissSkipModal() {
+    pauseAfterSeekRef.current = false;
     setSkipModalOpen(false);
     videoRef.current?.play();
   }
@@ -337,6 +346,7 @@ export default function RecordingPlayer({
         className="mt-4 aspect-video w-full rounded-lg bg-black"
         onTimeUpdate={handleTimeUpdate}
         onSeeking={handleSeeking}
+        onSeeked={handleSeeked}
         onEnded={handleEnded}
       />
 

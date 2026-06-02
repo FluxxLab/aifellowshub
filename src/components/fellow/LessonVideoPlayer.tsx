@@ -23,6 +23,7 @@ export default function LessonVideoPlayer({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const lastTimeRef = useRef(0);
   const lastWarnRef = useRef(0);
+  const pauseAfterSeekRef = useRef(false);
   const [skipModalOpen, setSkipModalOpen] = useState(false);
   const [skipCount, setSkipCount] = useState(0);
   const [showSkipBanner, setShowSkipBanner] = useState(false);
@@ -41,14 +42,24 @@ export default function LessonVideoPlayer({
       setShowSkipBanner(true);
       if (now - lastWarnRef.current > 30_000) {
         lastWarnRef.current = now;
-        v.pause();
+        // Don't pause here — the browser is still seeking and will resume
+        // playback when seeking finishes. Flag it; onSeeked applies the pause.
+        pauseAfterSeekRef.current = true;
         setSkipModalOpen(true);
       }
     }
     lastTimeRef.current = v.currentTime;
   }
 
+  function handleSeeked() {
+    if (pauseAfterSeekRef.current) {
+      videoRef.current?.pause();
+      pauseAfterSeekRef.current = false;
+    }
+  }
+
   function dismissSkipModal() {
+    pauseAfterSeekRef.current = false;
     setSkipModalOpen(false);
     videoRef.current?.play();
   }
@@ -103,6 +114,7 @@ export default function LessonVideoPlayer({
           className="w-full max-h-[70vh]"
           onTimeUpdate={handleTimeUpdate}
           onSeeking={handleSeeking}
+          onSeeked={handleSeeked}
         >
           {title ? <track kind="captions" /> : null}
           Your browser doesn&apos;t support inline video.{" "}
