@@ -1,5 +1,6 @@
 "use client";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
  Table,
  TableBody,
@@ -44,6 +45,7 @@ type AttendanceRosterProps = {
 };
 
 export default function AttendanceRoster({ sessionId, session }: AttendanceRosterProps) {
+ const router = useRouter();
  const [records, setRecords] = useState<AttendanceRecord[]>(session.attendance);
  const [filter, setFilter] = useState<(typeof FILTERS)[number]["id"]>("all");
  const [search, setSearch] = useState("");
@@ -52,6 +54,28 @@ export default function AttendanceRoster({ sessionId, session }: AttendanceRoste
  const [bulkMinutes, setBulkMinutes] = useState("");
  const [bulkBusy, setBulkBusy] = useState(false);
  const [syncBusy, setSyncBusy] = useState(false);
+ const [refreshing, setRefreshing] = useState(false);
+
+ // Sync local records when the server re-renders fresh data (after router.refresh()).
+ useEffect(() => {
+  setRecords(session.attendance);
+ }, [session.attendance]);
+
+ const refreshRecording = useCallback(async () => {
+  setRefreshing(true);
+  router.refresh();
+  // Give the server component time to re-render before clearing the spinner.
+  await new Promise((r) => setTimeout(r, 1200));
+  setRefreshing(false);
+ }, [router]);
+
+ // Auto-refresh every 30 s when the session has a recording so admins
+ // see live watch progress without manually reloading the page.
+ useEffect(() => {
+  if (!session.hasRecording) return;
+  const id = setInterval(() => { void refreshRecording(); }, 30_000);
+  return () => clearInterval(id);
+ }, [session.hasRecording, refreshRecording]);
 
   const counts = useMemo(() => {
     const attended = records.filter((r) => finalStatusOf(r) === "attended").length;
@@ -223,6 +247,17 @@ export default function AttendanceRoster({ sessionId, session }: AttendanceRoste
     )}
     <Tally tone="info" label="Excused" value={counts.excused} />
     <Tally tone="error" label="Missed" value={counts.missed} />
+ {session.hasRecording && (
+  <button
+   type="button"
+   onClick={() => void refreshRecording()}
+   disabled={refreshing}
+   title="Reload recording watch progress for all fellows"
+   className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+  >
+   {refreshing ? "Refreshing…" : "Refresh recording"}
+  </button>
+ )}
  {session.status === "ended" && (
   <button
    type="button"

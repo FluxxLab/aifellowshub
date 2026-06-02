@@ -34,24 +34,42 @@ export default function PastSessionsTable({
     initialWatchedSeconds: number;
   } | null>(null);
 
+  type ProgressRes = { attendance: { recordingWatchedSeconds: number; recordingCreditedAt: string | null; status: string } };
+
   async function watchRecording(s: FellowSession) {
     if (!s.id) return;
     try {
-      const res = await apiFetch<{ url: string | null }>(
-        `/sessions/${encodeURIComponent(s.id)}/recording-url`,
-      );
-      if (!res.url) {
+      const [urlRes, progressRes] = await Promise.all([
+        apiFetch<{ url: string | null }>(`/sessions/${encodeURIComponent(s.id)}/recording-url`),
+        apiFetch<ProgressRes>(`/sessions/${encodeURIComponent(s.id)}/recording-progress`).catch(() => null),
+      ]);
+      if (!urlRes.url) {
         toast.error("Recording isn't available yet — try again shortly.");
         return;
       }
       setOpen({
         sessionId: s.id,
-        videoUrl: res.url,
+        videoUrl: urlRes.url,
         durationSeconds: s.recordingDurationSeconds,
-        initialWatchedSeconds: s.recordingWatchedSeconds ?? 0,
+        // Use fresh server progress so re-opening the player picks up where
+        // the fellow left off even if the page was loaded hours ago.
+        initialWatchedSeconds: progressRes?.attendance.recordingWatchedSeconds ?? s.recordingWatchedSeconds ?? 0,
       });
     } catch (err) {
       toast.errorFromException("Couldn't load recording", err);
+    }
+  }
+
+  async function refreshUrl(sessionId: string) {
+    try {
+      const res = await apiFetch<{ url: string | null }>(
+        `/sessions/${encodeURIComponent(sessionId)}/recording-url`,
+      );
+      if (res.url) {
+        setOpen((prev) => prev ? { ...prev, videoUrl: res.url! } : null);
+      }
+    } catch {
+      // Silent — the video will error naturally when the old URL expires.
     }
   }
 
@@ -137,6 +155,7 @@ export default function PastSessionsTable({
         <RecordingPlayer
           isOpen={true}
           onClose={() => setOpen(null)}
+          onRefreshUrl={() => void refreshUrl(open.sessionId)}
           sessionId={open.sessionId}
           videoUrl={open.videoUrl}
           durationSeconds={open.durationSeconds}

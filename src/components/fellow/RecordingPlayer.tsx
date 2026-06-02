@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import Button from "@/components/ui/button/Button";
-import { apiFetch } from "@/lib/api/client";
+import { apiFetch, ApiError } from "@/lib/api/client";
 import { toast } from "@/lib/toast";
 
 type ProgressResponse = {
@@ -31,6 +31,7 @@ type ProgressResponse = {
 export default function RecordingPlayer({
   isOpen,
   onClose,
+  onRefreshUrl,
   sessionId,
   videoUrl,
   durationSeconds,
@@ -38,6 +39,8 @@ export default function RecordingPlayer({
 }: {
   isOpen: boolean;
   onClose: () => void;
+  /** Called ~30 min before the 6-hour signed URL expires so the parent can swap in a fresh one. */
+  onRefreshUrl?: () => void;
   sessionId: string;
   videoUrl: string;
   durationSeconds: number | null;
@@ -56,6 +59,9 @@ export default function RecordingPlayer({
   const [showSkipWarning, setShowSkipWarning] = useState(false);
   const [skipModalOpen, setSkipModalOpen] = useState(false);
   const [leaveModalOpen, setLeaveModalOpen] = useState(false);
+  const [progressErrorModal, setProgressErrorModal] = useState<string | null>(null);
+  const failCountRef = useRef(0);
+  const endedFlushedRef = useRef(false);
 
   // Match the backend threshold (90%).
   const fullThreshold = durationSeconds
@@ -70,6 +76,9 @@ export default function RecordingPlayer({
         `/sessions/${encodeURIComponent(sessionId)}/recording-progress`,
         { method: "POST", body: { secondsWatched: seconds, skipCount } },
       );
+      // Clear any previous error modal on success.
+      failCountRef.current = 0;
+      setProgressErrorModal(null);
       if (
         res.attendance.status === "attended_recording" &&
         res.attendance.recordingCreditedAt &&
@@ -81,8 +90,20 @@ export default function RecordingPlayer({
           "Thanks for catching up on this recording.",
         );
       }
-    } catch {
-      // Non-fatal — retry on next heartbeat.
+    } catch (err) {
+      failCountRef.current += 1;
+      // Surface a modal after 3 consecutive failures so the fellow
+      // knows their progress may not be saving. Transient network blips
+      // (1–2 failures) are silently retried; persistent errors are not.
+      if (failCountRef.current === 3) {
+        videoRef.current?.pause();
+        const isPermanent = err instanceof ApiError && (err.status === 400 || err.status === 403);
+        setProgressErrorModal(
+          isPermanent
+            ? "Your progress can't be saved right now. Please contact support — your watched time has not been recorded."
+            : "Your progress isn't saving. Check your connection and resume — your watch time will retry automatically.",
+        );
+      }
     }
   }
 
@@ -100,13 +121,25 @@ export default function RecordingPlayer({
       setShowSkipWarning(false);
       setSkipModalOpen(false);
       setLeaveModalOpen(false);
-      if (toFlush > 0) void postProgress(toFlush);
+      setProgressErrorModal(null);
+      failCountRef.current = 0;
+      // Skip flush if handleEnded already sent this value to avoid
+      // sending the same secondsWatched twice in rapid succession.
+      if (toFlush > 0 && !endedFlushedRef.current) void postProgress(toFlush);
+      endedFlushedRef.current = false;
     } else {
       const saved = initialWatchedSeconds ?? 0;
       watchedRef.current = saved;
       lastSentRef.current = saved;
       setWatched(saved);
       if (fullThreshold !== null && saved >= fullThreshold) setCredited(true);
+      // Sync refs to the video's current position so the first timeupdate
+      // event after open doesn't misread the resume jump as a forward skip.
+      const v = videoRef.current;
+      if (v) {
+        lastTimeRef.current = v.currentTime;
+        lastWallRef.current = Date.now();
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
@@ -121,6 +154,14 @@ export default function RecordingPlayer({
     return () => window.clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
+
+  // Refresh the signed URL 30 min before the 6-hour expiry so the video
+  // never stalls for fellows watching a long session or leaving the player open.
+  useEffect(() => {
+    if (!isOpen || !onRefreshUrl) return;
+    const id = window.setTimeout(onRefreshUrl, (6 * 60 - 30) * 60 * 1000);
+    return () => window.clearTimeout(id);
+  }, [isOpen, onRefreshUrl]);
 
   function handleTimeUpdate() {
     const v = videoRef.current;
@@ -157,6 +198,7 @@ export default function RecordingPlayer({
 
   function handleEnded() {
     if (watchedRef.current > 0) {
+      endedFlushedRef.current = true;
       void postProgress(Math.floor(watchedRef.current));
     }
   }
@@ -176,8 +218,36 @@ export default function RecordingPlayer({
     videoRef.current?.play();
   }
 
+  function dismissProgressErrorModal() {
+    setProgressErrorModal(null);
+    failCountRef.current = 0;
+    videoRef.current?.play();
+  }
+
   return (
     <>
+    <Modal
+      isOpen={!!progressErrorModal}
+      onClose={dismissProgressErrorModal}
+      className="m-4 max-w-sm p-6 text-center"
+    >
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-error-50">
+        <svg className="h-7 w-7 text-error-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+        </svg>
+      </div>
+      <h3 className="mt-4 text-base font-bold text-gray-800">Progress not saving</h3>
+      <p className="mt-2 text-sm text-gray-500">{progressErrorModal}</p>
+      <Button
+        variant="outline"
+        size="sm"
+        className="mt-5 w-full"
+        onClick={dismissProgressErrorModal}
+      >
+        OK, continue watching
+      </Button>
+    </Modal>
+
     <Modal
       isOpen={skipModalOpen}
       onClose={dismissSkipModal}
