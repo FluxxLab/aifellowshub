@@ -374,7 +374,17 @@ export default function RecordingPlayer({
         )}
       </div>
 
-      <div className="mt-5 flex justify-end">
+      <div className="mt-5 flex items-center justify-between">
+        <div
+          className={`transition-opacity duration-700 ${credited ? "opacity-100" : "pointer-events-none opacity-0"}`}
+        >
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-success-50 px-3 py-1.5 text-xs font-semibold text-success-700 ring-1 ring-success-200">
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+            </svg>
+            Completed
+          </span>
+        </div>
         <Button variant="outline" size="sm" onClick={handleRequestClose}>
           Close
         </Button>
