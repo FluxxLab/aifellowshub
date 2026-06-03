@@ -102,6 +102,8 @@ type BackendAdminSession = {
   host: { id: string; fullName: string } | null;
   teachers: { id: string; fullName: string }[];
   status: SessionStatus;
+  hasRecording?: boolean;
+  recordingDurationSeconds?: number | null;
   attendance: BackendAdminAttendance[];
 };
 
@@ -170,9 +172,7 @@ function mapToSessionDetail(s: BackendAdminSession): SessionDetail {
     attendedCount: s.status === "ended" ? attendedCount : undefined,
     expectedCount,
     attendanceThresholdMinutes: s.attendanceThresholdMinutes,
-    hasRecording: Boolean(
-      (s as { hasRecording?: boolean }).hasRecording,
-    ),
+    hasRecording: Boolean(s.hasRecording),
     attendance,
     joinUrl: s.joinUrl,
     zoomMeetingId: s.zoomMeetingId,
