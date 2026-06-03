@@ -122,12 +122,16 @@ export async function getFellowHomeServer(): Promise<FellowHome> {
   // (status === "ended" AND startsAt in the past) or whose attendance row has
   // already been settled (attended / attended_recording / missed).
   // Count modules whose session has happened: onboarding (always), or any
-  // module where the fellow has a settled attendance row (attended/missed)
-  // on ANY session. Uses sessionAttended from the backend which checks all
-  // sessions for the module, not just the primary one surfaced in `session`.
+  // module whose primary session has status "ended" — regardless of whether
+  // the fellow has an attendance row. A fellow who never RSVPed has no row
+  // (myAttendance === null), so checking only for a "missed" row silently
+  // excludes those sessions from the denominator and inflates the rate to 100%.
+  const sessionEnded = (m: BackendCurriculumModule) =>
+    m.session?.status === "ended" ||
+    // Fallback: status not yet flipped to "ended" but start time has passed.
+    (m.session != null && new Date(m.session.startsAt).getTime() < Date.now());
   const modulesWithPastSession = modules.filter(
-    (m) => isOnboarding(m) || m.sessionAttended ||
-      m.session?.myAttendance?.status === "missed",
+    (m) => isOnboarding(m) || sessionEnded(m),
   );
   const attendedCount = modulesWithPastSession.filter(
     (m) => isOnboarding(m) || m.sessionAttended,
