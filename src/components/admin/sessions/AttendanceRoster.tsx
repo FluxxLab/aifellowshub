@@ -21,13 +21,16 @@ import type {
  SessionDetail,
 } from "@/lib/api/sessions";
 
-type FinalStatus = "attended" | "excused" | "in_session" | "missed";
+type FinalStatus = "attended" | "attended_recording" | "excused" | "in_session" | "missed";
 
 function finalStatusOf(r: AttendanceRecord): FinalStatus {
   if (r.override === "attended") return "attended";
   if (r.override === "excused") return "excused";
   if (r.inSession) return "in_session";
   if (r.autoCredited) return "attended";
+  // recordingCreditedAt is stamped by the backend when the fellow watches
+  // enough of the lesson video to earn half-credit attendance.
+  if (r.recordingCreditedAt) return "attended_recording";
   return "missed";
 }
 
@@ -78,7 +81,10 @@ export default function AttendanceRoster({ sessionId, session }: AttendanceRoste
  }, [session.hasRecording, refreshRecording]);
 
   const counts = useMemo(() => {
-    const attended = records.filter((r) => finalStatusOf(r) === "attended").length;
+    const attended = records.filter((r) => {
+      const s = finalStatusOf(r);
+      return s === "attended" || s === "attended_recording";
+    }).length;
     const inSession = records.filter((r) => finalStatusOf(r) === "in_session").length;
     const excused = records.filter((r) => finalStatusOf(r) === "excused").length;
     const missed = records.filter((r) => finalStatusOf(r) === "missed").length;
@@ -86,12 +92,20 @@ export default function AttendanceRoster({ sessionId, session }: AttendanceRoste
   }, [records]);
 
  const visible = useMemo(() => {
- const q = search.trim().toLowerCase();
- return records.filter((r) => {
- if (filter !=="all"&& finalStatusOf(r) !== filter) return false;
- if (q && !r.fellowName.toLowerCase().includes(q)) return false;
- return true;
- });
+   const q = search.trim().toLowerCase();
+   return records.filter((r) => {
+     if (filter !== "all") {
+       const s = finalStatusOf(r);
+       // "Attended" filter covers both live attendance and recording credit.
+       const match =
+         filter === "attended"
+           ? s === "attended" || s === "attended_recording"
+           : s === filter;
+       if (!match) return false;
+     }
+     if (q && !r.fellowName.toLowerCase().includes(q)) return false;
+     return true;
+   });
  }, [records, filter, search]);
 
  const setOverride = async (
@@ -545,6 +559,11 @@ function FinalStatusBadge({
   return (
     <span className="inline-flex items-center gap-2">
       {status === "attended" && <Badge color="success">Attended</Badge>}
+      {status === "attended_recording" && (
+        <Badge color="success" variant="light">
+          Attended (recording)
+        </Badge>
+      )}
       {status === "excused" && <Badge color="info">Excused</Badge>}
       {status === "in_session" && (
         <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-700">
