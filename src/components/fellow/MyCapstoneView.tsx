@@ -10,6 +10,7 @@ import { toast } from "@/lib/toast";
 import { CheckLineIcon, PaperPlaneIcon } from "@/icons";
 import { useCurrentUser } from "@/lib/auth/useCurrentUser";
 import {
+  getCapstoneUploadUrl,
   postFellowCapstoneComment,
   saveFellowCapstone,
   submitFellowCapstone,
@@ -43,6 +44,62 @@ export default function MyCapstoneView({
   const [status, setStatus] = useState<CapstoneStatus>(capstone.status);
   const [feedback, setFeedback] = useState(capstone.feedback);
   const [reply, setReply] = useState("");
+  const [artifactUrl, setArtifactUrl] = useState<string | null>(capstone.artifactUrl);
+  const [uploadState, setUploadState] = useState<"idle" | "uploading" | "done">("idle");
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  const ALLOWED_TYPES = [
+    "application/pdf",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/msword",
+  ];
+
+  async function onUploadFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      toast.error("Unsupported format", "Please upload a Word (.docx) or PDF file.");
+      return;
+    }
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error("File too large", "Maximum size is 50 MB.");
+      return;
+    }
+    setUploadState("uploading");
+    setUploadProgress(0);
+    try {
+      const { uploadUrl, objectUrl } = await getCapstoneUploadUrl({
+        mimeType: file.type,
+        bytes: file.size,
+        filename: file.name,
+      });
+      // Upload directly to Spaces via the presigned PUT URL.
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.upload.onprogress = (ev) => {
+          if (ev.lengthComputable) setUploadProgress(Math.round((ev.loaded / ev.total) * 100));
+        };
+        xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`Upload failed (${xhr.status})`)));
+        xhr.onerror = () => reject(new Error("Network error during upload"));
+        xhr.open("PUT", uploadUrl);
+        xhr.setRequestHeader("Content-Type", file.type);
+        xhr.send(file);
+      });
+      // Persist the URL on the capstone row.
+      await saveFellowCapstone({
+        title: title.trim() || capstone.title,
+        problemStatement: draft.problem,
+        artifactUrl: objectUrl,
+      });
+      setArtifactUrl(objectUrl);
+      setUploadState("done");
+      toast.success("Document uploaded", file.name);
+    } catch (err) {
+      setUploadState("idle");
+      toast.errorFromException("Upload failed", err);
+    }
+  }
 
   const wordCount = countWords([
     draft.problem,
@@ -218,6 +275,67 @@ export default function MyCapstoneView({
             value={draft.risks}
             onChange={(v) => setDraft({ ...draft, risks: v })}
           />
+
+          {/* Document upload */}
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
+            <h2 className="text-base font-semibold text-gray-800">Upload document</h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Attach your capstone as a Word (.docx) or PDF. 50 MB max.
+            </p>
+
+            {artifactUrl && (
+              <div className="mt-3 flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+                <svg className="h-5 w-5 shrink-0 text-fellowship-navy" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                </svg>
+                <a
+                  href={artifactUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 truncate text-sm font-medium text-fellowship-navy hover:underline"
+                >
+                  {artifactUrl.split("/").pop() ?? "View document"}
+                </a>
+                <a
+                  href={artifactUrl}
+                  download
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 text-xs font-semibold text-gray-500 hover:text-fellowship-navy"
+                >
+                  Download
+                </a>
+              </div>
+            )}
+
+            <div className="mt-3">
+              {uploadState === "uploading" ? (
+                <div className="space-y-2">
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
+                    <div
+                      className="h-full rounded-full bg-fellowship-navy transition-all"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500">Uploading… {uploadProgress}%</p>
+                </div>
+              ) : (
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                  </svg>
+                  {artifactUrl ? "Replace document" : "Choose file"}
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    className="sr-only"
+                    onChange={onUploadFile}
+                    disabled={status === "under-review" || status === "approved"}
+                  />
+                </label>
+              )}
+            </div>
+          </div>
 
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white p-4 md:p-5">
             <div>

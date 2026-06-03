@@ -123,6 +123,7 @@ const EMPTY_CAPSTONE: FellowCapstone = {
   assignments: [],
   submittedAt: null,
   approvedAt: null,
+  artifactUrl: null,
 };
 
 export async function getFellowCapstoneServer(): Promise<FellowCapstone> {
@@ -164,6 +165,7 @@ function mapBackendCapstone(b: BackendCapstone): FellowCapstone {
     assignments: [],
     submittedAt: b.lastSubmittedAt,
     approvedAt: b.finalApprovedAt,
+    artifactUrl: b.artifactUrl ?? null,
   };
 }
 

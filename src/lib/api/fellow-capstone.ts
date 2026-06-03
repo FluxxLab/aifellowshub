@@ -107,6 +107,8 @@ export type FellowCapstone = {
   submittedAt: string | null;
   /** ISO timestamp — null until mentor approves. */
   approvedAt: string | null;
+  /** URL of the uploaded capstone document (Word or PDF). Null if not yet uploaded. */
+  artifactUrl: string | null;
 };
 
 
@@ -179,6 +181,18 @@ export async function saveFellowCapstone(
     { method: "PATCH", body: payload },
   );
   return mapMutationResult(data.capstone);
+}
+
+/** POST /me/capstone/upload-url — mint a presigned PUT URL for a document upload. */
+export async function getCapstoneUploadUrl(opts: {
+  mimeType: string;
+  bytes: number;
+  filename: string;
+}): Promise<{ uploadUrl: string; objectUrl: string }> {
+  return apiFetch("/me/capstone/upload-url", {
+    method: "POST",
+    body: opts,
+  });
 }
 
 /** POST /me/capstone/submit — flip status to under_review. */
