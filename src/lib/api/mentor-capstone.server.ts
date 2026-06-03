@@ -84,6 +84,7 @@ export async function getMentorCapstoneServer(
       assignments: [],
       submittedAt: match.lastSubmittedAt,
       approvedAt: match.finalApprovedAt,
+      artifactUrl: match.artifactUrl ?? null,
     };
   } catch {
     return null;
