@@ -219,17 +219,26 @@ function CapstoneTable({ submissions }: { submissions: CapstoneSubmission[] }) {
  </div>
  </Td>
  <Td>
- {s.title ? (
- <Link
- href={`/capstone/${s.id}`}
- className="block max-w-md truncate text-sm text-gray-700 hover:text-fellowship-navy">
- {s.title}
- </Link>
- ) : (
- <span className="text-sm italic text-gray-400">
- Not yet titled
- </span>
- )}
+   <div className="flex items-center gap-2 max-w-md">
+     {s.title ? (
+       <span className="truncate text-sm text-gray-700">{s.title}</span>
+     ) : (
+       <span className="text-sm italic text-gray-400">Not yet titled</span>
+     )}
+     {(s.fileUrl ?? s.submissionUrl) && (
+       <a
+         href={(s.fileUrl ?? s.submissionUrl)!}
+         target="_blank"
+         rel="noopener noreferrer"
+         title="Download submission"
+         className="shrink-0 rounded p-0.5 text-gray-400 hover:text-fellowship-navy"
+       >
+         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+           <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+         </svg>
+       </a>
+     )}
+   </div>
  </Td>
  <Td>
  {s.mentorName ? (
@@ -300,17 +309,22 @@ function RowActions({ submission }: { submission: CapstoneSubmission }) {
  const [open, setOpen] = useState(false);
  const [assignOpen, setAssignOpen] = useState(false);
 
+ const downloadUrl = submission.fileUrl ?? submission.submissionUrl;
+
  const actions: {
    label: string;
    href?: string;
    onClick?: () => void;
    destructive?: boolean;
  }[] = [
- // The fellow profile already shows capstone status, last feedback,
- // and links to attendance/assessments — gives admins the same
- // context they'd want from a dedicated capstone page.
  { label:"Open fellow profile", href:`/participants/${submission.fellowId}`},
  ];
+ if (downloadUrl) {
+   actions.push({
+     label: "Download submission",
+     onClick: () => window.open(downloadUrl, "_blank", "noopener,noreferrer"),
+   });
+ }
  actions.push({
    label: submission.mentorName ? "Reassign supervisor" : "Assign supervisor",
    onClick: () => setAssignOpen(true),
