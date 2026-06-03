@@ -18,6 +18,8 @@ type BackendOverview = {
     moduleId: string;
     title: string;
     attempts: number;
+    attendanceRate: number | null;
+    completionPercent: number | null;
     passRate: number | null;
     averageScore: number | null;
   }[];
@@ -63,12 +65,10 @@ function mapOverview(data: BackendOverview): AnalyticsSummary {
     (m) => ({
       weekNumber: m.weekNumber,
       moduleTitle: m.title,
-      // Attendance + completion need session-attendance modeling — set 0
-      // until we add those endpoints.
-      attendancePercent: 0,
+      attendancePercent: m.attendanceRate ?? 0,
       assessmentPassPercent: m.passRate,
       assessmentAvgScore: m.averageScore,
-      completionPercent: 0,
+      completionPercent: m.completionPercent ?? 0,
     }),
   );
 
