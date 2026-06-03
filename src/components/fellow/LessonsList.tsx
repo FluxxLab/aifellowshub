@@ -22,7 +22,7 @@ import type { Lesson } from "@/lib/api/fellow-learning";
  * (completed / in-progress / not-started) just reflects whatever
  * the API returns.
  */
-export default function LessonsList({ lessons }: { lessons: Lesson[] }) {
+export default function LessonsList({ lessons, sessionId }: { lessons: Lesson[]; sessionId?: string | null }) {
   const [openId, setOpenId] = useState<string | null>(null);
   // Local status overrides so the orb updates in real-time as the fellow watches.
   const [statusOverrides, setStatusOverrides] = useState<Record<string, Lesson["status"]>>({});
@@ -121,6 +121,7 @@ export default function LessonsList({ lessons }: { lessons: Lesson[] }) {
                 <div id={`lesson-${l.id}-body`} className="mt-4 ml-10">
                   <LessonContent
                     lessonId={l.id}
+                    sessionId={sessionId}
                     contentUrl={l.contentUrl}
                     contentMimeType={l.contentMimeType}
                     title={l.title}

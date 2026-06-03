@@ -1,78 +1,28 @@
 "use client";
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import Badge from "@/components/ui/badge/Badge";
-import RecordingPlayer from "@/components/fellow/RecordingPlayer";
 import {
   CheckLineIcon,
   ChevronRightIcon,
   CloseLineIcon,
 } from "@/icons";
-import { apiFetch } from "@/lib/api/client";
-import { toast } from "@/lib/toast";
 import type { FellowSession } from "@/lib/api/fellow-learning";
 
 /**
  * Past-sessions table for /my-sessions.
  *
- * Adds the "Watch recording" entry next to the module link when a
- * session has been recorded (and archived to DO Spaces). Watching ≥
- * 50% of the recording earns half-credit attendance — the inline
- * `RecordingPlayer` posts watched-seconds heartbeats to the backend
- * which flips the fellow's status to attended_recording when the
- * threshold is crossed.
+ * "Watch recording" links to the module's lesson page (/learning/:week)
+ * where the uploaded lesson videos live. The LessonVideoPlayer there
+ * posts watch-time heartbeats to both the lesson-progress and the
+ * session recording-progress endpoints, so the admin RECORDING column
+ * reflects real lesson-video watch time.
  */
 export default function PastSessionsTable({
   sessions,
 }: {
   sessions: FellowSession[];
 }) {
-  const [open, setOpen] = useState<{
-    sessionId: string;
-    videoUrl: string;
-    durationSeconds: number | null;
-    initialWatchedSeconds: number;
-  } | null>(null);
-
-  type ProgressRes = { attendance: { recordingWatchedSeconds: number; recordingCreditedAt: string | null; status: string } };
-
-  async function watchRecording(s: FellowSession) {
-    if (!s.id) return;
-    try {
-      const [urlRes, progressRes] = await Promise.all([
-        apiFetch<{ url: string | null }>(`/sessions/${encodeURIComponent(s.id)}/recording-url`),
-        apiFetch<ProgressRes>(`/sessions/${encodeURIComponent(s.id)}/recording-progress`).catch(() => null),
-      ]);
-      if (!urlRes.url) {
-        toast.error("Recording isn't available yet — try again shortly.");
-        return;
-      }
-      setOpen({
-        sessionId: s.id,
-        videoUrl: urlRes.url,
-        durationSeconds: s.recordingDurationSeconds,
-        // Use fresh server progress so re-opening the player picks up where
-        // the fellow left off even if the page was loaded hours ago.
-        initialWatchedSeconds: progressRes?.attendance.recordingWatchedSeconds ?? s.recordingWatchedSeconds ?? 0,
-      });
-    } catch (err) {
-      toast.errorFromException("Couldn't load recording", err);
-    }
-  }
-
-  async function refreshUrl(sessionId: string) {
-    try {
-      const res = await apiFetch<{ url: string | null }>(
-        `/sessions/${encodeURIComponent(sessionId)}/recording-url`,
-      );
-      if (res.url) {
-        setOpen((prev) => prev ? { ...prev, videoUrl: res.url! } : null);
-      }
-    } catch {
-      // Silent — the video will error naturally when the old URL expires.
-    }
-  }
-
   return (
     <>
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
@@ -122,13 +72,12 @@ export default function PastSessionsTable({
                   <td className="px-5 py-3 text-right">
                     <div className="flex flex-wrap items-center justify-end gap-3">
                       {s.hasRecording && (
-                        <button
-                          type="button"
-                          onClick={() => void watchRecording(s)}
+                        <Link
+                          href={`/learning/${s.weekNumber}`}
                           className="inline-flex items-center gap-1 text-sm font-medium text-fellowship-navy hover:text-fellowship-navy-dark"
                         >
                           Watch recording
-                        </button>
+                        </Link>
                       )}
                       <Link
                         href={`/learning/${s.weekNumber}`}
@@ -146,22 +95,10 @@ export default function PastSessionsTable({
         </table>
       </div>
       <p className="mt-3 text-xs text-gray-500">
-        Live attendance counts as full credit. You earn half-credit only if
-        you watch the full recording end-to-end — skipping ahead doesn&apos;t
-        count. Either path completes the module for unlock purposes.
+        Live attendance counts as full credit. Watch the lesson videos to
+        catch up on a missed session — your progress is tracked
+        automatically.
       </p>
-
-      {open && (
-        <RecordingPlayer
-          isOpen={true}
-          onClose={() => setOpen(null)}
-          onRefreshUrl={() => void refreshUrl(open.sessionId)}
-          sessionId={open.sessionId}
-          videoUrl={open.videoUrl}
-          durationSeconds={open.durationSeconds}
-          initialWatchedSeconds={open.initialWatchedSeconds}
-        />
-      )}
     </>
   );
 }

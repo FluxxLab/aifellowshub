@@ -7,13 +7,18 @@ import { apiFetch } from "@/lib/api/client";
 /**
  * Lesson video player with skip detection.
  * Warns fellows when they seek forward > 5 s so they know skipped
- * sections haven't been watched. No credit tracking here — that lives
- * in RecordingPlayer for session recordings.
+ * sections haven't been watched.
+ *
+ * When `sessionId` is provided (the module's live session), each
+ * heartbeat is also forwarded to the session's recording-progress
+ * endpoint so the admin attendance RECORDING column reflects how much
+ * of the uploaded lesson video the fellow has watched.
  */
 type ProgressResponse = { progress: { watchedSeconds: number; completedAt: string | null } };
 
 export default function LessonVideoPlayer({
   lessonId,
+  sessionId,
   src,
   poster,
   title,
@@ -22,6 +27,10 @@ export default function LessonVideoPlayer({
   onComplete,
 }: {
   lessonId: string;
+  /** Session linked to this module. When set, watch progress is also
+   *  reported to the session's recording-progress endpoint so the admin
+   *  attendance RECORDING column reflects lesson-video watch time. */
+  sessionId?: string | null;
   src: string;
   poster?: string;
   title?: string;
@@ -57,6 +66,15 @@ export default function LessonVideoPlayer({
       }
     } catch {
       // Non-fatal — retry on next heartbeat.
+    }
+    // Mirror progress to the session's recording-progress endpoint so
+    // the admin attendance RECORDING column reflects lesson-video watch
+    // time (the uploaded video IS the session recording in this LMS).
+    if (sessionId) {
+      void apiFetch(
+        `/sessions/${encodeURIComponent(sessionId)}/recording-progress`,
+        { method: "POST", body: { secondsWatched: seconds } },
+      ).catch(() => undefined);
     }
   }
 

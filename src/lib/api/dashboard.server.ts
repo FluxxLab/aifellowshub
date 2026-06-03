@@ -111,6 +111,31 @@ export async function getDashboardSummaryServer(): Promise<DashboardSummary> {
   }
 }
 
+/**
+ * Derive the cohort's current week from the data already in the
+ * dashboard response — no extra round-trip needed.
+ *
+ * Priority:
+ *  1. First upcoming session's weekNumber (the week the cohort is moving
+ *     toward, or currently in if a live session is running).
+ *  2. Max weekNumber across module performance rows (highest week with
+ *     any real activity — safe fallback when all sessions have ended).
+ *  3. Max weekNumber across cohort-progress rows.
+ *  4. 0 — genuinely nothing has started yet.
+ */
+function deriveCurrentWeek(data: BackendDashboard): number {
+  if (data.upcomingSessions.length > 0) {
+    return data.upcomingSessions[0].weekNumber;
+  }
+  if (data.modulePerformance.length > 0) {
+    return Math.max(...data.modulePerformance.map((m) => m.weekNumber));
+  }
+  if ((data.cohortProgress ?? []).length > 0) {
+    return Math.max(...data.cohortProgress.map((w) => w.weekNumber));
+  }
+  return 0;
+}
+
 function mapDashboard(
   data: BackendDashboard,
   configuredCapacity: number | null,
@@ -178,7 +203,7 @@ function mapDashboard(
     cohort: {
       id: "cohort-2026",
       name: "AI Fellows · Cohort 2026",
-      currentWeek: 0,
+      currentWeek: deriveCurrentWeek(data),
       seatsFilled: hero.fellowsTotal,
       capacity,
     },

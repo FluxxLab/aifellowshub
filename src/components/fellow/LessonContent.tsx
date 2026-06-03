@@ -21,6 +21,9 @@ import LessonVideoPlayer from "@/components/fellow/LessonVideoPlayer";
 
 type Props = {
   lessonId: string;
+  /** Passed through to LessonVideoPlayer so watch progress is also
+   *  reported to the session's recording-progress endpoint. */
+  sessionId?: string | null;
   contentUrl: string | null;
   contentMimeType: string | null;
   posterUrl?: string | null;
@@ -31,6 +34,7 @@ type Props = {
 
 export default function LessonContent({
   lessonId,
+  sessionId,
   contentUrl,
   contentMimeType,
   posterUrl,
@@ -58,6 +62,7 @@ export default function LessonContent({
     return (
       <LessonVideoPlayer
         lessonId={lessonId}
+        sessionId={sessionId}
         src={contentUrl}
         poster={posterUrl ?? undefined}
         title={title}

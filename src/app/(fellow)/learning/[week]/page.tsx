@@ -104,7 +104,7 @@ export default async function ModuleDetailPage({
               variant="pre"
             />
           )}
-          <LessonsList lessons={m.lessons} />
+          <LessonsList lessons={m.lessons} sessionId={m.session.id} />
           {m.postAssessment && (
             <AssessmentCard
               assessment={m.postAssessment}
@@ -431,8 +431,9 @@ function SessionCard({
 
       {!isOnboarding && isEnded && s.attended === false && (
         <p className="mt-3 rounded-md bg-gray-50 p-3 text-xs text-gray-600">
-          Sessions are live-only — no recording is available. The assessment
-          is the alternative path to completing this module.
+          You missed this session. Watch the lesson videos above — your
+          progress is tracked automatically and counts toward module
+          completion.
         </p>
       )}
     </section>
