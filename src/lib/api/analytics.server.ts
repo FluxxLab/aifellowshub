@@ -86,10 +86,17 @@ function mapOverview(data: BackendOverview): AnalyticsSummary {
     count: p.count,
   }));
 
+  // Derive currentWeek as the highest week in the data so no module is
+  // treated as "future" and hidden with dashes in the analytics table.
+  const maxWeek = data.modulesPerformance.reduce(
+    (max, m) => Math.max(max, m.weekNumber),
+    0,
+  );
+
   return {
     cohortName: "Cohort 2026",
-    currentWeek: 0,
-    totalWeeks: 12,
+    currentWeek: maxWeek,
+    totalWeeks: Math.max(12, maxWeek),
     enrolledCount: data.fellowsTotal,
     modulePerformance,
     assessmentDistributions: [],
