@@ -53,6 +53,10 @@ export type Lesson = {
   kind: LessonKind;
   durationMinutes: number;
   status: LessonStatus;
+  /** Cumulative seconds the fellow has watched (0 if never opened). */
+  watchedSeconds: number;
+  /** ISO timestamp when the fellow first crossed the 90% watch threshold. Null if not yet. */
+  completedAt: string | null;
   /** Public URL to the uploaded content. Null when faculty hasn't
       attached anything yet — viewer falls back to an empty state. */
   contentUrl: string | null;

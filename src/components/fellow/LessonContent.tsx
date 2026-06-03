@@ -20,18 +20,23 @@ import Image from "next/image";
 import LessonVideoPlayer from "@/components/fellow/LessonVideoPlayer";
 
 type Props = {
+  lessonId: string;
   contentUrl: string | null;
   contentMimeType: string | null;
-  /** Used as poster fallback / `<video>` poster image hint when set. */
   posterUrl?: string | null;
   title?: string;
+  initialWatchedSeconds?: number;
+  onComplete?: () => void;
 };
 
 export default function LessonContent({
+  lessonId,
   contentUrl,
   contentMimeType,
   posterUrl,
   title,
+  initialWatchedSeconds,
+  onComplete,
 }: Props) {
   if (!contentUrl) {
     return (
@@ -52,10 +57,13 @@ export default function LessonContent({
   if (mime.startsWith("video/")) {
     return (
       <LessonVideoPlayer
+        lessonId={lessonId}
         src={contentUrl}
         poster={posterUrl ?? undefined}
         title={title}
         crossOrigin="anonymous"
+        initialWatchedSeconds={initialWatchedSeconds}
+        onComplete={onComplete}
       />
     );
   }

@@ -1,7 +1,8 @@
 "use client";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import Button from "@/components/ui/button/Button";
+import { apiFetch } from "@/lib/api/client";
 
 /**
  * Lesson video player with skip detection.
@@ -9,28 +10,92 @@ import Button from "@/components/ui/button/Button";
  * sections haven't been watched. No credit tracking here — that lives
  * in RecordingPlayer for session recordings.
  */
+type ProgressResponse = { progress: { watchedSeconds: number; completedAt: string | null } };
+
 export default function LessonVideoPlayer({
+  lessonId,
   src,
   poster,
   title,
   crossOrigin,
+  initialWatchedSeconds = 0,
+  onComplete,
 }: {
+  lessonId: string;
   src: string;
   poster?: string;
   title?: string;
   crossOrigin?: "anonymous" | "use-credentials";
+  initialWatchedSeconds?: number;
+  /** Called once when the fellow first crosses the 90% threshold. */
+  onComplete?: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const lastTimeRef = useRef(0);
+  const lastWallRef = useRef(Date.now());
   const lastWarnRef = useRef(0);
   const pauseAfterSeekRef = useRef(false);
+  const watchedRef = useRef(initialWatchedSeconds);
+  const lastSentRef = useRef(initialWatchedSeconds);
+  const completedRef = useRef(false);
+  const totalSecondsRef = useRef<number | null>(null);
   const [skipModalOpen, setSkipModalOpen] = useState(false);
   const [skipCount, setSkipCount] = useState(0);
   const [showSkipBanner, setShowSkipBanner] = useState(false);
 
+  async function postProgress(seconds: number) {
+    if (seconds <= lastSentRef.current) return;
+    lastSentRef.current = seconds;
+    try {
+      const res = await apiFetch<ProgressResponse>(
+        `/lessons/${encodeURIComponent(lessonId)}/progress`,
+        { method: "POST", body: { secondsWatched: seconds, totalSeconds: totalSecondsRef.current } },
+      );
+      if (res.progress.completedAt && !completedRef.current) {
+        completedRef.current = true;
+        onComplete?.();
+      }
+    } catch {
+      // Non-fatal — retry on next heartbeat.
+    }
+  }
+
+  // Heartbeat every 15 s while playing.
+  useEffect(() => {
+    const t = window.setInterval(() => {
+      if (watchedRef.current > lastSentRef.current) {
+        void postProgress(Math.floor(watchedRef.current));
+      }
+    }, 15_000);
+    return () => window.clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lessonId]);
+
+  function handleLoadedMetadata() {
+    const v = videoRef.current;
+    if (v && Number.isFinite(v.duration) && v.duration > 0) {
+      totalSecondsRef.current = v.duration;
+    }
+  }
+
   function handleTimeUpdate() {
     const v = videoRef.current;
-    if (v) lastTimeRef.current = v.currentTime;
+    if (!v) return;
+    const now = Date.now();
+    const wallDelta = (now - lastWallRef.current) / 1000;
+    const playDelta = v.currentTime - lastTimeRef.current;
+    lastWallRef.current = now;
+    lastTimeRef.current = v.currentTime;
+    // Only count legitimate forward playback at ≤1.5× wall-clock speed.
+    if (playDelta > 0 && playDelta <= wallDelta * 1.5 + 0.5) {
+      watchedRef.current += playDelta;
+    }
+  }
+
+  function handleEnded() {
+    if (watchedRef.current > lastSentRef.current) {
+      void postProgress(Math.floor(watchedRef.current));
+    }
   }
 
   function handleSeeking() {
@@ -42,12 +107,11 @@ export default function LessonVideoPlayer({
       setShowSkipBanner(true);
       if (now - lastWarnRef.current > 30_000) {
         lastWarnRef.current = now;
-        // Don't pause here — the browser is still seeking and will resume
-        // playback when seeking finishes. Flag it; onSeeked applies the pause.
         pauseAfterSeekRef.current = true;
         setSkipModalOpen(true);
       }
     }
+    lastWallRef.current = now;
     lastTimeRef.current = v.currentTime;
   }
 
@@ -112,9 +176,11 @@ export default function LessonVideoPlayer({
           preload="metadata"
           controlsList="nodownload"
           className="w-full max-h-[70vh]"
+          onLoadedMetadata={handleLoadedMetadata}
           onTimeUpdate={handleTimeUpdate}
           onSeeking={handleSeeking}
           onSeeked={handleSeeked}
+          onEnded={handleEnded}
         >
           {title ? <track kind="captions" /> : null}
           Your browser doesn&apos;t support inline video.{" "}

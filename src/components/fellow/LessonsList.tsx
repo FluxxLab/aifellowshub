@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import Button from "@/components/ui/button/Button";
 import LessonContent from "@/components/fellow/LessonContent";
 import { ChevronDownIcon, TimeIcon } from "@/icons";
@@ -24,10 +24,29 @@ import type { Lesson } from "@/lib/api/fellow-learning";
  */
 export default function LessonsList({ lessons }: { lessons: Lesson[] }) {
   const [openId, setOpenId] = useState<string | null>(null);
-  const completed = lessons.filter((l) => l.status === "completed").length;
+  // Local status overrides so the orb updates in real-time as the fellow watches.
+  const [statusOverrides, setStatusOverrides] = useState<Record<string, Lesson["status"]>>({});
 
-  const toggle = (id: string) =>
-    setOpenId((prev) => (prev === id ? null : id));
+  const effectiveStatus = (l: Lesson): Lesson["status"] =>
+    statusOverrides[l.id] ?? l.status;
+
+  const completed = lessons.filter((l) => effectiveStatus(l) === "completed").length;
+
+  const toggle = (id: string) => {
+    setOpenId((prev) => {
+      if (prev === id) return null;
+      // Mark as in-progress the moment the fellow opens a not-started lesson.
+      setStatusOverrides((s) => {
+        const cur = s[id] ?? lessons.find((l) => l.id === id)?.status ?? "not-started";
+        return cur === "not-started" ? { ...s, [id]: "in-progress" } : s;
+      });
+      return id;
+    });
+  };
+
+  const handleComplete = useCallback((lessonId: string) => {
+    setStatusOverrides((s) => ({ ...s, [lessonId]: "completed" }));
+  }, []);
 
   if (lessons.length === 0) return null;
 
@@ -46,7 +65,7 @@ export default function LessonsList({ lessons }: { lessons: Lesson[] }) {
           return (
             <li key={l.id} className="py-4 first:pt-0 last:pb-0">
               <div className="flex items-start gap-4">
-                <LessonStatusOrb status={l.status} />
+                <LessonStatusOrb status={effectiveStatus(l)} />
                 <button
                   type="button"
                   onClick={() => toggle(l.id)}
@@ -76,13 +95,13 @@ export default function LessonsList({ lessons }: { lessons: Lesson[] }) {
                 <div className="shrink-0 pt-1">
                   <Button
                     size="sm"
-                    variant={l.status === "in-progress" ? "fellowship" : "outline"}
+                    variant={effectiveStatus(l) === "in-progress" ? "fellowship" : "outline"}
                     onClick={() => toggle(l.id)}
                     aria-expanded={isOpen}
                   >
                     {isOpen
                       ? "Close"
-                      : l.status === "in-progress"
+                      : effectiveStatus(l) === "in-progress"
                       ? "Resume"
                       : l.kind === "video"
                       ? "Re-watch"
@@ -101,9 +120,12 @@ export default function LessonsList({ lessons }: { lessons: Lesson[] }) {
               {isOpen && (
                 <div id={`lesson-${l.id}-body`} className="mt-4 ml-10">
                   <LessonContent
+                    lessonId={l.id}
                     contentUrl={l.contentUrl}
                     contentMimeType={l.contentMimeType}
                     title={l.title}
+                    initialWatchedSeconds={l.watchedSeconds}
+                    onComplete={() => handleComplete(l.id)}
                   />
                 </div>
               )}

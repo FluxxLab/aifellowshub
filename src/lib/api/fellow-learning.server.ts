@@ -48,6 +48,8 @@ type BackendCurriculumModule = {
     contentMimeType: string | null;
     contentBytes: number | null;
     assessment: BackendAssessment | null;
+    watchedSeconds: number;
+    completedAt: string | null;
   }[];
   resources: { id: string; title: string; url: string; kind: "pdf" | "link" | "video" }[];
   preAssessment: BackendAssessment | null;
@@ -257,18 +259,29 @@ function mapBackendCurriculumModule(
   // stay in lockstep.
   if (m.weekNumber <= 0) status = "completed";
 
-  // Map lessons; mark all as not-started for now (lesson-progress backend TBD).
-  const lessons: Lesson[] = m.lessons.map((l) => ({
-    id: l.id,
-    title: l.title,
-    summary: l.summary,
-    kind: l.kind,
-    durationMinutes: l.durationMinutes,
-    status: status === "completed" ? "completed" : "not-started",
-    contentUrl: l.contentUrl ?? null,
-    contentMimeType: l.contentMimeType ?? null,
-    assessment: l.assessment ? mapBackendAssessment(l.assessment, my) : null,
-  }));
+  const lessons: Lesson[] = m.lessons.map((l) => {
+    let lessonStatus: Lesson["status"];
+    if (status === "completed" || l.completedAt) {
+      lessonStatus = "completed";
+    } else if (l.watchedSeconds > 0) {
+      lessonStatus = "in-progress";
+    } else {
+      lessonStatus = "not-started";
+    }
+    return {
+      id: l.id,
+      title: l.title,
+      summary: l.summary,
+      kind: l.kind,
+      durationMinutes: l.durationMinutes,
+      status: lessonStatus,
+      watchedSeconds: l.watchedSeconds,
+      completedAt: l.completedAt ?? null,
+      contentUrl: l.contentUrl ?? null,
+      contentMimeType: l.contentMimeType ?? null,
+      assessment: l.assessment ? mapBackendAssessment(l.assessment, my) : null,
+    };
+  });
 
   const resources: ModuleResource[] = m.resources.map((r) => ({
     id: r.id,
