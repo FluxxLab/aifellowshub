@@ -93,9 +93,10 @@ export type ModuleSession = {
   attended: boolean | null;
   /**
    * Richer attendance state. "attended" = full credit (live), "attended_recording"
-   * = half credit (caught up via recording), "missed" = no credit, null = pending.
+   * = half credit (caught up via recording), "excused" = admin-granted full credit,
+   * "missed" = no credit, null = pending.
    */
-  attendanceState: "attended" | "attended_recording" | "missed" | null;
+  attendanceState: "attended" | "attended_recording" | "excused" | "missed" | null;
   /** True once the session's recording has been archived to DO Spaces. */
   hasRecording: boolean;
   /** Total length of the recording, in seconds. Null if no recording yet. */

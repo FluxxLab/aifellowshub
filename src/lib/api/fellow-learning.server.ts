@@ -85,7 +85,7 @@ type BackendSession = {
   hasRecording?: boolean;
   recordingDurationSeconds?: number | null;
   myAttendance: {
-    status: "rsvpd" | "attended" | "attended_recording" | "missed";
+    status: "rsvpd" | "attended" | "attended_recording" | "excused" | "missed";
     minutesAttended: number | null;
     joinedAt: string | null;
     leftAt: string | null;
@@ -204,7 +204,9 @@ export async function getFellowCurriculumServer(): Promise<FellowModuleSummary[]
       sessionEnded =
         m.session.status === "ended" &&
         new Date(m.session.startsAt).getTime() < Date.now();
-      if (sessionEnded && (myAttStatus === "missed" || myAttStatus === null)) {
+      if (myAttStatus === "excused") {
+        sessionAttended = true;
+      } else if (sessionEnded && (myAttStatus === "missed" || myAttStatus === null)) {
         sessionAttended = false;
       }
     }
@@ -492,7 +494,7 @@ function mapBackendListedSession(b: BackendListedSession): FellowSession {
     // bleed into an upcoming session and surface as "Missed" on a
     // session the fellow hasn't even had a chance to attend yet.
     attended:
-      myStatus === "attended" || myStatus === "attended_recording"
+      myStatus === "attended" || myStatus === "attended_recording" || myStatus === "excused"
         ? true
         : myStatus === "missed" && sessionEnded
         ? false
@@ -516,6 +518,7 @@ function mapAttendanceState(
 ): ModuleSession["attendanceState"] {
   if (status === "attended") return "attended";
   if (status === "attended_recording") return "attended_recording";
+  if (status === "excused") return "excused";
   if (status === "missed" && sessionEnded) return "missed";
   return null;
 }
@@ -547,7 +550,7 @@ function mapBackendSession(b: BackendSession): ModuleSession {
     // the session has actually ended, so a future session never reads
     // as Missed on the module page's Live-session chip.
     attended:
-      myStatus === "attended" || myStatus === "attended_recording"
+      myStatus === "attended" || myStatus === "attended_recording" || myStatus === "excused"
         ? true
         : myStatus === "missed" && sessionEnded
         ? false

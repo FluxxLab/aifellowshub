@@ -124,6 +124,14 @@ function AttendanceBadge({
       </Badge>
     );
   }
+  if (state === "excused") {
+    return (
+      <Badge color="info" variant="light">
+        <CheckLineIcon className="h-3.5 w-3.5" />
+        Excused
+      </Badge>
+    );
+  }
   return (
     <Badge color="light" variant="light">
       <CloseLineIcon className="h-3.5 w-3.5" />
