@@ -127,11 +127,17 @@ function deriveCurrentWeek(data: BackendDashboard): number {
   if (data.upcomingSessions.length > 0) {
     return data.upcomingSessions[0].weekNumber;
   }
-  if (data.modulePerformance.length > 0) {
-    return Math.max(...data.modulePerformance.map((m) => m.weekNumber));
-  }
+  // cohortProgress only has rows for weeks where fellows made real progress —
+  // reliable indicator of "how far the cohort has gotten".
   if ((data.cohortProgress ?? []).length > 0) {
     return Math.max(...data.cohortProgress.map((w) => w.weekNumber));
+  }
+  // modulePerformance includes all published modules (even future ones with
+  // zero activity). Only count rows with real attempts so we don't jump
+  // ahead to the last published week.
+  const activeModules = data.modulePerformance.filter((m) => m.attempts > 0);
+  if (activeModules.length > 0) {
+    return Math.max(...activeModules.map((m) => m.weekNumber));
   }
   return 0;
 }
