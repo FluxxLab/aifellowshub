@@ -1,6 +1,7 @@
 "use client";
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
  Table,
  TableBody,
@@ -20,6 +21,7 @@ import {
  type CapstoneSubmission,
 } from "@/lib/api/capstone";
 import AssignCapstoneMentorModal from "./AssignCapstoneMentorModal";
+import { useConfirm } from "@/components/ui/ConfirmDialog";
 
 const FILTERS: { id:"all"|"overdue"| CapstoneStatus; label: string }[] = [
  { id:"all", label:"All"},
@@ -308,8 +310,33 @@ function CapstoneStatusBadge({ status }: { status: CapstoneStatus }) {
 function RowActions({ submission }: { submission: CapstoneSubmission }) {
  const [open, setOpen] = useState(false);
  const [assignOpen, setAssignOpen] = useState(false);
+ const [retracting, setRetracting] = useState(false);
+ const router = useRouter();
+ const { confirm, dialog } = useConfirm();
 
  const downloadUrl = submission.fileUrl ?? submission.submissionUrl;
+
+ const handleRetract = async () => {
+   const ok = await confirm({
+     title: "Delete submission?",
+     message: `This will reset ${submission.fellowName}'s capstone back to draft so they can edit and re-submit. The feedback history will be kept.`,
+     confirmLabel: "Delete submission",
+     tone: "danger",
+   });
+   if (!ok) return;
+   setRetracting(true);
+   try {
+     const res = await fetch(`/api/capstones/${encodeURIComponent(submission.id)}/submission`, {
+       method: "DELETE",
+     });
+     if (!res.ok) throw new Error(await res.text());
+     router.refresh();
+   } catch {
+     // surface nothing — refresh will show current state
+   } finally {
+     setRetracting(false);
+   }
+ };
 
  const actions: {
    label: string;
@@ -329,6 +356,13 @@ function RowActions({ submission }: { submission: CapstoneSubmission }) {
    label: submission.mentorName ? "Reassign supervisor" : "Assign supervisor",
    onClick: () => setAssignOpen(true),
  });
+ if (submission.status === "under-review" || submission.status === "submitted") {
+   actions.push({
+     label: retracting ? "Deleting…" : "Delete submission",
+     onClick: handleRetract,
+     destructive: true,
+   });
+ }
 
  return (
  <div className="relative inline-block text-left">
@@ -368,6 +402,7 @@ function RowActions({ submission }: { submission: CapstoneSubmission }) {
  fellowSector={submission.sector}
  currentMentorId={submission.mentorId}
  />
+ {dialog}
  </div>
  );
 }
