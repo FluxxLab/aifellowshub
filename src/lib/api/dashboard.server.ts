@@ -34,6 +34,7 @@ type BackendDashboard = {
     averageScore: number | null;
     attendanceRate: number | null;
     sessionsEnded: number;
+    currentWeek?: number;
     deltas?: {
       activeFellowsDelta: number;
       attendanceRateDelta: number;
@@ -124,17 +125,15 @@ export async function getDashboardSummaryServer(): Promise<DashboardSummary> {
  *  4. 0 — genuinely nothing has started yet.
  */
 function deriveCurrentWeek(data: BackendDashboard): number {
+  // Backend now returns the week of the most recently started session —
+  // the authoritative answer, no heuristics needed.
+  if (typeof data.hero.currentWeek === "number") {
+    return data.hero.currentWeek;
+  }
+  // Legacy fallback for older backend versions.
   if (data.upcomingSessions.length > 0) {
     return data.upcomingSessions[0].weekNumber;
   }
-  // cohortProgress only has rows for weeks where fellows made real progress —
-  // reliable indicator of "how far the cohort has gotten".
-  if ((data.cohortProgress ?? []).length > 0) {
-    return Math.max(...data.cohortProgress.map((w) => w.weekNumber));
-  }
-  // modulePerformance includes all published modules (even future ones with
-  // zero activity). Only count rows with real attempts so we don't jump
-  // ahead to the last published week.
   const activeModules = data.modulePerformance.filter((m) => m.attempts > 0);
   if (activeModules.length > 0) {
     return Math.max(...activeModules.map((m) => m.weekNumber));
