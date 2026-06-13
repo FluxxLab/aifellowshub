@@ -76,16 +76,16 @@ export default function ZoomMeetingRoom({
   // fire 'leave' if we actually joined (avoids spurious leave pings on
   // error paths). keepalive: true ensures the request survives tab close.
   const attendJoinedRef = useRef(false);
-  const creditTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  function recordAttend(action: "join" | "leave" | "credit") {
+  function recordAttend(action: "join" | "leave" | "credit" | "heartbeat") {
     if (action === "leave" && !attendJoinedRef.current) return;
     if (action === "join") attendJoinedRef.current = true;
     if (action === "leave") {
       attendJoinedRef.current = false;
-      if (creditTimerRef.current) {
-        clearTimeout(creditTimerRef.current);
-        creditTimerRef.current = null;
+      if (heartbeatRef.current) {
+        clearInterval(heartbeatRef.current);
+        heartbeatRef.current = null;
       }
     }
     fetch(`/api/sessions/${encodeURIComponent(sessionId)}/attend`, {
@@ -203,11 +203,16 @@ export default function ZoomMeetingRoom({
         if (cancelled) return;
         setPhase("in-meeting");
         recordAttend("join");
-        // Silently credit after 30 minutes — no UI feedback, fellows
-        // don't know when the threshold fires.
-        creditTimerRef.current = setTimeout(() => {
-          recordAttend("credit");
-        }, 30 * 60 * 1000);
+        // Continuous presence heartbeat — the authoritative attendance
+        // signal, mirroring how recording watch-time is tracked. The
+        // backend accumulates real elapsed presence from the first join
+        // and credits once the threshold is met (and only if the fellow
+        // joined within the late-join cutoff). Firing every minute means a
+        // lost "leave" ping (tab crash, network drop) can't wrongly credit
+        // a fellow who left early, and can't deny credit to one who stayed.
+        heartbeatRef.current = setInterval(() => {
+          recordAttend("heartbeat");
+        }, 60 * 1000);
 
         // Earlier iterations called client.setViewType("speaker") here
         // to re-nudge the SDK out of Minimized. That call landed during
