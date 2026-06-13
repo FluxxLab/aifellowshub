@@ -78,18 +78,13 @@ export default function ZoomMeetingRoom({
   const attendJoinedRef = useRef(false);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // True only while the Zoom SDK reports a live "Connected" state. The
-  // heartbeat counter advances only when this is true, so time spent
-  // disconnected / reconnecting (tab open but not in the meeting) isn't
-  // counted toward attendance.
+  // heartbeat only fires when this is true, so time spent disconnected /
+  // reconnecting (tab open but not in the meeting) isn't counted toward
+  // attendance — the backend accrues minutes from the gaps between the
+  // heartbeats it actually receives.
   const connectedRef = useRef(false);
-  // Count of minutes we've actually been connected. Sent on each heartbeat;
-  // the backend clamps it to real wall-clock so it can't be inflated.
-  const presentMinutesRef = useRef(0);
 
-  function recordAttend(
-    action: "join" | "leave" | "credit" | "heartbeat",
-    minutes?: number,
-  ) {
+  function recordAttend(action: "join" | "leave" | "credit" | "heartbeat") {
     if (action === "leave" && !attendJoinedRef.current) return;
     if (action === "join") attendJoinedRef.current = true;
     if (action === "leave") {
@@ -104,9 +99,7 @@ export default function ZoomMeetingRoom({
       credentials: "include",
       keepalive: true,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(
-        minutes != null ? { action, minutes } : { action },
-      ),
+      body: JSON.stringify({ action }),
     }).catch(() => {});
   }
 
@@ -220,31 +213,28 @@ export default function ZoomMeetingRoom({
         // client.join() only resolves once we're actually in the meeting,
         // so we start out connected. The connection-change event then keeps
         // this in sync — "Connected" while live, anything else (Reconnecting
-        // / Closed / Fail) pauses the presence counter.
+        // / Closed / Fail) pauses heartbeats.
         connectedRef.current = true;
-        presentMinutesRef.current = 0;
         try {
           client.on("connection-change", (payload: { state?: string }) => {
             connectedRef.current = payload?.state === "Connected";
           });
         } catch {
-          // If the SDK build doesn't expose the event, fall back to
-          // assuming connected — the server still clamps to wall-clock.
+          // If the SDK build doesn't expose the event, assume connected.
           connectedRef.current = true;
         }
 
         // Continuous presence heartbeat — the authoritative attendance
-        // signal, mirroring how recording watch-time is tracked. Each tick
-        // counts one minute ONLY while the SDK reports Connected, so a tab
-        // left open while asleep/disconnected stops accruing time. The
-        // backend credits once the counter crosses the threshold, provided
-        // the fellow joined within the late-join cutoff. Firing every minute
-        // also means a lost "leave" ping can't wrongly credit someone who
-        // left early, nor deny credit to one who stayed.
+        // signal, mirroring how recording watch-time is tracked. We only
+        // ping while the SDK reports Connected; the backend accrues minutes
+        // from the gaps between pings (capped), so a tab left open while
+        // asleep/disconnected stops accruing time, and presence still sums
+        // correctly across a reconnect or a full tab-close-and-return. The
+        // backend credits once total presence crosses the threshold, and
+        // only if the fellow joined within the late-join cutoff.
         heartbeatRef.current = setInterval(() => {
           if (!connectedRef.current) return;
-          presentMinutesRef.current += 1;
-          recordAttend("heartbeat", presentMinutesRef.current);
+          recordAttend("heartbeat");
         }, 60 * 1000);
 
         // Earlier iterations called client.setViewType("speaker") here
