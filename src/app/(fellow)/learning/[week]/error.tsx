@@ -1,8 +1,7 @@
 "use client";
-import { useTransition } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Button from "@/components/ui/button/Button";
+import { useErrorRetry } from "@/lib/hooks/useErrorRetry";
 
 export default function ModuleError({
   reset,
@@ -10,18 +9,7 @@ export default function ModuleError({
   error: Error;
   reset: () => void;
 }) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-
-  // reset() alone re-renders the boundary but doesn't re-run the server
-  // component's data fetch — pair it with router.refresh() so a recovered
-  // backend actually reloads instead of throwing again.
-  const retry = () => {
-    startTransition(() => {
-      router.refresh();
-      reset();
-    });
-  };
+  const { isPending, autoExhausted, manualRetry } = useErrorRetry(reset, "module");
 
   return (
     <div className="flex flex-col items-center justify-center py-24 text-center">
@@ -30,12 +18,13 @@ export default function ModuleError({
         Couldn&apos;t load this module
       </h1>
       <p className="mx-auto mt-3 max-w-sm text-sm text-gray-600">
-        There was a problem reaching the server. Your progress is safe — please
-        try again in a moment.
+        {autoExhausted
+          ? "Still couldn't reach the server. Your progress is safe — check your connection and try again."
+          : "There was a problem reaching the server. Reconnecting automatically…"}
       </p>
       <div className="mt-6 flex flex-wrap justify-center gap-3">
-        <Button size="md" variant="fellowship" onClick={retry} disabled={isPending}>
-          {isPending ? "Retrying…" : "Try again"}
+        <Button size="md" variant="fellowship" onClick={manualRetry} disabled={isPending}>
+          {isPending ? "Retrying…" : autoExhausted ? "Try again" : "Retry now"}
         </Button>
         <Link href="/learning">
           <Button size="md" variant="outline">

@@ -96,10 +96,25 @@ type BackendSession = {
 async function fetchCurriculum(): Promise<BackendCurriculumModule[] | null> {
   try {
     const res = await backendFetch("/me/curriculum", { method: "GET" });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      // Log the real reason (status only — never the JWT/body) so a
+      // recurring "couldn't load your modules" can be diagnosed from the
+      // Vercel function logs: a 500 means a backend/data bug for that
+      // fellow; a 401/403 means a session problem; a 502/503/504 means a
+      // gateway/cold-start blip (already retried by backendFetch).
+      console.error(`[curriculum] /me/curriculum responded ${res.status}`);
+      return null;
+    }
     const data = (await res.json()) as { modules: BackendCurriculumModule[] };
     return data.modules;
-  } catch {
+  } catch (err) {
+    // Network-level failure after retries (timeout/abort/DNS). Log the
+    // error shape only — no URL, no token — so it's safe in aggregators.
+    const safe =
+      err instanceof Error
+        ? { name: err.name, message: err.message, code: (err as { code?: string }).code }
+        : { message: "unknown error" };
+    console.error("[curriculum] /me/curriculum fetch failed:", safe);
     return null;
   }
 }
