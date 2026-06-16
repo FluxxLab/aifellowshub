@@ -9,6 +9,34 @@ const nextConfig = {
   output: "standalone",
 
   /**
+   * Client-side Router Cache tuning (low-latency / poor-network UX).
+   *
+   * By default the App Router caches a *dynamically*-rendered page's RSC
+   * payload in the browser for 0s, so every navigation — including back /
+   * forward and re-entering a page you just left — re-fetches from the
+   * server. On a slow connection that means the loading skeleton (or a
+   * brief empty flash) on every hop, even though the data was on screen a
+   * moment ago.
+   *
+   * Holding the payload for a short window lets re-navigation render
+   * instantly from memory, then revalidate on the next fetch. This is the
+   * browser's own session cache — per-user, never shared — so there's no
+   * cross-user leakage. Mutations still call `router.refresh()`, which
+   * invalidates this cache, so a fellow who completes a module or RSVPs
+   * sees fresh data immediately rather than the cached copy.
+   *
+   * Tradeoff: data can be up to `dynamic` seconds stale when you navigate
+   * back to a page within the window. 30s is a good balance for an LMS;
+   * raise it for more aggressive offline-feel, lower it for fresher reads.
+   */
+  experimental: {
+    staleTimes: {
+      dynamic: 30,
+      static: 180,
+    },
+  },
+
+  /**
    * Don't gate production builds on ESLint. We rely on TypeScript +
    * runtime tests for correctness.
    */
