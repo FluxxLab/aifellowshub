@@ -93,20 +93,32 @@ type BackendSession = {
   } | null;
 };
 
-async function fetchCurriculum(): Promise<BackendCurriculumModule[] | null> {
+type CurriculumResult =
+  | { ok: true; modules: BackendCurriculumModule[] }
+  | { ok: false; reason: string };
+
+async function fetchCurriculum(): Promise<CurriculumResult> {
   try {
     const res = await backendFetch("/me/curriculum", { method: "GET" });
     if (!res.ok) {
-      // Log the real reason (status only — never the JWT/body) so a
-      // recurring "couldn't load your modules" can be diagnosed from the
-      // Vercel function logs: a 500 means a backend/data bug for that
-      // fellow; a 401/403 means a session problem; a 502/503/504 means a
-      // gateway/cold-start blip (already retried by backendFetch).
-      console.error(`[curriculum] /me/curriculum responded ${res.status}`);
-      return null;
+      // Carry the status in the reason so the thrown error (and Vercel log)
+      // is self-diagnosing: 500 = a backend/data bug for this fellow,
+      // 401/403 = session, 502/503/504 = gateway/cold-start blip (already
+      // retried by backendFetch). Read a short slice of the body too — a
+      // NestJS 500 often includes the exception message, which pinpoints
+      // the failing row/serializer without a separate backend dig.
+      let detail = "";
+      try {
+        detail = (await res.text()).slice(0, 300);
+      } catch {
+        /* body unreadable — status alone still tells us a lot */
+      }
+      const reason = `backend ${res.status}${detail ? ` — ${detail}` : ""}`;
+      console.error(`[curriculum] /me/curriculum responded ${res.status}: ${detail}`);
+      return { ok: false, reason };
     }
     const data = (await res.json()) as { modules: BackendCurriculumModule[] };
-    return data.modules;
+    return { ok: true, modules: data.modules };
   } catch (err) {
     // Network-level failure after retries (timeout/abort/DNS). Log the
     // error shape only — no URL, no token — so it's safe in aggregators.
@@ -115,7 +127,7 @@ async function fetchCurriculum(): Promise<BackendCurriculumModule[] | null> {
         ? { name: err.name, message: err.message, code: (err as { code?: string }).code }
         : { message: "unknown error" };
     console.error("[curriculum] /me/curriculum fetch failed:", safe);
-    return null;
+    return { ok: false, reason: `network ${safe.code ?? safe.name ?? "error"}` };
   }
 }
 
@@ -170,12 +182,15 @@ function mapBackendAssessment(
  * empty curriculum ("0 of 0 modules").
  */
 export async function getFellowCurriculumServer(): Promise<FellowModuleSummary[]> {
-  const real = await fetchCurriculum();
-  if (!real) {
-    throw new Error("Could not load your curriculum — please try again.");
+  const result = await fetchCurriculum();
+  if (!result.ok) {
+    // The reason (status + backend message slice) rides along in the error,
+    // so the Vercel log line for THIS throw pinpoints the cause without
+    // correlating two lines. The client only ever sees a generic digest.
+    throw new Error(`Could not load your curriculum — ${result.reason}`);
   }
 
-  return real.map((m) => {
+  return result.modules.map((m) => {
     const my = m.myAttempts;
     const passed = my.bestStatus === "passed";
     const failed = my.bestStatus === "failed";
@@ -393,9 +408,9 @@ function mapBackendCurriculumModule(
 export async function getFellowModuleServer(
   week: number,
 ): Promise<FellowModuleDetail | null> {
-  const real = await fetchCurriculum();
-  if (!real) throw new Error("Could not load module — please try again.");
-  const m = real.find((x) => x.weekNumber === week);
+  const result = await fetchCurriculum();
+  if (!result.ok) throw new Error(`Could not load module — ${result.reason}`);
+  const m = result.modules.find((x) => x.weekNumber === week);
   if (!m) return null;
   return mapBackendCurriculumModule(m);
 }
@@ -408,9 +423,9 @@ export async function getFellowModuleServer(
 export async function getFellowCurriculumDetailServer(): Promise<
   FellowModuleDetail[]
 > {
-  const real = await fetchCurriculum();
-  if (!real) return [];
-  return real.map(mapBackendCurriculumModule);
+  const result = await fetchCurriculum();
+  if (!result.ok) return [];
+  return result.modules.map(mapBackendCurriculumModule);
 }
 
 /** Full cohort sessions list for `/my-sessions`. Empty when backend unreachable.
@@ -439,8 +454,8 @@ export async function getFellowSessionsServer() {
   const data = (await sessionsRes.json()) as { sessions: BackendListedSession[] };
   const sessions = (data.sessions ?? []).map(mapBackendListedSession);
 
-  if (curriculum) {
-    const onboarding = curriculum.find(
+  if (curriculum.ok) {
+    const onboarding = curriculum.modules.find(
       (m) => m.weekNumber <= 0 && /onboarding/i.test(m.title),
     );
     const alreadyListed = sessions.some(
