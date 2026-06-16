@@ -5,7 +5,7 @@
  * eligible empty state until those domains move to the backend.
  */
 import "server-only";
-import { backendFetch } from "./backend";
+import { backendFetch, BACKEND_URL } from "./backend";
 import type {
   Certificate,
   FellowCertificateState,
@@ -95,9 +95,23 @@ export async function getPublicCertificateServer(
   serial: string,
 ): Promise<PublicCertificate | null> {
   try {
-    const res = await backendFetch(
-      `/certificates/${encodeURIComponent(serial)}/verify`,
-      { method: "GET", forwardAuth: false },
+    // Public, shared, non-personalized data — a verification link gets
+    // pasted into LinkedIn/email and re-fetched by anyone who clicks it.
+    // Cache it in Next's Data Cache (keyed per serial) so those hits serve
+    // from the edge instead of the backend. We bypass backendFetch here
+    // because it hard-codes `cache: "no-store"` and forwards the viewer's
+    // cookie — neither wanted for a public, cacheable endpoint.
+    //
+    // Tradeoff: a freshly-revoked certificate can read "valid" for up to
+    // the revalidate window. Revocation is rare and 5 min is an acceptable
+    // lag for a credential page; shorten REVALIDATE if you need it tighter.
+    const res = await fetch(
+      `${BACKEND_URL}/certificates/${encodeURIComponent(serial)}/verify`,
+      {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        next: { revalidate: 300 },
+      },
     );
     if (!res.ok) return null;
     const data = (await res.json()) as BackendVerifyOk | BackendVerifyFail;

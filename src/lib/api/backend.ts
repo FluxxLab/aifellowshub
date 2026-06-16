@@ -13,7 +13,7 @@ import { cookies, headers } from "next/headers";
 // `BACKEND_API_URL` is the canonical name (server-side only). The legacy
 // `NEXT_PUBLIC_API_URL` is honoured during the rollover so existing
 // .env files keep working — drop the fallback once everyone's migrated.
-const BACKEND_URL =
+export const BACKEND_URL =
   process.env.BACKEND_API_URL ??
   process.env.NEXT_PUBLIC_API_URL ??
   "http://localhost:4000/api";
