@@ -1,12 +1,28 @@
 "use client";
+import { useTransition } from "react";
+import { useRouter } from "next/navigation";
 import Button from "@/components/ui/button/Button";
 
 /**
  * Shown when the sessions fetch fails (backend unreachable / transient
  * error after retries) instead of rendering a misleading short or empty
- * session list. The Try again button re-runs the server render.
+ * session list.
+ *
+ * Retry: `reset()` alone re-renders the boundary but does NOT re-fetch the
+ * server component's data, so it would just throw again. `router.refresh()`
+ * re-fetches; we run both in a transition so the recovered render shows.
  */
 export default function SessionsError({ reset }: { error: Error; reset: () => void }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  const retry = () => {
+    startTransition(() => {
+      router.refresh();
+      reset();
+    });
+  };
+
   return (
     <div className="flex flex-col items-center justify-center py-24 text-center">
       <p className="text-sm font-medium text-gray-500">Couldn&apos;t load</p>
@@ -18,8 +34,8 @@ export default function SessionsError({ reset }: { error: Error; reset: () => vo
         moment.
       </p>
       <div className="mt-6">
-        <Button size="md" variant="fellowship" onClick={reset}>
-          Try again
+        <Button size="md" variant="fellowship" onClick={retry} disabled={isPending}>
+          {isPending ? "Retrying…" : "Try again"}
         </Button>
       </div>
     </div>
