@@ -40,10 +40,13 @@ type FetchOpts = RequestInit & {
 };
 
 /** Transient HTTP statuses worth a retry — server hiccups, cold starts,
- *  gateway blips, and throttling. 4xx (other than 429) are the caller's
- *  fault and won't change on replay, so we don't retry them. */
+ *  and gateway blips. We deliberately do NOT retry 429: replaying a
+ *  rate-limited request immediately just consumes more of the bucket and
+ *  makes the throttling worse. A 429 surfaces to the error boundary, whose
+ *  spaced auto-retry lets the bucket refill at human timescale. 4xx are the
+ *  caller's fault and won't change on replay, so they aren't retried. */
 function isRetryableStatus(status: number): boolean {
-  return status === 429 || status === 502 || status === 503 || status === 504;
+  return status === 502 || status === 503 || status === 504;
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
