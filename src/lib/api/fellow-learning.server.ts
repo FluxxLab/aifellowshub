@@ -144,10 +144,21 @@ function mapBackendAssessment(
   };
 }
 
-/** List view for `/learning`. Returns `[]` if the backend is unreachable. */
+/**
+ * List view for `/learning`.
+ *
+ * Throws when the backend can't be reached (after retries) so the route's
+ * error.tsx shows a "couldn't load — try again" state. A genuinely empty
+ * cohort returns `[]` (the backend responded with no modules), which the
+ * page renders as the friendly "no modules published yet" empty state.
+ * The distinction matters: a transient failure must NOT masquerade as an
+ * empty curriculum ("0 of 0 modules").
+ */
 export async function getFellowCurriculumServer(): Promise<FellowModuleSummary[]> {
   const real = await fetchCurriculum();
-  if (!real) return [];
+  if (!real) {
+    throw new Error("Could not load your curriculum — please try again.");
+  }
 
   return real.map((m) => {
     const my = m.myAttempts;
@@ -397,31 +408,35 @@ export async function getFellowCurriculumDetailServer(): Promise<
  * Onboarding module but no corresponding session in the listing.
  */
 export async function getFellowSessionsServer() {
-  try {
-    const [sessionsRes, curriculum] = await Promise.all([
-      backendFetch("/me/sessions", { method: "GET" }),
-      fetchCurriculum(),
-    ]);
-    if (!sessionsRes.ok) return [];
-    const data = (await sessionsRes.json()) as { sessions: BackendListedSession[] };
-    const sessions = (data.sessions ?? []).map(mapBackendListedSession);
-
-    if (curriculum) {
-      const onboarding = curriculum.find(
-        (m) => m.weekNumber <= 0 && /onboarding/i.test(m.title),
-      );
-      const alreadyListed = sessions.some(
-        (s) => s.weekNumber <= 0 && /onboarding/i.test(s.moduleTitle),
-      );
-      if (onboarding && !alreadyListed) {
-        sessions.push(synthOnboardingSession(onboarding));
-      }
-    }
-
-    return sessions;
-  } catch {
-    return [];
+  // backendFetch retries idempotent GETs and throws after exhausting them;
+  // we let that propagate so the route's error.tsx shows a retry state
+  // instead of silently rendering an empty/short session list. fetchCurriculum
+  // is best-effort (it null-guards internally) — it only enriches the list
+  // with the synthetic Onboarding row, so a curriculum hiccup degrades that
+  // one row rather than failing the whole page.
+  const [sessionsRes, curriculum] = await Promise.all([
+    backendFetch("/me/sessions", { method: "GET" }),
+    fetchCurriculum(),
+  ]);
+  if (!sessionsRes.ok) {
+    throw new Error("Could not load your sessions — please try again.");
   }
+  const data = (await sessionsRes.json()) as { sessions: BackendListedSession[] };
+  const sessions = (data.sessions ?? []).map(mapBackendListedSession);
+
+  if (curriculum) {
+    const onboarding = curriculum.find(
+      (m) => m.weekNumber <= 0 && /onboarding/i.test(m.title),
+    );
+    const alreadyListed = sessions.some(
+      (s) => s.weekNumber <= 0 && /onboarding/i.test(s.moduleTitle),
+    );
+    if (onboarding && !alreadyListed) {
+      sessions.push(synthOnboardingSession(onboarding));
+    }
+  }
+
+  return sessions;
 }
 
 /** Build a synthetic "past attended" session row for the Onboarding
