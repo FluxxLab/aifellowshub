@@ -29,7 +29,24 @@ const PUBLIC_ORIGIN = process.env.FRONTEND_ORIGIN ?? "http://localhost:3000";
 type FetchOpts = RequestInit & {
   /** Forward the local session cookie as Authorization: Bearer. Default: true. */
   forwardAuth?: boolean;
+  /** Per-attempt timeout in ms. Default 12s. */
+  timeoutMs?: number;
+  /**
+   * Max attempts for idempotent (GET) requests. Default 3. Non-GET
+   * requests are never retried — replaying a POST/PATCH/DELETE could
+   * double-submit. Set to 1 to disable retries for a specific GET.
+   */
+  maxAttempts?: number;
 };
+
+/** Transient HTTP statuses worth a retry — server hiccups, cold starts,
+ *  gateway blips, and throttling. 4xx (other than 429) are the caller's
+ *  fault and won't change on replay, so we don't retry them. */
+function isRetryableStatus(status: number): boolean {
+  return status === 429 || status === 502 || status === 503 || status === 504;
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export async function backendFetch(path: string, opts: FetchOpts = {}) {
   const reqHeaders = new Headers(opts.headers);
@@ -59,11 +76,47 @@ export async function backendFetch(path: string, opts: FetchOpts = {}) {
     if (token) reqHeaders.set("Authorization", `Bearer ${token}`);
   }
 
-  const res = await fetch(`${BACKEND_URL}${path}`, {
-    ...opts,
-    headers: reqHeaders,
-    cache: "no-store",
-  });
+  // Only idempotent GETs are safe to replay. A failed POST/PATCH/DELETE
+  // might have already mutated state on the backend, so we never retry it.
+  const method = (opts.method ?? "GET").toUpperCase();
+  const isIdempotent = method === "GET";
+  const maxAttempts = isIdempotent ? Math.max(1, opts.maxAttempts ?? 3) : 1;
+  const timeoutMs = opts.timeoutMs ?? 12_000;
 
-  return res;
+  let lastErr: unknown;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    // Per-attempt timeout so a hung backend (cold start, stuck socket)
+    // doesn't stall the whole server render — abort and retry instead.
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(`${BACKEND_URL}${path}`, {
+        ...opts,
+        headers: reqHeaders,
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+      // Retry transient server statuses; return everything else (incl. 4xx).
+      if (isIdempotent && isRetryableStatus(res.status) && attempt < maxAttempts) {
+        await sleep(250 * attempt);
+        continue;
+      }
+      return res;
+    } catch (err) {
+      clearTimeout(timer);
+      lastErr = err;
+      // Network error or abort (timeout). Retry idempotent requests with a
+      // short linear backoff; otherwise propagate so the caller can handle it.
+      if (isIdempotent && attempt < maxAttempts) {
+        await sleep(250 * attempt);
+        continue;
+      }
+      throw err;
+    }
+  }
+
+  // Unreachable in practice — the loop either returns or throws — but keeps
+  // the type checker happy and guards against a future logic change.
+  throw lastErr ?? new Error(`backendFetch failed: ${path}`);
 }
