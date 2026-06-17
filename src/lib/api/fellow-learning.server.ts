@@ -370,17 +370,22 @@ function mapBackendCurriculumModule(
     progressPercent:
       status === "completed" ? 100 : status === "in-progress" ? 50 : 0,
     // Onboarding was conducted outside the LMS — every fellow is
-    // credited regardless of the underlying attendance row. Force
-    // sessionAttended to true so the path chip on the module header
-    // reads "Attended" instead of "Upcoming". Mirrors the SessionCard's
-    // title-matched gate so non-Onboarding Week 0 modules keep the
-    // real attendance value.
+    // credited regardless of the underlying attendance row.
+    //
+    // For everyone else, prefer the backend's `m.sessionAttended`, which
+    // checks ALL of the module's sessions, not just the primary one we
+    // render in the SessionCard. A week with two sessions (e.g. Wed + Fri)
+    // would otherwise read as "not attended" the moment the primary slot
+    // points at the still-upcoming second session — hiding the end-of-
+    // module survey even after the fellow attended the first. Falls back
+    // to the primary session's tri-state (false = missed-and-ended,
+    // null = upcoming) only when no session has been attended yet.
     sessionAttended:
-      m.weekNumber <= 0 && /onboarding/i.test(m.title)
+      (m.weekNumber <= 0 && /onboarding/i.test(m.title)) || m.sessionAttended
         ? true
         : session.attended,
     sessionEnded:
-      m.weekNumber <= 0 && /onboarding/i.test(m.title)
+      (m.weekNumber <= 0 && /onboarding/i.test(m.title)) || m.sessionAttended
         ? true
         : session.status === "ended",
     assessmentPassed: passed ? true : failed ? false : null,
