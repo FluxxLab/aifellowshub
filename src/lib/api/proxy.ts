@@ -18,6 +18,12 @@ import { backendFetch } from "./backend";
 export async function proxy(
   req: NextRequest,
   backendPath: string,
+  opts: {
+    /** Override the per-attempt timeout (ms). Default 12s is fine for normal
+     *  reads/writes, but long-running backend work (AI report generation,
+     *  Zoom reconciliation) needs a larger window or it aborts mid-flight. */
+    timeoutMs?: number;
+  } = {},
 ): Promise<NextResponse> {
   const url = new URL(req.url);
   const fullPath = `${backendPath}${url.search}`;
@@ -32,6 +38,7 @@ export async function proxy(
     res = await backendFetch(fullPath, {
       method: req.method,
       body,
+      timeoutMs: opts.timeoutMs,
     });
   } catch (err) {
     // Network-level failure (DNS, connection refused, timeout, etc.).
