@@ -57,11 +57,13 @@ export default async function ModuleDetailPage({
     return <LockedView module={m} />;
   }
 
-  // Completion is met when the fellow has either attended a session or
-  // passed the assessment. Once met, the feedback form gates the next
-  // module's unlock — show the form unless they've already submitted.
+  // The feedback form opens once the fellow can actually submit it — i.e.
+  // they've attended a session or passed the assessment. We use the backend's
+  // `feedbackEligible` flag (looser than `sessionAttended`), so a multi-
+  // session week shows the survey after the session they attended instead of
+  // waiting for the week's later sessions to run.
   const completionMet =
-    m.sessionAttended === true || m.assessmentPassed === true;
+    m.feedbackEligible || m.assessmentPassed === true;
   // Only fetch the existing submission when the form would actually
   // render; saves a backend round-trip on every module page load.
   const existingFeedback =

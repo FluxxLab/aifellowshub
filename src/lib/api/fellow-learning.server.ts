@@ -57,6 +57,10 @@ type BackendCurriculumModule = {
   session: BackendSession | null;
   /** True if the fellow attended ANY session for this module (all sessions checked, not just the primary). */
   sessionAttended: boolean;
+  /** Looser than sessionAttended — true once the fellow attended a session OR
+   *  passed the assessment, WITHOUT waiting for a multi-session week's later
+   *  sessions. Gates the end-of-module feedback form. */
+  feedbackEligible?: boolean;
   myAttempts: {
     attemptsUsed: number;
     attemptsAllowed: number;
@@ -402,6 +406,10 @@ function mapBackendCurriculumModule(
     session,
     resources,
     feedbackSubmitted: m.feedbackSubmitted ?? false,
+    // Looser gate for the feedback form (attended any session OR passed),
+    // so a multi-session week doesn't hide it until the last session runs.
+    // Falls back to the stricter sessionAttended flag for older backends.
+    feedbackEligible: m.feedbackEligible ?? m.sessionAttended,
     preAssessment: m.preAssessment ? mapBackendAssessment(m.preAssessment, my) : null,
     postAssessment: m.postAssessment ? mapBackendAssessment(m.postAssessment, my) : null,
   };

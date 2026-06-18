@@ -161,10 +161,16 @@ export type FellowModuleDetail = FellowModuleSummary & {
   resources: ModuleResource[];
   /**
    * Whether the fellow has submitted end-of-module feedback. When false
-   * AND completion is met (session attended OR assessment passed), the
-   * fellow sees the feedback form; submitting it unlocks the next module.
+   * AND `feedbackEligible`, the fellow sees the feedback form; submitting
+   * it unlocks the next module.
    */
   feedbackSubmitted: boolean;
+  /**
+   * Whether the fellow can leave end-of-module feedback yet. Looser than
+   * `sessionAttended` — true once they've attended a session OR passed the
+   * assessment, without waiting for a multi-session week's later sessions.
+   */
+  feedbackEligible: boolean;
 };
 
 /** End-of-module feedback the fellow submits once per module. */
