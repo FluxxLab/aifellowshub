@@ -8,6 +8,7 @@ import {
   CloseLineIcon,
 } from "@/icons";
 import type { FellowSession } from "@/lib/api/fellow-learning";
+import SessionFeedbackButton from "./SessionFeedbackButton";
 
 /**
  * Past-sessions table for /my-sessions.
@@ -71,6 +72,20 @@ export default function PastSessionsTable({
                   </td>
                   <td className="px-5 py-3 text-right">
                     <div className="flex flex-wrap items-center justify-end gap-3">
+                      {/* Per-session feedback — only for a real session the
+                          fellow actually attended (live, recording, or
+                          excused). Onboarding rows have no id and no feedback. */}
+                      {!isOnboarding &&
+                        s.id &&
+                        (s.attendanceState === "attended" ||
+                          s.attendanceState === "attended_recording" ||
+                          s.attendanceState === "excused") && (
+                          <SessionFeedbackButton
+                            sessionId={s.id}
+                            sessionTitle={s.title || s.moduleTitle}
+                            submitted={s.feedbackSubmitted}
+                          />
+                        )}
                       {s.hasRecording && (
                         <Link
                           href={`/learning/${s.weekNumber}`}

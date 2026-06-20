@@ -196,5 +196,8 @@ export type FellowSession = ModuleSession & {
   attendanceThresholdMinutes: number;
   /** ISO timestamp of when this fellow first joined, null if never joined. */
   joinedAt: string | null;
+  /** Whether the fellow has already submitted feedback for this session.
+   *  Drives the per-session "Give feedback" / "Feedback submitted" control. */
+  feedbackSubmitted: boolean;
 };
 

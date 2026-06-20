@@ -510,11 +510,14 @@ function synthOnboardingSession(m: BackendCurriculumModule): FellowSession {
     joinUrl: "#",
     attendanceThresholdMinutes: 0,
     joinedAt: null,
+    // Orientation ran outside the LMS — no per-session feedback for it.
+    feedbackSubmitted: true,
   };
 }
 
 type BackendListedSession = BackendSession & {
   module: { id: string; title: string; weekNumber: number } | null;
+  feedbackSubmitted?: boolean;
 };
 
 function mapBackendListedSession(b: BackendListedSession): FellowSession {
@@ -564,6 +567,7 @@ function mapBackendListedSession(b: BackendListedSession): FellowSession {
     joinUrl: b.joinUrl ?? "#",
     attendanceThresholdMinutes: b.attendanceThresholdMinutes,
     joinedAt: b.myAttendance?.joinedAt ?? null,
+    feedbackSubmitted: Boolean(b.feedbackSubmitted),
   };
 }
 

@@ -17,10 +17,8 @@ import LessonsList from "@/components/fellow/LessonsList";
 import ResourcesSection from "@/components/fellow/ResourcesSection";
 import LiveSessionAction from "@/components/fellow/LiveSessionAction";
 import SurveyGatedSessionAction from "@/components/fellow/SurveyGatedSessionAction";
-import ModuleFeedbackForm from "@/components/fellow/ModuleFeedbackForm";
 import ZoomSdkPrefetch from "@/components/fellow/ZoomSdkPrefetch";
 import PreFellowshipSurvey from "@/components/fellow/PreFellowshipSurvey";
-import { getMyModuleFeedbackServer } from "@/lib/api/feedback.server";
 import type {
   FellowModuleDetail,
   ModuleSession,
@@ -57,19 +55,9 @@ export default async function ModuleDetailPage({
     return <LockedView module={m} />;
   }
 
-  // The feedback form opens once the fellow can actually submit it — i.e.
-  // they've attended a session or passed the assessment. We use the backend's
-  // `feedbackEligible` flag (looser than `sessionAttended`), so a multi-
-  // session week shows the survey after the session they attended instead of
-  // waiting for the week's later sessions to run.
-  const completionMet =
-    m.feedbackEligible || m.assessmentPassed === true;
-  // Only fetch the existing submission when the form would actually
-  // render; saves a backend round-trip on every module page load.
-  const existingFeedback =
-    completionMet && m.feedbackSubmitted && m.id
-      ? await getMyModuleFeedbackServer(m.id)
-      : null;
+  // Feedback is now collected per-session on the My Sessions page (one
+  // response per attended session), so the module page no longer renders a
+  // module-level survey.
 
   return (
     <div className="flex flex-col gap-4 md:gap-6">
@@ -115,12 +103,6 @@ export default async function ModuleDetailPage({
             />
           )}
           <ResourcesSection resources={m.resources} />
-          {completionMet && m.id && (
-            <ModuleFeedbackForm
-              moduleId={m.id}
-              existing={existingFeedback}
-            />
-          )}
         </div>
         <div className="flex flex-col gap-4 md:gap-6">
           <SessionCard
