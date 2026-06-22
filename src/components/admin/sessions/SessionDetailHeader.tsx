@@ -188,19 +188,37 @@ function buildActions(
   return [];
 }
 
+/**
+ * Final attendance status for export — mirrors `finalStatusOf` in
+ * AttendanceRoster so the CSV matches exactly what the admin sees on screen.
+ * Precedence: admin overrides win, then live presence, then recording credit.
+ */
+function exportStatusLabel(r: AttendanceRecord): string {
+  if (r.override === "attended") return "Attended";
+  if (r.override === "excused") return "Excused";
+  if (r.inSession) return "In session";
+  if (r.autoCredited) return "Attended";
+  if (r.recordingCreditedAt) return "Attended (recording)";
+  return "Missed";
+}
+
 function exportAttendanceCSV(
   sessionTitle: string,
   attendance: AttendanceRecord[],
 ): void {
-  const header = ["Fellow Name", "Joined At", "Left At", "Minutes Present", "Status", "Auto-credited", "Override"];
+  const header = [
+    "Fellow Name",
+    "Joined At",
+    "Left At",
+    "Minutes Present",
+    "Status",
+    "Auto-credited",
+    "Recording Watched (min)",
+    "Recording Credit",
+    "Override",
+  ];
 
   const rows = attendance.map((r) => {
-    const status =
-      r.override === "attended" || r.autoCredited
-        ? "Attended"
-        : r.override === "excused"
-          ? "Excused"
-          : "Missed";
     return [
       r.fellowName,
       r.joinedAt
@@ -210,8 +228,10 @@ function exportAttendanceCSV(
         ? new Date(r.leftAt).toLocaleString(undefined, { timeZone: "Africa/Lagos" })
         : "",
       String(r.totalMinutesPresent),
-      status,
+      exportStatusLabel(r),
       r.autoCredited ? "Yes" : "No",
+      String(Math.round((r.recordingWatchedSeconds ?? 0) / 60)),
+      r.recordingCreditedAt ? "Yes (half-credit)" : "No",
       r.override ?? "",
     ];
   });
