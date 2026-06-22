@@ -82,6 +82,12 @@ export default function ParticipantsList({ data }: ParticipantsListProps) {
  router.replace(url.pathname + url.search, { scroll: false });
  }, [tab, fellowFilter, router]);
 
+ // Build the export rows for the active tab (respecting search + filter).
+ // Cheap for a cohort, so recompute on render rather than memoising.
+ const exportData = participantsForExport(data, tab, search, fellowFilter);
+ const handleExport = () =>
+ downloadCsv(`participants-${exportData.filename}`, exportData.header, exportData.rows);
+
  return (
  <>
  <div className="flex flex-col gap-4">
@@ -93,6 +99,8 @@ export default function ParticipantsList({ data }: ParticipantsListProps) {
  setSearch={setSearch}
  fellowFilter={fellowFilter}
  setFellowFilter={setFellowFilter}
+ onExport={handleExport}
+ exportCount={exportData.rows.length}
  />
  <TabPanel
  tab={tab}
@@ -263,6 +271,8 @@ type ToolbarProps = {
  setSearch: (s: string) => void;
  fellowFilter: (typeof FELLOW_FILTERS)[number]["id"];
  setFellowFilter: (f: (typeof FELLOW_FILTERS)[number]["id"]) => void;
+ onExport: () => void;
+ exportCount: number;
 };
 
 function Toolbar({
@@ -271,6 +281,8 @@ function Toolbar({
  setSearch,
  fellowFilter,
  setFellowFilter,
+ onExport,
+ exportCount,
 }: ToolbarProps) {
  return (
  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -287,9 +299,9 @@ function Toolbar({
  </svg>
  </div>
 
+ <div className="flex flex-wrap items-center gap-2">
  {tab ==="fellows"&& (
- <div className="flex flex-wrap gap-2">
- {FELLOW_FILTERS.map((f) => (
+ FELLOW_FILTERS.map((f) => (
  <button
  key={f.id}
  onClick={() => setFellowFilter(f.id)}
@@ -299,9 +311,21 @@ function Toolbar({
  >
  {f.label}
  </button>
- ))}
- </div>
+ ))
  )}
+ <button
+ type="button"
+ onClick={onExport}
+ disabled={exportCount === 0}
+ title={`Export the ${exportCount} ${tab} currently shown to CSV`}
+ className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+ >
+ <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+ <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+ </svg>
+ Export CSV
+ </button>
+ </div>
  </div>
  );
 }
@@ -1171,4 +1195,89 @@ function relativeDays(iso: string): string {
  if (days < 30) return `${days}d ago`;
  if (days < 365) return `${Math.round(days / 30)}mo ago`;
  return `${Math.round(days / 365)}y ago`;
+}
+
+/* ---------- CSV export ---------- */
+
+/**
+ * Build header + rows for the active tab's CSV export, applying the same
+ * search + status filter the table uses. The Fellows export carries the
+ * Progress / Attendance / Status columns admins asked for.
+ */
+function participantsForExport(
+ data: Participants,
+ tab: TabId,
+ search: string,
+ fellowFilter: (typeof FELLOW_FILTERS)[number]["id"],
+): { header: string[]; rows: string[][]; filename: string } {
+ const q = search.trim().toLowerCase();
+ const m = (s: string) => !q || s.toLowerCase().includes(q);
+
+ if (tab === "fellows") {
+ const list = data.fellows.filter(
+ (f) =>
+ (fellowFilter === "all" || f.status === fellowFilter) &&
+ (m(f.fullName) || m(f.email)),
+ );
+ return {
+ header: ["Name", "Email", "Organisation", "Country", "Sector", "Mentor", "Progress %", "Attendance %", "Status"],
+ rows: list.map((f) => [
+ f.fullName, f.email, f.organisation, f.country, f.sector,
+ f.mentor ?? "Unassigned", String(f.progressPercent), String(f.attendanceRate), f.status,
+ ]),
+ filename: "fellows",
+ };
+ }
+ if (tab === "faculty") {
+ const list = data.faculty.filter((f) => m(f.fullName) || m(f.email));
+ return {
+ header: ["Name", "Email", "Expertise", "Modules owned", "In draft", "Status"],
+ rows: list.map((f) => [
+ f.fullName, f.email, f.expertise.join("; "),
+ String(f.ownedModulesCount), String(f.draftModulesCount), f.isActive ? "Active" : "Inactive",
+ ]),
+ filename: "faculty",
+ };
+ }
+ if (tab === "mentors") {
+ const list = data.mentors.filter((x) => m(x.fullName) || m(x.email));
+ return {
+ header: ["Name", "Email", "Expertise", "Fellows", "Pending reviews", "Status"],
+ rows: list.map((x) => [
+ x.fullName, x.email, x.expertise.join("; "),
+ String(x.assignedFellowsCount), String(x.pendingReviewsCount), x.isActive ? "Active" : "Inactive",
+ ]),
+ filename: "mentors",
+ };
+ }
+ if (tab === "admins") {
+ const list = data.admins.filter((x) => m(x.fullName) || m(x.email));
+ return {
+ header: ["Name", "Email", "Role", "Last active", "Status"],
+ rows: list.map((x) => [
+ x.fullName, x.email, x.role === "super_admin" ? "Super admin" : "Admin",
+ x.lastActiveAt, x.isActive ? "Active" : "Inactive",
+ ]),
+ filename: "admins",
+ };
+ }
+ const list = data.waitlist.filter((x) => m(x.fullName) || m(x.email));
+ return {
+ header: ["Position", "Name", "Email", "Applied"],
+ rows: list.map((x) => [String(x.position), x.fullName, x.email, x.appliedAt]),
+ filename: "waitlist",
+ };
+}
+
+/** Build a CSV blob from header + rows and trigger a download. */
+function downloadCsv(filename: string, header: string[], rows: string[][]): void {
+ const esc = (cell: string) => `"${String(cell ?? "").replace(/"/g, '""')}"`;
+ const csv = [header, ...rows].map((row) => row.map(esc).join(",")).join("\n");
+ const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+ const url = URL.createObjectURL(blob);
+ const a = document.createElement("a");
+ a.href = url;
+ a.download = `${filename}.csv`;
+ a.click();
+ URL.revokeObjectURL(url);
 }
