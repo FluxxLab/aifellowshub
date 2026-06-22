@@ -44,6 +44,7 @@ function mapToSubmission(c: BackendCapstone): CapstoneSubmission {
     sector: c.sector ?? c.fellow?.sector ?? "Economic Inclusion Development",
     title: c.title === "Untitled capstone" ? null : c.title,
     description: c.problemStatement,
+    content: c.content ?? "",
     submissionUrl: c.draftUrl,
     fileUrl: c.artifactUrl,
     version: 1, // backend doesn't track versions yet

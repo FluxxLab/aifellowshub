@@ -19,7 +19,11 @@ export type CapstoneSubmission = {
   /** Sector or topic the capstone addresses. */
   sector: string;
   title: string | null;
+  /** The capstone's problem statement (short framing). */
   description: string;
+  /** The capstone's full body / approach text. Used to generate a
+   *  downloadable document when the fellow submitted text rather than a file. */
+  content: string;
   submissionUrl: string | null;
   fileUrl: string | null;
   /** Submission version (BRD §6.10 — fellow can resubmit). */

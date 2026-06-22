@@ -227,18 +227,17 @@ function CapstoneTable({ submissions }: { submissions: CapstoneSubmission[] }) {
      ) : (
        <span className="text-sm italic text-gray-400">Not yet titled</span>
      )}
-     {(s.fileUrl ?? s.submissionUrl) && (
-       <a
-         href={(s.fileUrl ?? s.submissionUrl)!}
-         target="_blank"
-         rel="noopener noreferrer"
+     {hasDownloadable(s) && (
+       <button
+         type="button"
+         onClick={() => downloadCapstoneSubmission(s)}
          title="Download submission"
          className="shrink-0 rounded p-0.5 text-gray-400 hover:text-fellowship-navy"
        >
          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
          </svg>
-       </a>
+       </button>
      )}
    </div>
  </Td>
@@ -314,8 +313,6 @@ function RowActions({ submission }: { submission: CapstoneSubmission }) {
  const router = useRouter();
  const { confirm, dialog } = useConfirm();
 
- const downloadUrl = submission.fileUrl ?? submission.submissionUrl;
-
  const handleRetract = async () => {
    const ok = await confirm({
      title: "Delete submission?",
@@ -346,10 +343,10 @@ function RowActions({ submission }: { submission: CapstoneSubmission }) {
  }[] = [
  { label:"Open fellow profile", href:`/participants/${submission.fellowId}`},
  ];
- if (downloadUrl) {
+ if (hasDownloadable(submission)) {
    actions.push({
      label: "Download submission",
-     onClick: () => window.open(downloadUrl, "_blank", "noopener,noreferrer"),
+     onClick: () => downloadCapstoneSubmission(submission),
    });
  }
  actions.push({
@@ -405,6 +402,59 @@ function RowActions({ submission }: { submission: CapstoneSubmission }) {
  {dialog}
  </div>
  );
+}
+
+/** Whether there's anything to download for this capstone — either an
+ *  uploaded file, or text content we can render into a document. */
+function hasDownloadable(s: CapstoneSubmission): boolean {
+  return Boolean(
+    s.fileUrl ||
+      s.submissionUrl ||
+      s.description?.trim() ||
+      s.content?.trim(),
+  );
+}
+
+/**
+ * Download a fellow's capstone. If they uploaded a file (Word/PDF), open it.
+ * Otherwise — most submissions are typed text, not an uploaded file — build a
+ * Word-openable document from the title, problem statement, and body so the
+ * admin always gets a downloadable submission instead of nothing.
+ */
+function downloadCapstoneSubmission(s: CapstoneSubmission): void {
+  const fileUrl = s.fileUrl ?? s.submissionUrl;
+  if (fileUrl) {
+    window.open(fileUrl, "_blank", "noopener,noreferrer");
+    return;
+  }
+
+  const esc = (t: string) =>
+    t
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\n/g, "<br/>");
+  const title = s.title || "Untitled capstone";
+  const html =
+    `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(title)}</title></head><body>` +
+    `<h1>${esc(title)}</h1>` +
+    `<p><b>Fellow:</b> ${esc(s.fellowName)}<br/>` +
+    `<b>Sector:</b> ${esc(s.sector)}<br/>` +
+    `<b>Status:</b> ${esc(s.status)}` +
+    (s.submittedAt ? `<br/><b>Submitted:</b> ${esc(new Date(s.submittedAt).toLocaleString())}` : "") +
+    `</p>` +
+    `<h2>Problem statement</h2><p>${esc(s.description || "—")}</p>` +
+    `<h2>Approach</h2><p>${esc(s.content || "—")}</p>` +
+    `</body></html>`;
+
+  const blob = new Blob([html], { type: "application/msword" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const safe = `${s.fellowName}-${title}`.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+  a.href = url;
+  a.download = `capstone-${safe}.doc`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 function Th({ children, right }: { children: React.ReactNode; right?: boolean }) {
