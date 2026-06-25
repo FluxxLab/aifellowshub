@@ -9,6 +9,7 @@ import {
 } from "@/icons";
 import type { FellowSession } from "@/lib/api/fellow-learning";
 import SessionFeedbackButton from "./SessionFeedbackButton";
+import MobileRowCard, { MobileRowList } from "@/components/ui/table/MobileRowCard";
 
 /**
  * Past-sessions table for /my-sessions.
@@ -26,7 +27,73 @@ export default function PastSessionsTable({
 }) {
   return (
     <>
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+      {/* Mobile: cards (the desktop table's Actions column gets clipped on
+          phones, which hid the per-session "Give feedback" button). */}
+      <MobileRowList>
+        {sessions.map((s) => {
+          const start = new Date(s.startsAt);
+          const isOnboarding =
+            s.weekNumber <= 0 && /onboarding/i.test(s.moduleTitle);
+          const canGiveFeedback =
+            !isOnboarding &&
+            Boolean(s.id) &&
+            (s.attendanceState === "attended" ||
+              s.attendanceState === "attended_recording" ||
+              s.attendanceState === "excused");
+          return (
+            <MobileRowCard
+              key={s.weekNumber}
+              header={
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                    Week {s.weekNumber}
+                  </p>
+                  <p className="text-sm font-semibold text-gray-800">
+                    {s.moduleTitle}
+                  </p>
+                </div>
+              }
+              status={
+                <AttendanceBadge state={isOnboarding ? "attended" : s.attendanceState} />
+              }
+              stats={[
+                {
+                  label: "Date",
+                  value: isOnboarding
+                    ? "Closed"
+                    : start.toLocaleDateString(undefined, {
+                        timeZone: "Africa/Lagos",
+                        day: "numeric",
+                        month: "short",
+                      }),
+                },
+                { label: "Host", value: isOnboarding ? "Closed" : s.hostName },
+              ]}
+              actions={
+                <div className="flex flex-wrap items-center justify-end gap-3">
+                  {canGiveFeedback && s.id && (
+                    <SessionFeedbackButton
+                      sessionId={s.id}
+                      sessionTitle={s.title || s.moduleTitle}
+                      submitted={s.feedbackSubmitted}
+                    />
+                  )}
+                  <Link
+                    href={`/learning/${s.weekNumber}`}
+                    className="inline-flex items-center gap-1 text-sm font-medium text-fellowship-navy hover:text-fellowship-navy-dark"
+                  >
+                    Open module
+                    <ChevronRightIcon className="h-4 w-4" />
+                  </Link>
+                </div>
+              }
+            />
+          );
+        })}
+      </MobileRowList>
+
+      {/* Desktop: table */}
+      <div className="hidden overflow-x-auto rounded-2xl border border-gray-200 bg-white md:block">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
             <tr>
