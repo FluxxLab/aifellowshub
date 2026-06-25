@@ -171,6 +171,21 @@ export type FellowModuleDetail = FellowModuleSummary & {
    * assessment, without waiting for a multi-session week's later sessions.
    */
   feedbackEligible: boolean;
+  /**
+   * Every session of this module, with the fellow's attendance + feedback
+   * state — drives the per-session feedback prompts on the module page.
+   */
+  feedbackSessions: ModuleSessionFeedbackInfo[];
+};
+
+/** One session's feedback state for the module page's per-session prompts. */
+export type ModuleSessionFeedbackInfo = {
+  id: string;
+  title: string;
+  startsAt: string;
+  /** Attended live / via recording / excused — gates whether feedback shows. */
+  attended: boolean;
+  feedbackSubmitted: boolean;
 };
 
 /** End-of-module feedback the fellow submits once per module. */

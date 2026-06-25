@@ -55,6 +55,14 @@ type BackendCurriculumModule = {
   preAssessment: BackendAssessment | null;
   postAssessment: BackendAssessment | null;
   session: BackendSession | null;
+  /** Every session of this module with the fellow's attendance + feedback state. */
+  sessions?: {
+    id: string;
+    title: string;
+    startsAt: string;
+    attended: boolean;
+    feedbackSubmitted: boolean;
+  }[];
   /** True if the fellow attended ANY session for this module (all sessions checked, not just the primary). */
   sessionAttended: boolean;
   /** Looser than sessionAttended — true once the fellow attended a session OR
@@ -410,6 +418,13 @@ function mapBackendCurriculumModule(
     // so a multi-session week doesn't hide it until the last session runs.
     // Falls back to the stricter sessionAttended flag for older backends.
     feedbackEligible: m.feedbackEligible ?? m.sessionAttended,
+    feedbackSessions: (m.sessions ?? []).map((s) => ({
+      id: s.id,
+      title: s.title,
+      startsAt: s.startsAt,
+      attended: s.attended,
+      feedbackSubmitted: s.feedbackSubmitted,
+    })),
     preAssessment: m.preAssessment ? mapBackendAssessment(m.preAssessment, my) : null,
     postAssessment: m.postAssessment ? mapBackendAssessment(m.postAssessment, my) : null,
   };

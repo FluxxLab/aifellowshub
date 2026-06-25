@@ -17,6 +17,7 @@ import LessonsList from "@/components/fellow/LessonsList";
 import ResourcesSection from "@/components/fellow/ResourcesSection";
 import LiveSessionAction from "@/components/fellow/LiveSessionAction";
 import SurveyGatedSessionAction from "@/components/fellow/SurveyGatedSessionAction";
+import SessionFeedbackButton from "@/components/fellow/SessionFeedbackButton";
 import ZoomSdkPrefetch from "@/components/fellow/ZoomSdkPrefetch";
 import PreFellowshipSurvey from "@/components/fellow/PreFellowshipSurvey";
 import type {
@@ -103,6 +104,7 @@ export default async function ModuleDetailPage({
             />
           )}
           <ResourcesSection resources={m.resources} />
+          <SessionFeedbackSection sessions={m.feedbackSessions} />
         </div>
         <div className="flex flex-col gap-4 md:gap-6">
           <SessionCard
@@ -114,6 +116,56 @@ export default async function ModuleDetailPage({
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * Per-session feedback on the module page. One prompt per session the fellow
+ * attended (live / recording / excused). Renders nothing when there's no
+ * attended session to give feedback on yet.
+ */
+function SessionFeedbackSection({
+  sessions,
+}: {
+  sessions: FellowModuleDetail["feedbackSessions"];
+}) {
+  const attended = sessions.filter((s) => s.attended);
+  if (attended.length === 0) return null;
+  return (
+    <section className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
+      <h2 className="text-base font-semibold text-gray-800">Session feedback</h2>
+      <p className="mt-1 text-sm text-gray-600">
+        Share your thoughts on each session you attended — it helps us improve
+        the programme. Anonymous to faculty.
+      </p>
+      <div className="mt-4 flex flex-col gap-3">
+        {attended.map((s) => (
+          <div
+            key={s.id}
+            className="flex items-center justify-between gap-3 rounded-lg border border-gray-100 bg-gray-50 px-4 py-3"
+          >
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-gray-800">
+                {s.title}
+              </p>
+              <p className="text-xs text-gray-500">
+                {new Date(s.startsAt).toLocaleDateString(undefined, {
+                  timeZone: "Africa/Lagos",
+                  weekday: "short",
+                  day: "numeric",
+                  month: "short",
+                })}
+              </p>
+            </div>
+            <SessionFeedbackButton
+              sessionId={s.id}
+              sessionTitle={s.title}
+              submitted={s.feedbackSubmitted}
+            />
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
