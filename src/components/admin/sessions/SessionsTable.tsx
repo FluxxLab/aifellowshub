@@ -319,7 +319,7 @@ function RowActions({ session: s }: { session: LiveSession }) {
  const actions: Action[] = [{ label: "Open", href: `/sessions/${sessionId}` }];
  if (status === "scheduled" || status === "live") {
    if (status === "scheduled") {
-     actions.push({ label: "Reschedule", onClick: () => setRescheduleOpen(true) });
+     actions.push({ label: "Edit / reschedule", onClick: () => setRescheduleOpen(true) });
      actions.push({ label: "Reassign host", onClick: () => setReassignOpen(true) });
    }
    // "End now" lives above the destructive cancel because it's the

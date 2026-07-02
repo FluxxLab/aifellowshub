@@ -142,7 +142,9 @@ function mapBackendCapstone(b: BackendCapstone): FellowCapstone {
     status: mapStatus(b.status),
     title: b.title,
     oneliner: firstLine(b.problemStatement) || "No problem statement yet.",
-    sector: mapSector(b.sector) ?? "Economic Inclusion Development",
+    // Fellow's profile sector is the source of truth; the capstone's own
+    // sector column drifts (nulled on most saves), so prefer the profile.
+    sector: mapSector(b.fellow?.sector ?? b.sector) ?? "Economic Inclusion Development",
     mentor: b.mentor
       ? {
           id: b.mentor.id,

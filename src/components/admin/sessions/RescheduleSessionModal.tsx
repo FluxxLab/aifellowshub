@@ -10,8 +10,9 @@ import { apiFetch } from "@/lib/api/client";
 import { toast } from "@/lib/toast";
 
 /**
- * Move a scheduled session to a new start time / duration. Pre-fills
- * with the current values so admins typically only change one thing.
+ * Edit a scheduled session — rename it and/or move it to a new start
+ * time / duration. Pre-fills with the current values so admins typically
+ * only change one thing.
  */
 export default function RescheduleSessionModal({
   isOpen,
@@ -33,6 +34,7 @@ export default function RescheduleSessionModal({
   const initialDate = isoDate(start);
   const initialTime = isoTime(start);
 
+  const [title, setTitle] = useState(sessionTitle);
   const [date, setDate] = useState(initialDate);
   const [time, setTime] = useState(initialTime);
   const [duration, setDuration] = useState(currentDurationMinutes);
@@ -40,6 +42,11 @@ export default function RescheduleSessionModal({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const trimmedTitle = title.trim();
+    if (trimmedTitle.length < 2) {
+      toast.error("Session name must be at least 2 characters.");
+      return;
+    }
     if (!date || !time) {
       toast.error("Pick a date and start time.");
       return;
@@ -58,15 +65,16 @@ export default function RescheduleSessionModal({
       await apiFetch(`/sessions/${encodeURIComponent(sessionId)}/reschedule`, {
         method: "PATCH",
         body: {
+          title: trimmedTitle,
           startsAt: startsAt.toISOString(),
           durationMinutes: duration,
         },
       });
-      toast.success("Session rescheduled");
+      toast.success("Session updated");
       router.refresh();
       onClose();
     } catch (err) {
-      toast.errorFromException("Couldn't reschedule", err);
+      toast.errorFromException("Couldn't update session", err);
     } finally {
       setSubmitting(false);
     }
@@ -77,12 +85,21 @@ export default function RescheduleSessionModal({
       <form onSubmit={handleSubmit} className="p-6 sm:p-8">
         <div className="mb-6">
           <h2 className="text-title-sm font-bold text-gray-800">
-            Reschedule session
+            Edit session
           </h2>
           <p className="mt-1 text-sm text-gray-500">
-            Move <span className="font-semibold text-gray-700">{sessionTitle}</span> to
-            a new time. Registered fellows are notified.
+            Rename or move this session. Registered fellows are notified of changes.
           </p>
+        </div>
+
+        <div className="mb-4">
+          <Label>Session name</Label>
+          <Input
+            type="text"
+            defaultValue={title}
+            placeholder="e.g. Week 3 — Governance Frameworks"
+            onChange={(e) => setTitle(e.target.value)}
+          />
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
