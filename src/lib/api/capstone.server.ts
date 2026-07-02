@@ -6,7 +6,7 @@
 import "server-only";
 import { backendFetch } from "./backend";
 import type { CapstoneStatus, CapstoneSubmission } from "./capstone";
-import type { BackendCapstone } from "./fellow-capstone.server";
+import { mapSector, type BackendCapstone } from "./fellow-capstone.server";
 
 export async function getCapstoneSubmissionsServer(): Promise<CapstoneSubmission[]> {
   try {
@@ -42,8 +42,12 @@ function mapToSubmission(c: BackendCapstone): CapstoneSubmission {
     mentorId: c.mentor?.id ?? null,
     mentorName: c.mentor?.fullName ?? null,
     // Fellow's profile sector is authoritative; the capstone's own column
-    // drifts, so prefer the profile and only fall back to the column.
-    sector: c.fellow?.sector ?? c.sector ?? "Economic Inclusion Development",
+    // drifts, so prefer the profile and only fall back to the column. Run it
+    // through mapSector so the admin table shows clean display labels
+    // ("Education", not the raw "edtech") — the same normalization the
+    // fellow-facing view uses.
+    sector:
+      mapSector(c.fellow?.sector ?? c.sector) ?? "Economic Inclusion Development",
     title: c.title === "Untitled capstone" ? null : c.title,
     description: c.problemStatement,
     content: c.content ?? "",

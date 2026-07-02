@@ -184,11 +184,11 @@ function mapStatus(s: BackendCapstone["status"]): CapstoneStatus {
   }
 }
 
-function mapSector(s: string | null): CapstoneSector | null {
+export function mapSector(s: string | null): CapstoneSector | null {
   if (!s) return null;
   const norm = s.toLowerCase();
   if (norm.includes("health")) return "Healthcare";
-  if (norm === "edtech") return "Education";
+  if (norm === "edtech" || norm.includes("educat")) return "Education";
   if (norm.includes("agric")) return "Agriculture";
   // Fintech, governance, public-policy, financial-inclusion all
   // collapse into "Economic Inclusion Development" — the LMS now
