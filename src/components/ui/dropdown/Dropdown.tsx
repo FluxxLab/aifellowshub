@@ -1,6 +1,6 @@
 "use client";
 import type React from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 interface DropdownProps {
@@ -35,7 +35,16 @@ export const Dropdown: React.FC<DropdownProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
   // For portal mode: anchor coordinates derived from the trigger's
   // bounding rect. Recomputed on open + on scroll/resize.
-  const [coords, setCoords] = useState<{ top: number; right: number; left: number } | null>(null);
+  const [coords, setCoords] = useState<{
+    triggerTop: number;
+    triggerBottom: number;
+    right: number;
+    left: number;
+  } | null>(null);
+  // Whether the menu opens below the trigger (default) or flips above it when
+  // there isn't enough room below — otherwise the last rows of a table run the
+  // menu off the bottom of the viewport (users had to zoom out to reach it).
+  const [placement, setPlacement] = useState<"down" | "up">("down");
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -67,7 +76,8 @@ export const Dropdown: React.FC<DropdownProps> = ({
       if (!trigger) return;
       const rect = trigger.getBoundingClientRect();
       setCoords({
-        top: rect.bottom + 8, // 8px gap (matches the legacy `mt-2`)
+        triggerTop: rect.top,
+        triggerBottom: rect.bottom,
         right: window.innerWidth - rect.right,
         left: rect.left,
       });
@@ -81,18 +91,52 @@ export const Dropdown: React.FC<DropdownProps> = ({
     };
   }, [portal, isOpen]);
 
+  // After the menu is in the DOM, measure it and flip above the trigger when
+  // it wouldn't fit below and there's more room above. Runs before paint to
+  // avoid a visible jump.
+  useLayoutEffect(() => {
+    if (!portal || !isOpen || !coords) return;
+    const el = dropdownRef.current;
+    if (!el) return;
+    const gap = 8;
+    // scrollHeight, not offsetHeight — the maxHeight cap we apply below would
+    // otherwise shrink offsetHeight and hide the true content height, so the
+    // flip decision would never trigger.
+    const menuHeight = el.scrollHeight;
+    const spaceBelow = window.innerHeight - coords.triggerBottom;
+    const spaceAbove = coords.triggerTop;
+    const next =
+      spaceBelow < menuHeight + gap && spaceAbove > spaceBelow ? "up" : "down";
+    setPlacement((prev) => (prev === next ? prev : next));
+  }, [portal, isOpen, coords, children]);
+
   if (!isOpen) return null;
 
   if (portal) {
     if (typeof window === "undefined" || !coords) return null;
+    const gap = 8;
+    // Cap the menu to the space on its chosen side so a very tall menu (or a
+    // short viewport) scrolls internally instead of spilling off-screen.
+    const maxHeight =
+      placement === "up"
+        ? coords.triggerTop - gap - 8
+        : window.innerHeight - coords.triggerBottom - gap - 8;
+    const vStyle =
+      placement === "up"
+        ? { bottom: window.innerHeight - coords.triggerTop + gap }
+        : { top: coords.triggerBottom + gap };
+    const hStyle =
+      align === "end" ? { right: coords.right } : { left: coords.left };
     return createPortal(
       <div
         ref={dropdownRef}
-        style={
-          align === "end"
-            ? { position: "fixed", top: coords.top, right: coords.right }
-            : { position: "fixed", top: coords.top, left: coords.left }
-        }
+        style={{
+          position: "fixed",
+          ...vStyle,
+          ...hStyle,
+          maxHeight,
+          overflowY: "auto",
+        }}
         className={`z-1000 rounded-xl border border-gray-200 bg-white shadow-theme-lg ${className}`}
       >
         {children}
