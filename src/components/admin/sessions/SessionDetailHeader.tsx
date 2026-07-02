@@ -2,13 +2,19 @@
 import React, { useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import AvatarText from "@/components/ui/avatar/AvatarText";
 import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
+import { useConfirm } from "@/components/ui/ConfirmDialog";
+import { apiFetch } from "@/lib/api/client";
+import { toast } from "@/lib/toast";
 import { CalenderIcon, ChevronLeftIcon, MoreDotIcon } from "@/icons";
 import type { AttendanceRecord, SessionDetail, SessionStatus } from "@/lib/api/sessions";
+import RescheduleSessionModal from "./RescheduleSessionModal";
+import ReassignHostModal from "./ReassignHostModal";
 
 // Lazy-loaded so the ~3MB Zoom Meeting SDK bundle stays out of the admin
 // list view. SSR off because the SDK reaches for `window` on import.
@@ -29,8 +35,52 @@ export default function SessionDetailHeader({
 }: {
  session: SessionDetail;
 }) {
+ const router = useRouter();
+ const { confirm, dialog } = useConfirm();
  const [menuOpen, setMenuOpen] = useState(false);
  const [meetingOpen, setMeetingOpen] = useState(false);
+ const [rescheduleOpen, setRescheduleOpen] = useState(false);
+ const [reassignOpen, setReassignOpen] = useState(false);
+
+ async function endNow() {
+   const ok = await confirm({
+     title: "End this session now?",
+     message:
+       "Everyone in the meeting will be booted. Attendance settles using a proportional threshold so fellows aren't punished for the early end.",
+     confirmLabel: "End session",
+     tone: "danger",
+   });
+   if (!ok) return;
+   try {
+     await apiFetch(`/sessions/${encodeURIComponent(session.id)}/end`, {
+       method: "POST",
+     });
+     toast.success("Session ended", "Attendance has been settled.");
+     router.refresh();
+   } catch (err) {
+     toast.errorFromException("Couldn't end session", err);
+   }
+ }
+
+ async function cancelSession() {
+   const ok = await confirm({
+     title: "Cancel this session?",
+     message:
+       "Registered fellows will be notified, the Zoom meeting is removed, and the session disappears from upcoming calendars.",
+     confirmLabel: "Cancel session",
+     tone: "danger",
+   });
+   if (!ok) return;
+   try {
+     await apiFetch(`/sessions/${encodeURIComponent(session.id)}/cancel`, {
+       method: "POST",
+     });
+     toast.success("Session cancelled");
+     router.refresh();
+   } catch (err) {
+     toast.errorFromException("Couldn't cancel session", err);
+   }
+ }
 
  const startsAt = new Date(session.scheduledStart);
  const dateLabel = startsAt.toLocaleDateString(undefined, {
@@ -46,10 +96,25 @@ export default function SessionDetailHeader({
  minute:"2-digit",
  });
 
- const actions = buildActions(session.status, session.title, session.attendance);
+ type Action = { label: string; destructive?: boolean; onClick?: () => void };
+ const actions: Action[] = [];
+ if (session.status === "scheduled") {
+   actions.push({ label: "Edit / reschedule", onClick: () => setRescheduleOpen(true) });
+   actions.push({ label: "Reassign host", onClick: () => setReassignOpen(true) });
+   actions.push({ label: "Cancel session", destructive: true, onClick: () => void cancelSession() });
+ } else if (session.status === "live") {
+   actions.push({ label: "End now", destructive: true, onClick: () => void endNow() });
+   actions.push({ label: "Cancel session", destructive: true, onClick: () => void cancelSession() });
+ } else if (session.status === "ended") {
+   actions.push({
+     label: "Export attendance CSV",
+     onClick: () => exportAttendanceCSV(session.title, session.attendance),
+   });
+ }
 
  return (
  <div className="flex flex-col gap-4">
+ {dialog}
  <Link
  href="/sessions" className="inline-flex w-fit items-center gap-1 text-sm text-gray-500 transition-colors hover:text-gray-700">
  <ChevronLeftIcon className="h-4 w-4"/>
@@ -161,31 +226,24 @@ export default function SessionDetailHeader({
  />
  </div>
  )}
+
+ <RescheduleSessionModal
+ isOpen={rescheduleOpen}
+ onClose={() => setRescheduleOpen(false)}
+ sessionId={session.id}
+ sessionTitle={session.title}
+ currentStartsAt={session.scheduledStart}
+ currentDurationMinutes={session.durationMinutes}
+ />
+ <ReassignHostModal
+ isOpen={reassignOpen}
+ onClose={() => setReassignOpen(false)}
+ sessionId={session.id}
+ sessionTitle={session.title}
+ currentHostId={session.hostId}
+ />
  </div>
  );
-}
-
-function buildActions(
-  status: SessionStatus,
-  sessionTitle: string,
-  attendance: AttendanceRecord[],
-): { label: string; destructive?: boolean; onClick?: () => void }[] {
-  if (status === "scheduled" || status === "live") {
-    return [
-      { label: "Reschedule" },
-      { label: "Reassign host" },
-      { label: "Cancel session", destructive: true },
-    ];
-  }
-  if (status === "ended") {
-    return [
-      {
-        label: "Export attendance CSV",
-        onClick: () => exportAttendanceCSV(sessionTitle, attendance),
-      },
-    ];
-  }
-  return [];
 }
 
 /**
