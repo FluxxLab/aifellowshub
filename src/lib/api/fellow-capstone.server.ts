@@ -6,6 +6,7 @@
  */
 import "server-only";
 import { backendFetch } from "./backend";
+import { normalizeSector } from "@/lib/sector";
 import type {
   CapstoneStatus,
   CapstoneSector,
@@ -184,16 +185,11 @@ function mapStatus(s: BackendCapstone["status"]): CapstoneStatus {
   }
 }
 
+// Kept as a thin re-export so existing callers (capstone.server) don't churn;
+// the actual normalization lives in the shared `@/lib/sector` util so server
+// mappers and client views can't drift.
 export function mapSector(s: string | null): CapstoneSector | null {
-  if (!s) return null;
-  const norm = s.toLowerCase();
-  if (norm.includes("health")) return "Healthcare";
-  if (norm === "edtech" || norm.includes("educat")) return "Education";
-  if (norm.includes("agric")) return "Agriculture";
-  // Fintech, governance, public-policy, financial-inclusion all
-  // collapse into "Economic Inclusion Development" — the LMS now
-  // uses a single sector for these adjacent areas.
-  return "Economic Inclusion Development";
+  return normalizeSector(s);
 }
 
 function mapFeedback(f: BackendCapstoneFeedback): CapstoneFeedbackEntry {

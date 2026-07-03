@@ -6,6 +6,7 @@ import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
 import { ChevronLeftIcon, PencilIcon } from "@/icons";
 import EditUserModal from "./EditUserModal";
+import { sectorLabel } from "@/lib/sector";
 import type { UserProfile } from "@/lib/api/participants";
 
 const ROLE_LABEL: Record<string, string> = {
@@ -68,7 +69,7 @@ export default function GenericProfileView({
                 )}
                 {user.sector && (
                   <Badge color="light">
-                    {user.sector.replace(/_/g, " ")}
+                    {sectorLabel(user.sector)}
                   </Badge>
                 )}
               </div>

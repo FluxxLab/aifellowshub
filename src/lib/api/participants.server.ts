@@ -6,6 +6,7 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import { backendFetch } from "./backend";
+import { sectorLabel } from "@/lib/sector";
 import type {
   Faculty,
   Fellow,
@@ -302,16 +303,7 @@ function mapFellowProfile(f: BackendFellowProfile): FellowProfile {
 }
 
 function prettySector(s: string | null): Sector {
-  if (!s) return "Economic Inclusion Development";
-  switch (s) {
-    case "healthcare":
-      return "Healthcare";
-    case "edtech":
-      return "Education";
-    case "agriculture":
-      return "Agriculture";
-    case "economic_inclusion_development":
-    default:
-      return "Economic Inclusion Development";
-  }
+  // Single source of truth in `@/lib/sector`, shared with the client views
+  // so a raw token can't leak into the UI here or there.
+  return sectorLabel(s);
 }
