@@ -711,9 +711,11 @@ function FacultyTable({ faculty, isSuperAdmin }: { faculty: Faculty[]; isSuperAd
  <div className="flex items-center gap-3">
  <AvatarText name={f.fullName} className="h-9 w-9"/>
  <div className="min-w-0">
- <span className="block truncate text-sm font-semibold text-gray-800">
+ <Link
+ href={`/participants/${f.id}`}
+ className="block truncate text-sm font-semibold text-gray-800 hover:text-fellowship-navy">
  {f.fullName}
- </span>
+ </Link>
  <span className="block truncate text-xs text-gray-500">
  {f.email}
  </span>
@@ -785,9 +787,11 @@ function FacultyTable({ faculty, isSuperAdmin }: { faculty: Faculty[]; isSuperAd
  <div className="flex items-center gap-3">
  <AvatarText name={f.fullName} className="h-9 w-9"/>
  <div>
- <span className="block text-sm font-semibold text-gray-800">
+ <Link
+ href={`/participants/${f.id}`}
+ className="block text-sm font-semibold text-gray-800 hover:text-fellowship-navy">
  {f.fullName}
- </span>
+ </Link>
  <span className="block text-xs text-gray-500">
  {f.email}
  </span>
@@ -855,9 +859,11 @@ function MentorsTable({ mentors, isSuperAdmin }: { mentors: Mentor[]; isSuperAdm
  <div className="flex items-center gap-3">
  <AvatarText name={m.fullName} className="h-9 w-9"/>
  <div className="min-w-0">
- <span className="block truncate text-sm font-semibold text-gray-800">
+ <Link
+ href={`/participants/${m.id}`}
+ className="block truncate text-sm font-semibold text-gray-800 hover:text-fellowship-navy">
  {m.fullName}
- </span>
+ </Link>
  <span className="block truncate text-xs text-gray-500">
  {m.email}
  </span>
@@ -928,9 +934,11 @@ function MentorsTable({ mentors, isSuperAdmin }: { mentors: Mentor[]; isSuperAdm
  <div className="flex items-center gap-3">
  <AvatarText name={m.fullName} className="h-9 w-9"/>
  <div>
- <span className="block text-sm font-semibold text-gray-800">
+ <Link
+ href={`/participants/${m.id}`}
+ className="block text-sm font-semibold text-gray-800 hover:text-fellowship-navy">
  {m.fullName}
- </span>
+ </Link>
  <span className="block text-xs text-gray-500">
  {m.email}
  </span>
@@ -1000,9 +1008,11 @@ function AdminsTable({ admins, isSuperAdmin }: { admins: AdminUser[]; isSuperAdm
  <div className="flex items-center gap-3">
  <AvatarText name={a.fullName} className="h-9 w-9"/>
  <div className="min-w-0">
- <span className="block truncate text-sm font-semibold text-gray-800">
+ <Link
+ href={`/participants/${a.id}`}
+ className="block truncate text-sm font-semibold text-gray-800 hover:text-fellowship-navy">
  {a.fullName}
- </span>
+ </Link>
  <span className="block truncate text-xs text-gray-500">
  {a.email}
  </span>
@@ -1061,9 +1071,11 @@ function AdminsTable({ admins, isSuperAdmin }: { admins: AdminUser[]; isSuperAdm
  <div className="flex items-center gap-3">
  <AvatarText name={a.fullName} className="h-9 w-9"/>
  <div>
- <span className="block text-sm font-semibold text-gray-800">
+ <Link
+ href={`/participants/${a.id}`}
+ className="block text-sm font-semibold text-gray-800 hover:text-fellowship-navy">
  {a.fullName}
- </span>
+ </Link>
  <span className="block text-xs text-gray-500">
  {a.email}
  </span>
