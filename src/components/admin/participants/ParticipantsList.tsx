@@ -20,6 +20,7 @@ import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { MoreDotIcon, PlusIcon } from "@/icons";
 import InviteModal from "./InviteModal";
+import AssignFellowsModal from "./profile/AssignFellowsModal";
 import { apiFetch } from "@/lib/api/client";
 import { toast } from "@/lib/toast";
 import { useCurrentUser } from "@/lib/auth/useCurrentUser";
@@ -573,6 +574,52 @@ function RowActions({
  );
 }
 
+/**
+ * Mentor row actions — the shared RowActions menu plus an "Assign fellows"
+ * item that opens the pin-fellows modal. Wrapped in its own component so the
+ * modal's open state lives per-row.
+ */
+function MentorRowActions({
+  mentor,
+  run,
+  runDelete,
+  isSuperAdmin,
+}: {
+  mentor: Mentor;
+  run: DeactivateRunner;
+  runDelete: DeleteRunner;
+  isSuperAdmin: boolean;
+}) {
+  const [assignOpen, setAssignOpen] = useState(false);
+  return (
+    <>
+      <RowActions
+        label={`Actions for ${mentor.fullName}`}
+        actions={[
+          { label: "View profile", href: `/participants/${mentor.id}` },
+          { label: "Assign fellows", onClick: () => setAssignOpen(true) },
+          deactivateAction(mentor, run),
+          ...(isSuperAdmin
+            ? [
+                {
+                  label: "Delete permanently",
+                  onClick: () => runDelete(mentor),
+                  destructive: true,
+                },
+              ]
+            : []),
+        ]}
+      />
+      <AssignFellowsModal
+        isOpen={assignOpen}
+        onClose={() => setAssignOpen(false)}
+        mentorId={mentor.id}
+        mentorName={mentor.fullName}
+      />
+    </>
+  );
+}
+
 function FellowsTable({ fellows, isSuperAdmin }: { fellows: Fellow[]; isSuperAdmin: boolean }) {
  const { dialog, run } = useDeactivateUser();
  const { dialog: deleteDialog, run: runDelete } = useDeleteUser();
@@ -901,13 +948,11 @@ function MentorsTable({ mentors, isSuperAdmin }: { mentors: Mentor[]; isSuperAdm
  },
  ]}
  actions={
- <RowActions
- label={`Actions for ${m.fullName}`}
- actions={[
- { label: "View profile", href: `/participants/${m.id}` },
- deactivateAction(m, run),
- ...(isSuperAdmin ? [{ label: "Delete permanently", onClick: () => runDelete(m), destructive: true }] : []),
- ]}
+ <MentorRowActions
+ mentor={m}
+ run={run}
+ runDelete={runDelete}
+ isSuperAdmin={isSuperAdmin}
  />
  }
  />
@@ -974,13 +1019,11 @@ function MentorsTable({ mentors, isSuperAdmin }: { mentors: Mentor[]; isSuperAdm
  )}
  </TableCell>
  <ActionsCell>
- <RowActions
- label={`Actions for ${m.fullName}`}
- actions={[
- { label: "View profile", href: `/participants/${m.id}` },
- deactivateAction(m, run),
- ...(isSuperAdmin ? [{ label: "Delete permanently", onClick: () => runDelete(m), destructive: true }] : []),
- ]}
+ <MentorRowActions
+ mentor={m}
+ run={run}
+ runDelete={runDelete}
+ isSuperAdmin={isSuperAdmin}
  />
  </ActionsCell>
  </TableRow>

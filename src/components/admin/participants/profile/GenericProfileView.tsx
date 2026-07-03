@@ -6,6 +6,7 @@ import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
 import { ChevronLeftIcon, PencilIcon } from "@/icons";
 import EditUserModal from "./EditUserModal";
+import MentorFellowsSection from "./MentorFellowsSection";
 import { sectorLabel } from "@/lib/sector";
 import type { UserProfile } from "@/lib/api/participants";
 
@@ -135,6 +136,10 @@ export default function GenericProfileView({
           <RoleStatsCard user={user} />
         </div>
       </div>
+
+      {user.role === "mentor" && (
+        <MentorFellowsSection mentorId={user.id} mentorName={user.fullName} />
+      )}
     </div>
   );
 }
