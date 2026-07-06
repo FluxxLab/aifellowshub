@@ -1,6 +1,5 @@
 "use client";
 import React, { useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
  Table,
@@ -209,11 +208,9 @@ function CapstoneTable({ submissions }: { submissions: CapstoneSubmission[] }) {
  <div className="flex items-center gap-3">
  <AvatarText name={s.fellowName} className="h-9 w-9"/>
  <div>
- <Link
- href={`/participants/${s.fellowId}`}
- className="block text-sm font-semibold text-gray-800 hover:text-fellowship-navy">
+ <span className="block text-sm font-semibold text-gray-800">
  {s.fellowName}
- </Link>
+ </span>
  <span className="block text-xs text-gray-500">
  {s.sector}
  </span>
