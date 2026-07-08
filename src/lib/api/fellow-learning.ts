@@ -70,8 +70,9 @@ export type Lesson = {
 };
 
 export type ModuleSession = {
-  /** Real backend session id. Null for the mock fallback. Required to embed
-   *  the in-app Zoom meeting (used to mint a Meeting SDK signature). */
+  /** Real backend session id. Null when the module has no scheduled session
+   *  yet (a placeholder card is shown). Required to embed the in-app Zoom
+   *  meeting (used to mint a Meeting SDK signature). */
   id: string | null;
   /** Admin-set session title (Zoom meeting name) — what the fellow sees
    *  as the bold heading on session cards. Falls back to the module
@@ -146,9 +147,8 @@ export type ModuleResource = {
 };
 
 export type FellowModuleDetail = FellowModuleSummary & {
-  /** Real backend module id — null for mock-only modules. Required to
-   *  POST end-of-module feedback. */
-  id: string | null;
+  /** Real backend module id. Required to POST end-of-module feedback. */
+  id: string;
   lessons: Lesson[];
   session: ModuleSession;
   /**
