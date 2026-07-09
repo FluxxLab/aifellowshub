@@ -62,6 +62,9 @@ type BackendSession = {
   status: "scheduled" | "live" | "ended" | "cancelled";
   host: { fullName: string } | null;
   module: { weekNumber: number } | null;
+  myAttendance?: {
+    status: "rsvpd" | "attended" | "attended_recording" | "excused" | "missed";
+  } | null;
 };
 
 type BackendAi = { quota: { used: number; limit: number; remaining: number } };
@@ -110,38 +113,46 @@ export async function getFellowHomeServer(): Promise<FellowHome> {
     currentModule?.weekNumber ??
     Math.min(totalWeeks, Math.max(0, completed + 1));
 
-  // Attendance rate: derive from curriculum data directly rather than
-  // cross-joining the sessions list. Each curriculum module already carries
-  // session.myAttendance, so the join is unnecessary and fragile (breaks
-  // when s.module is null or weekNumbers drift).
-  //
-  // Onboarding (Week 0) was conducted in-person outside the LMS — it has no
-  // Zoom session row, but every fellow is credited. Include it as one
-  // attended session so the rate isn't 0% before the first LMS session ends.
-  // For all other modules, count only those whose session has actually ended
-  // (status === "ended" AND startsAt in the past) or whose attendance row has
-  // already been settled (attended / attended_recording / missed).
-  // Count modules whose session has happened: onboarding (always), or any
-  // module whose primary session has status "ended" — regardless of whether
-  // the fellow has an attendance row. A fellow who never RSVPed has no row
-  // (myAttendance === null), so checking only for a "missed" row silently
-  // excludes those sessions from the denominator and inflates the rate to 100%.
-  const sessionEnded = (m: BackendCurriculumModule) =>
-    m.session?.status === "ended" ||
-    // Fallback: status not yet flipped to "ended" but start time has passed.
-    (m.session != null && new Date(m.session.startsAt).getTime() < Date.now());
-  const modulesWithPastSession = modules.filter(
-    (m) => isOnboarding(m) || sessionEnded(m),
-  );
-  const attendedCount = modulesWithPastSession.filter(
-    (m) => isOnboarding(m) || m.sessionAttended,
-  ).length;
-  const attendanceRatePercent =
-    modulesWithPastSession.length === 0
-      ? 0
-      : Math.round((attendedCount / modulesWithPastSession.length) * 100);
-
   const sessionList = sessions?.sessions ?? [];
+
+  // Attendance rate: per-SESSION, using the same rules as the My Sessions
+  // page (`my-sessions/page.tsx`) so the dashboard tile and that page can
+  // never disagree. The previous per-module rate (any session attended ⇒
+  // whole module credited) overstated the number — a fellow attending 1 of
+  // a module's 2 sessions read as 100% here while the sessions page (and
+  // the certification scorecard, which is also per-session) said less.
+  //
+  // Rules mirrored from the sessions page:
+  //   - A session counts toward the denominator only when it actually
+  //     happened: status "ended" AND startsAt in the past (guards against
+  //     rescheduled-forward rows), except orientation which is pinned past.
+  //   - Attended = attended / attended_recording / excused.
+  //   - Orientation (Week 0) ran outside the LMS: any week<=0 row is
+  //     credited, and if the curriculum has an Onboarding module with no
+  //     session row at all, count one synthetic attended session (the
+  //     sessions page injects the same synthetic row).
+  const now = Date.now();
+  const isOrientationSession = (s: BackendSession) =>
+    (s.module?.weekNumber ?? 0) <= 0;
+  const isPastSession = (s: BackendSession) =>
+    isOrientationSession(s) ||
+    (s.status === "ended" && new Date(s.startsAt).getTime() < now);
+  const isAttendedSession = (s: BackendSession) =>
+    isOrientationSession(s) ||
+    s.myAttendance?.status === "attended" ||
+    s.myAttendance?.status === "attended_recording" ||
+    s.myAttendance?.status === "excused";
+  const pastSessions = sessionList.filter(isPastSession);
+  let pastSessionCount = pastSessions.length;
+  let attendedSessionCount = pastSessions.filter(isAttendedSession).length;
+  if (modules.some(isOnboarding) && !sessionList.some(isOrientationSession)) {
+    pastSessionCount += 1;
+    attendedSessionCount += 1;
+  }
+  const attendanceRatePercent =
+    pastSessionCount === 0
+      ? 0
+      : Math.round((attendedSessionCount / pastSessionCount) * 100);
   const upcoming = sessionList
     .filter((s) => s.status === "scheduled" || s.status === "live")
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt))[0];
