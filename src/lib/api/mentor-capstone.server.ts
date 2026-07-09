@@ -72,8 +72,7 @@ export async function getMentorCapstoneServer(
         risks: "",
         lastSavedAt: match.updatedAt,
       },
-      milestones: [],
-      consultations: [],
+      milestones: match.milestones ?? [],
       feedback: match.feedback.map((f) => ({
         id: f.id,
         fromMentor: f.author.role !== "fellow",
@@ -81,7 +80,6 @@ export async function getMentorCapstoneServer(
         message: f.message,
         at: f.createdAt,
       })),
-      assignments: [],
       submittedAt: match.lastSubmittedAt,
       approvedAt: match.finalApprovedAt,
       artifactUrl: match.artifactUrl ?? null,

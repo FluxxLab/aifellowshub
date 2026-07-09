@@ -1,8 +1,8 @@
 /**
  * Server-only fellow capstone fetcher (BRD §6.10). Maps the backend
- * response into the existing rich `FellowCapstone` shape. Fields the
- * backend doesn't yet model (milestones, consultations, assignments,
- * mentor expertise summary) ship empty.
+ * response into the existing rich `FellowCapstone` shape. Milestones and
+ * feedback come from the backend; the mentor expertise summary isn't
+ * modelled server-side yet and ships empty.
  */
 import "server-only";
 import { backendFetch } from "./backend";
@@ -119,9 +119,7 @@ const EMPTY_CAPSTONE: FellowCapstone = {
   mentor: EMPTY_MENTOR,
   draft: EMPTY_DRAFT,
   milestones: [],
-  consultations: [],
   feedback: [],
-  assignments: [],
   submittedAt: null,
   approvedAt: null,
   artifactUrl: null,
@@ -163,9 +161,7 @@ function mapBackendCapstone(b: BackendCapstone): FellowCapstone {
       lastSavedAt: b.updatedAt,
     },
     milestones: b.milestones ?? [],
-    consultations: [],
     feedback: b.feedback.map(mapFeedback),
-    assignments: [],
     submittedAt: b.lastSubmittedAt,
     approvedAt: b.finalApprovedAt,
     artifactUrl: b.artifactUrl ?? null,

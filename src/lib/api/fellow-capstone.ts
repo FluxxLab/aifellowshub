@@ -55,16 +55,6 @@ export type CapstoneMilestone = {
   dueAt?: string;
 };
 
-export type StakeholderConsultation = {
-  id: string;
-  stakeholderName: string;
-  stakeholderRole: string;
-  scheduledAt: string;
-  /** "scheduled" before, "complete" after, "cancelled" if pulled. */
-  status: "scheduled" | "complete" | "cancelled";
-  notes: string | null;
-};
-
 export type CapstoneFeedbackEntry = {
   id: string;
   /** Mentor or the fellow themselves replying on the thread. */
@@ -72,24 +62,6 @@ export type CapstoneFeedbackEntry = {
   fromName: string;
   message: string;
   at: string;
-};
-
-export type CapstoneAssignmentStatus = "pending" | "completed";
-
-export type CapstoneAssignment = {
-  id: string;
-  title: string;
-  description: string;
-  assignedBy: {
-    id: string;
-    name: string;
-  };
-  assignedAt: string;
-  /** ISO date the fellow needs to deliver by; null = no fixed deadline. */
-  dueAt: string | null;
-  status: CapstoneAssignmentStatus;
-  /** ISO timestamp the fellow marked it done. Null until completed. */
-  completedAt: string | null;
 };
 
 export type FellowCapstone = {
@@ -100,9 +72,7 @@ export type FellowCapstone = {
   mentor: CapstoneMentor;
   draft: CapstoneDraft;
   milestones: CapstoneMilestone[];
-  consultations: StakeholderConsultation[];
   feedback: CapstoneFeedbackEntry[];
-  assignments: CapstoneAssignment[];
   /** ISO timestamp — null until the fellow submits draft v1. */
   submittedAt: string | null;
   /** ISO timestamp — null until mentor approves. */
@@ -115,10 +85,10 @@ export type FellowCapstone = {
 /* ---------- Client-side mutators (BRD §6.10) ---------- */
 
 /**
- * Backend-shape returned from PATCH/POST endpoints. The view doesn't need
- * the full mock-merged shape after a write — just the canonical fields
- * that the backend owns. Mock-only fields (milestones, consultations,
- * assignments) stay untouched in component state.
+ * Backend-shape returned from PATCH/POST endpoints. A write only needs the
+ * canonical fields the backend owns; the view calls `router.refresh()`
+ * afterwards to re-fetch milestones + feedback from the server (both are
+ * backend-derived).
  */
 export type CapstoneMutationResult = {
   id: string;

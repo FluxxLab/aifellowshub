@@ -9,8 +9,8 @@ import UserDropdown from "@/components/header/UserDropdown";
  * controls) match the NextAdmin / TailAdmin reference rhythm: a tall
  * search field anchors the centre so the bar reads as balanced.
  *
- * Primary navigation lives in `AppSidebar`. The `onSidebarToggle`
- * prop wires the hamburger to the sidebar state owned by `LayoutShell`
+ * Primary navigation lives in the `Layouts/sidebar` `Sidebar`. The
+ * `onSidebarToggle` prop wires the hamburger to the sidebar state owned by `LayoutShell`
  * — at the `lg` breakpoint and above this collapses the icon rail;
  * below it, opens/closes the overlay drawer. One button, viewport-
  * aware behaviour.

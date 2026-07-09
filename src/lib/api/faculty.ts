@@ -580,15 +580,6 @@ export async function uploadLessonContent(
   });
 }
 
-/** @deprecated Use uploadLessonContent instead. */
-export async function uploadLessonContentMultipart(
-  lessonId: string,
-  file: File,
-  options: { onProgress?: (loaded: number, total: number) => void } = {},
-): Promise<FacultyLesson> {
-  return uploadLessonContent(lessonId, file, options);
-}
-
 export async function reorderLesson(
   lessonId: string,
   payload: { beforeId: string | null; afterId: string | null },
