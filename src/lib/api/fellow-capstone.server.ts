@@ -102,38 +102,19 @@ const EMPTY_MENTOR = {
   expertiseSummary: "Awaiting mentor assignment.",
 };
 
-const EMPTY_DRAFT = {
-  problem: "",
-  approach: "",
-  stakeholders: "",
-  deliverables: "",
-  risks: "",
-  lastSavedAt: new Date().toISOString(),
-};
-
-const EMPTY_CAPSTONE: FellowCapstone = {
-  status: "not-started",
-  title: "Untitled capstone",
-  oneliner: "Start by defining your problem statement.",
-  sector: "Economic Inclusion Development",
-  mentor: EMPTY_MENTOR,
-  draft: EMPTY_DRAFT,
-  milestones: [],
-  feedback: [],
-  submittedAt: null,
-  approvedAt: null,
-  artifactUrl: null,
-};
-
 export async function getFellowCapstoneServer(): Promise<FellowCapstone> {
-  try {
-    const res = await backendFetch("/me/capstone", { method: "GET" });
-    if (!res.ok) return EMPTY_CAPSTONE;
-    const data = (await res.json()) as { capstone: BackendCapstone };
-    return mapBackendCapstone(data.capstone);
-  } catch {
-    return EMPTY_CAPSTONE;
+  // Let failures propagate to the route's error.tsx (auto-retry + manual
+  // button) instead of silently rendering an empty capstone. The old
+  // EMPTY_CAPSTONE fallback made a mid-deploy blip look like the fellow's
+  // capstone had been wiped — "Untitled capstone", no mentor, blank draft —
+  // which is far scarier than an honest "couldn't load, retrying".
+  // backendFetch already retries idempotent GETs before throwing.
+  const res = await backendFetch("/me/capstone", { method: "GET" });
+  if (!res.ok) {
+    throw new Error("Could not load your capstone — please try again.");
   }
+  const data = (await res.json()) as { capstone: BackendCapstone };
+  return mapBackendCapstone(data.capstone);
 }
 
 function mapBackendCapstone(b: BackendCapstone): FellowCapstone {
