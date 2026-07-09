@@ -649,7 +649,7 @@ function FellowsTable({ fellows, isSuperAdmin }: { fellows: Fellow[]; isSuperAdm
  }
  status={<FellowStatusBadge status={f.status} />}
  stats={[
- { label: "Sector", value: f.sector },
+ { label: "Sector", value: f.sector ?? "No sector" },
  { label: "Mentor", value: f.mentor ?? "Unassigned" },
  { label: "Progress", value: `${f.progressPercent}%` },
  { label: "Attendance", value: `${f.attendanceRate}%` },
@@ -701,7 +701,9 @@ function FellowsTable({ fellows, isSuperAdmin }: { fellows: Fellow[]; isSuperAdm
  </div>
  </TableCell>
  <TableCell className="px-5 py-4 text-sm text-gray-600">
- {f.sector}
+ {f.sector ?? (
+ <span className="italic text-gray-400">No sector</span>
+ )}
  </TableCell>
  <TableCell className="px-5 py-4 text-sm text-gray-600">
  {f.mentor ?? (
@@ -1277,7 +1279,7 @@ function participantsForExport(
  return {
  header: ["Name", "Email", "Organisation", "Country", "Sector", "Mentor", "Progress %", "Attendance %", "Status"],
  rows: list.map((f) => [
- f.fullName, f.email, f.organisation, f.country, f.sector,
+ f.fullName, f.email, f.organisation, f.country, f.sector ?? "",
  f.mentor ?? "Unassigned", String(f.progressPercent), String(f.attendanceRate), f.status,
  ]),
  filename: "fellows",

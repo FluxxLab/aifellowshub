@@ -44,7 +44,11 @@ export default function ProfileHeader({ fellow }: ProfileHeaderProps) {
  <div className="mt-3 flex flex-wrap items-center gap-2">
  <Badge color="info">Fellow</Badge>
  <FellowStatusBadge status={fellow.status} />
+ {fellow.sector ? (
  <Badge color="light">{fellow.sector}</Badge>
+ ) : (
+ <Badge color="warning">No sector</Badge>
+ )}
  </div>
  </div>
  </div>

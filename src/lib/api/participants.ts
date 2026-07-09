@@ -70,7 +70,10 @@ export type Fellow = {
   country: string;
   organisation: string;
   jobTitle: string;
-  sector: Sector;
+  /** Normalized sector label, or null when the profile has no sector set.
+   *  Null matters: a sector-less fellow can't auto-match a mentor, so the
+   *  UI must show "No sector" rather than mask it with a default. */
+  sector: Sector | null;
   /** Mentor full name, or null if unassigned. Kept as a plain string for
    *  the list view; the detail view uses `assignedMentor` for actions. */
   mentor: string | null;

@@ -6,7 +6,7 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import { backendFetch } from "./backend";
-import { sectorLabel } from "@/lib/sector";
+import { normalizeSector } from "@/lib/sector";
 import type {
   Faculty,
   Fellow,
@@ -114,7 +114,7 @@ function mapFellow(f: BackendFellow): Fellow {
     country: f.country,
     organisation: f.organisation,
     jobTitle: f.jobTitle,
-    sector: prettySector(f.sector),
+    sector: normalizeSector(f.sector),
     mentor: f.mentorName,
     progressPercent: f.progressPercent,
     attendanceRate: f.attendanceRate,
@@ -125,12 +125,14 @@ function mapFellow(f: BackendFellow): Fellow {
 }
 
 function mapMentor(m: BackendMentor): Mentor {
-  const sec = prettySector(m.sector);
+  // Honest nullability: a mentor with no sector can't auto-match any
+  // fellow, so masking it with the default label hid real problems.
+  const sec = normalizeSector(m.sector);
   return {
     id: m.id,
     fullName: m.fullName,
     email: m.email,
-    expertise: [sec],
+    expertise: sec ? [sec] : [],
     assignedFellowsCount: m.assignedFellowsCount,
     pendingReviewsCount: m.pendingReviewsCount,
     isActive: m.isActive,
@@ -139,12 +141,12 @@ function mapMentor(m: BackendMentor): Mentor {
 }
 
 function mapFaculty(f: BackendFaculty): Faculty {
-  const sec = prettySector(f.sector);
+  const sec = normalizeSector(f.sector);
   return {
     id: f.id,
     fullName: f.fullName,
     email: f.email,
-    expertise: [sec],
+    expertise: sec ? [sec] : [],
     ownedModulesCount: f.ownedModulesCount,
     draftModulesCount: f.draftModulesCount,
     isActive: f.isActive,
@@ -265,7 +267,7 @@ function mapFellowProfile(f: BackendFellowProfile): FellowProfile {
     country: f.country ?? "",
     organisation: f.organisation ?? "",
     jobTitle: f.jobTitle ?? "",
-    sector: prettySector(f.sector),
+    sector: normalizeSector(f.sector),
     mentor: f.mentorName ?? null,
     progressPercent: f.progressPercent ?? 0,
     attendanceRate: f.attendanceRate ?? 0,
@@ -302,8 +304,3 @@ function mapFellowProfile(f: BackendFellowProfile): FellowProfile {
   };
 }
 
-function prettySector(s: string | null): Sector {
-  // Single source of truth in `@/lib/sector`, shared with the client views
-  // so a raw token can't leak into the UI here or there.
-  return sectorLabel(s);
-}

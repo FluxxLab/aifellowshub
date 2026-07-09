@@ -69,7 +69,9 @@ export default function EditFellowModal({
   const [jobTitle, setJobTitle] = useState(fellow.jobTitle ?? "");
   const [organisation, setOrganisation] = useState(fellow.organisation ?? "");
   const [country, setCountry] = useState(fellow.country ?? "");
-  const [sector, setSector] = useState<Sector>(fellow.sector);
+  // Null = the profile has no sector yet: no pill starts selected, and a
+  // sector is only written once the admin actually picks one.
+  const [sector, setSector] = useState<Sector | null>(fellow.sector);
   const [status, setStatus] = useState<FellowStatus>(fellow.status);
   const [bio, setBio] = useState(fellow.bio ?? "");
   const [linkedinUrl, setLinkedinUrl] = useState(fellow.linkedinUrl ?? "");
@@ -92,7 +94,7 @@ export default function EditFellowModal({
       body.organisation = organisation.trim() || null;
     if (country.trim() !== (fellow.country ?? ""))
       body.country = country.trim() || null;
-    if (sector !== fellow.sector) body.sector = SECTOR_TO_BACKEND[sector];
+    if (sector && sector !== fellow.sector) body.sector = SECTOR_TO_BACKEND[sector];
     if (status !== fellow.status) body.status = STATUS_TO_BACKEND[status];
     if (bio.trim() !== (fellow.bio ?? "")) body.bio = bio.trim() || null;
     if (linkedinUrl.trim() !== (fellow.linkedinUrl ?? ""))
