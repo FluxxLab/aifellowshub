@@ -145,14 +145,32 @@ export default function FellowMentorshipView({
     <div className="flex flex-col gap-4 md:gap-6">
       {dialog}
 
-      {/* Request form (or no-mentor empty state) */}
+      {/* Request form (or no-mentor / couldn't-load empty state). The two
+          failure states are deliberately distinct: a transient fetch failure
+          (backend restarting mid-deploy, network blip) must not read as
+          "you have no mentor" — that misdirects the fellow to an admin when
+          a simple retry fixes it. */}
       {!assigned.ok ? (
-        <div className="rounded-2xl border border-warning-200 bg-warning-50 p-5 md:p-6">
-          <h2 className="text-base font-semibold text-gray-800">
-            No mentor assigned yet
-          </h2>
-          <p className="mt-2 text-sm text-gray-700">{assigned.message}</p>
-        </div>
+        assigned.transient ? (
+          <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5 md:p-6">
+            <h2 className="text-base font-semibold text-gray-800">
+              We couldn&apos;t load your mentor
+            </h2>
+            <p className="mt-2 text-sm text-gray-700">{assigned.message}</p>
+            <div className="mt-4">
+              <Button size="sm" onClick={() => router.refresh()}>
+                Try again
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-warning-200 bg-warning-50 p-5 md:p-6">
+            <h2 className="text-base font-semibold text-gray-800">
+              No mentor assigned yet
+            </h2>
+            <p className="mt-2 text-sm text-gray-700">{assigned.message}</p>
+          </div>
+        )
       ) : (
         <form
           onSubmit={submit}

@@ -34,7 +34,16 @@ export async function listMentorsForBrowseServer(): Promise<MentorSummary[]> {
  */
 export type AssignedMentorResult =
   | { ok: true; mentor: MentorSummary }
-  | { ok: false; message: string };
+  /**
+   * `transient: true` = infrastructure failure (backend unreachable,
+   * mid-deploy restart, 5xx) — the fellow may well HAVE a mentor and
+   * should just retry. `transient: false` = the backend answered and
+   * there genuinely is no mentor (no pin, no sector match) — retrying
+   * won't change anything; an admin has to act. The page renders these
+   * as two different states so an outage never reads as "you have no
+   * mentor".
+   */
+  | { ok: false; message: string; transient: boolean };
 
 export async function getMyAssignedMentorServer(): Promise<AssignedMentorResult> {
   try {
@@ -43,6 +52,7 @@ export async function getMyAssignedMentorServer(): Promise<AssignedMentorResult>
       const body = (await res.json().catch(() => ({}))) as { message?: string };
       return {
         ok: false,
+        transient: res.status >= 500,
         message:
           body.message ??
           "We couldn't find a mentor assigned to you. Contact an admin.",
@@ -53,7 +63,9 @@ export async function getMyAssignedMentorServer(): Promise<AssignedMentorResult>
   } catch {
     return {
       ok: false,
-      message: "We couldn't reach the mentor service. Try again in a moment.",
+      transient: true,
+      message:
+        "We couldn't reach the mentor service — this is usually a brief network blip.",
     };
   }
 }
