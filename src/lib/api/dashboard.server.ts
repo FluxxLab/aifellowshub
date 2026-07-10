@@ -66,7 +66,17 @@ type BackendDashboard = {
     email: string;
     country: string | null;
     sector: string | null;
+    attendanceRate: number;
+    progressPercent: number;
+    reason: "low_attendance" | "manual";
+    lastActiveAt: string;
+   
   }[];
+   engagementTrend:{
+      date: string;
+      forumMessages: number;
+      aiBuddyMessages: number;
+    }[];
   cohortProgress: { weekNumber: number; avgCompletionPercent: number }[];
   sectorDistribution: { sector: string; count: number }[];
 };
@@ -180,10 +190,13 @@ function mapDashboard(
     id: f.id,
     fullName: f.fullName,
     avatarUrl: "",
-    attendanceRate: hero.attendanceRate ?? 0,
-    progressPercent: 0,
-    riskReason: "Failed assessment or missed sessions",
-    lastActiveAt: new Date().toISOString(),
+    attendanceRate: f.attendanceRate,
+    progressPercent: f.progressPercent,
+    riskReason:
+      f.reason === "manual"
+        ? "Marked at-risk by an admin"
+        : `Attendance ${f.attendanceRate}% — below the 60% threshold`,
+    lastActiveAt: f.lastActiveAt,
   }));
 
   const d = hero.deltas;
@@ -234,7 +247,7 @@ function mapDashboard(
       avgCompletionPercent: w.avgCompletionPercent,
     })),
     moduleCompletion,
-    engagementTrend: [],
+    engagementTrend: data.engagementTrend ?? [],
     cohortBySector,
     atRiskFellows,
     upcomingSessions,
