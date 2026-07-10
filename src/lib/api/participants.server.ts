@@ -36,6 +36,9 @@ type BackendFellow = {
   progressPercent: number;
   attendanceRate: number;
   joinedAt: string;
+  mustChangePassword: boolean;
+  /** Manual at_risk status OR backend-derived (attendance < 60% after ≥2 ended sessions). */
+  atRisk: boolean;
 };
 
 type BackendMentor = {
@@ -118,7 +121,9 @@ function mapFellow(f: BackendFellow): Fellow {
     mentor: f.mentorName,
     progressPercent: f.progressPercent,
     attendanceRate: f.attendanceRate,
-    status: f.status === "at_risk" ? "at-risk" : (f.status ?? "active"),
+    status: f.atRisk ? "at-risk" : f.status === "at_risk" ? "at-risk" : (f.status ?? "active"),
+    atRisk: f.atRisk,
+    pending: f.mustChangePassword,
     isActive: f.isActive,
     joinedAt: f.joinedAt,
   };
@@ -177,6 +182,7 @@ type BackendFellowProfile = {
   bio: string | null;
   linkedinUrl: string | null;
   status: "active" | "at_risk" | "inactive" | null;
+  mustChangePassword: boolean;
   isActive: boolean;
   joinedAt: string;
   progressPercent: number;
@@ -272,6 +278,10 @@ function mapFellowProfile(f: BackendFellowProfile): FellowProfile {
     progressPercent: f.progressPercent ?? 0,
     attendanceRate: f.attendanceRate ?? 0,
     status: f.status === "at_risk" ? "at-risk" : f.status ?? "active",
+    // The fellow-detail endpoint doesn't compute the derived rule yet, so the
+    // profile page reflects the manual mark only (list view has the full rule).
+    atRisk: f.status === "at_risk",
+    pending: f.mustChangePassword ?? false,
     isActive: f.isActive ?? true,
     joinedAt: f.joinedAt,
     bio: f.bio ?? null,

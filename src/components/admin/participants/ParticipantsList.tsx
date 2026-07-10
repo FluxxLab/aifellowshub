@@ -43,11 +43,13 @@ const TABS = [
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
 
-const FELLOW_FILTERS: { id:"all"| FellowStatus; label: string }[] = [
+const FELLOW_FILTERS: { id:"all"| "pending" | FellowStatus; label: string }[] = [
  { id:"all", label:"All"},
  { id:"active", label:"Active"},
  { id:"at-risk", label:"At-risk"},
+{ id: "pending", label: "Pending"},
  { id:"inactive", label:"Inactive"},
+
 ];
 
 type ParticipantsListProps = {
@@ -357,10 +359,13 @@ function TabPanel({ tab, data, search, fellowFilter, isSuperAdmin }: TabPanelPro
    setPage(1);
  }, [tab, fellowFilter, search]);
 
+  
+
  if (tab ==="fellows") {
  const fellows = data.fellows.filter((f) => {
- if (fellowFilter !=="all"&& f.status !== fellowFilter) return false;
- return matchesSearch(f.fullName) || matchesSearch(f.email);
+ if (fellowFilter ==="pending"&& !f.pending) return false;
+ if (fellowFilter !=="all"&& fellowFilter !=="pending"&& f.status !== fellowFilter) return false;
+  return matchesSearch(f.fullName) || matchesSearch(f.email);
  });
  return (
    <Paginated
@@ -647,7 +652,7 @@ function FellowsTable({ fellows, isSuperAdmin }: { fellows: Fellow[]; isSuperAdm
  </div>
  </div>
  }
- status={<FellowStatusBadge status={f.status} />}
+ status={f.pending ? <Badge color="warning"> Pending </Badge> :<FellowStatusBadge status={f.status} />}
  stats={[
  { label: "Sector", value: f.sector ?? "No sector" },
  { label: "Mentor", value: f.mentor ?? "Unassigned" },
@@ -717,7 +722,7 @@ function FellowsTable({ fellows, isSuperAdmin }: { fellows: Fellow[]; isSuperAdm
  {f.attendanceRate}%
  </TableCell>
  <TableCell className="px-5 py-4">
- <FellowStatusBadge status={f.status} />
+ {f.pending ? <Badge color="warning">Pending</Badge> : <FellowStatusBadge status={f.status} />}
  </TableCell>
  <ActionsCell>
  <RowActions
@@ -1273,15 +1278,15 @@ function participantsForExport(
  if (tab === "fellows") {
  const list = data.fellows.filter(
  (f) =>
- (fellowFilter === "all" || f.status === fellowFilter) &&
+ (fellowFilter === "all" || (fellowFilter === "pending" ? f.pending : f.status === fellowFilter)) &&
  (m(f.fullName) || m(f.email)),
  );
  return {
- header: ["Name", "Email", "Organisation", "Country", "Sector", "Mentor", "Progress %", "Attendance %", "Status"],
+ header: ["Name", "Email", "Organisation", "Country", "Sector", "Mentor", "Progress %", "Attendance %", "Status", "Onboarded"],
  rows: list.map((f) => [
  f.fullName, f.email, f.organisation, f.country, f.sector ?? "",
- f.mentor ?? "Unassigned", String(f.progressPercent), String(f.attendanceRate), f.status,
- ]),
+  f.mentor ?? "Unassigned", String(f.progressPercent), String(f.attendanceRate), f.status, f.pending ? "No" : "Yes",
+  ]),
  filename: "fellows",
  };
  }

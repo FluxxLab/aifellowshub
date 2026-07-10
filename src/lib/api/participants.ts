@@ -84,6 +84,14 @@ export type Fellow = {
    *  the fellow `status` enum, which is a programme-progress signal. */
   isActive: boolean;
   joinedAt: string; // ISO date
+  /**
+   * True when the fellow has never logged in. This is a separate field from
+   * `isActive` because a fellow can be active but still have never logged in
+   * (e.g., if they were added by an admin but haven't accessed the platform).
+   */
+  pending: boolean; // true when the fellow has never logged in
+  atRisk: boolean; // true when the fellow is at risk of dropping out
+
 };
 
 export type Mentor = {
