@@ -195,7 +195,7 @@ function mapDashboard(
     riskReason:
       f.reason === "manual"
         ? "Marked at-risk by an admin"
-        : `Attendance ${f.attendanceRate}% — below the 60% threshold`,
+        : `Attendance ${f.attendanceRate}%  below the 60% threshold`,
     lastActiveAt: f.lastActiveAt,
   }));
 
