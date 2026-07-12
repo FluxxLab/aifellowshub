@@ -151,6 +151,7 @@ export type FellowModuleDetail = FellowModuleSummary & {
   id: string;
   lessons: Lesson[];
   session: ModuleSession;
+  catchupSessionId?: string | null;
   /**
    * Tiered assessments. The legacy `assessment` field is removed —
    * consumers should render `preAssessment`, lesson-level quizzes

@@ -95,7 +95,7 @@ export default async function ModuleDetailPage({
               variant="pre"
             />
           )}
-          <LessonsList lessons={m.lessons} sessionId={m.session.id} />
+          <LessonsList lessons={m.lessons} sessionId={m.catchupSessionId} />
           {m.postAssessment && (
             <AssessmentCard
               assessment={m.postAssessment}

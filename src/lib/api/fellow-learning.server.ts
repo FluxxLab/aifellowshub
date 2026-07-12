@@ -63,6 +63,7 @@ type BackendCurriculumModule = {
     attended: boolean;
     feedbackSubmitted: boolean;
   }[];
+  catchupSessionId?: string | null; 
   /** True if the fellow attended ANY session for this module (all sessions checked, not just the primary). */
   sessionAttended: boolean;
   /** Looser than sessionAttended — true once the fellow attended a session OR
@@ -412,6 +413,7 @@ function mapBackendCurriculumModule(
         : "Re-read",
     lessons,
     session,
+    catchupSessionId: m.catchupSessionId ?? null,
     resources,
     feedbackSubmitted: m.feedbackSubmitted ?? false,
     // Looser gate for the feedback form (attended any session OR passed),
