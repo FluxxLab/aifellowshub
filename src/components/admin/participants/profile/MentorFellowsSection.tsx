@@ -50,7 +50,7 @@ export default function MentorFellowsSection({
   async function unpin(f: MentorAssignedFellow) {
     const ok = await confirm({
       title: "Unassign this fellow?",
-      message: `${f.fullName} will revert to sector auto-matching. You can reassign them at any time.`,
+      message: `${f.fullName} will be removed from ${mentorName}'s care and won't have a mentor until you reassign them.`,
       confirmLabel: "Unassign",
       tone: "danger",
     });
@@ -141,18 +141,16 @@ export default function MentorFellowsSection({
                   Sector
                 </Badge>
               )}
-              {f.via === "pinned" && (
-                <button
-                  type="button"
-                  onClick={() => void unpin(f)}
-                  disabled={busyId === f.id}
-                  aria-label={`Unassign ${f.fullName}`}
-                  title="Unassign (revert to sector match)"
-                  className="rounded-md px-2 py-1 text-xs font-semibold text-error-600 transition-colors hover:bg-error-50 disabled:opacity-50"
-                >
-                  {busyId === f.id ? "…" : "Unassign"}
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => void unpin(f)}
+                disabled={busyId === f.id}
+                aria-label={`Unassign ${f.fullName}`}
+                title="Remove this fellow from the mentor's care"
+                className="rounded-md px-2 py-1 text-xs font-semibold text-error-600 transition-colors hover:bg-error-50 disabled:opacity-50"
+              >
+                {busyId === f.id ? "…" : "Unassign"}
+              </button>
             </li>
           ))}
         </ul>
