@@ -135,8 +135,9 @@ export async function getDashboardSummaryServer(): Promise<DashboardSummary> {
  *  4. 0 — genuinely nothing has started yet.
  */
 function deriveCurrentWeek(data: BackendDashboard): number {
-  // Backend now returns the week of the most recently started session —
-  // the authoritative answer, no heuristics needed.
+  // Backend returns the calendar week of the cohort (weeks elapsed since
+  // cohortStartDate, clamped to the programme length) — the authoritative
+  // answer, no heuristics needed.
   if (typeof data.hero.currentWeek === "number") {
     return data.hero.currentWeek;
   }
