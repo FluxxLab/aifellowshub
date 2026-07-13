@@ -9,6 +9,7 @@ import CohortCompositionDonut from "@/components/admin/dashboard/CohortCompositi
 import AtRiskFellows from "@/components/admin/dashboard/AtRiskFellows";
 import AdminFirstLoginTour from "@/components/admin/dashboard/AdminFirstLoginTour";
 import { getDashboardSummaryServer } from "@/lib/api/dashboard.server";
+import { getCohortStatusServer } from "@/lib/api/cohort.server";
 import { getCurrentUser } from "@/lib/auth/getCurrentUser";
 
 export const metadata: Metadata = {
@@ -26,9 +27,10 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const [summary, user] = await Promise.all([
+  const [summary, user, cohortStatus] = await Promise.all([
     getDashboardSummaryServer(),
     getCurrentUser(),
+    getCohortStatusServer(),
   ]);
 
   const showAdminTour =
@@ -40,8 +42,9 @@ export default async function DashboardPage() {
       {showAdminTour && <AdminFirstLoginTour firstName={firstName} />}
       <WelcomePanel
         user={user}
-        cohortName={summary.cohort.name}
-        currentWeek={summary.cohort.currentWeek}
+        cohortName={cohortStatus.name}
+        currentWeek={cohortStatus.currentWeek}
+        weekCount={cohortStatus.weekCount}
         attentionItems={summary.attentionItems}
       />
 
@@ -50,7 +53,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-12 gap-4 md:gap-6">
         <div data-tour="cohort-progress" className="col-span-12 xl:col-span-8">
           <CohortProgressChart
-            cohortName={summary.cohort.name}
+            cohortName={cohortStatus.name}
             data={summary.cohortProgress}
           />
         </div>

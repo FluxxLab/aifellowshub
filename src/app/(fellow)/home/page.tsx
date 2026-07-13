@@ -7,6 +7,7 @@ import FirstLoginTour from "@/components/fellow/FirstLoginTour";
 import { ChevronRightIcon } from "@/icons";
 import { getCurrentUser } from "@/lib/auth/getCurrentUser";
 import { getFellowHomeServer } from "@/lib/api/fellow-home.server";
+import { getCohortStatusServer } from "@/lib/api/cohort.server";
 import { formatCohortDate, formatCohortTime } from "@/lib/datetime";
 
 export const metadata: Metadata = {
@@ -25,12 +26,13 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function FellowHomePage() {
-  const [user, home] = await Promise.all([
+  const [user, home, cohortStatus] = await Promise.all([
     getCurrentUser(),
     getFellowHomeServer(),
+    getCohortStatusServer(),
   ]);
   const firstName = user.fullName.split(" ")[0];
-  const { cohort, metrics, currentModule, nextSession, recentActivity } = home;
+  const { metrics, currentModule, nextSession, recentActivity } = home;
   // Sessions are scheduled in Lagos time (UTC+1) — format with the
   // cohort timezone so the dashboard time matches what fellows
   // expect, regardless of where the server-side render runs.
@@ -49,10 +51,13 @@ export default async function FellowHomePage() {
           Hi, {firstName}.
         </h1>
         <p className="mt-2 text-gray-600">
-          {cohort.totalWeeks > 0 ? (
-            <>You&apos;re in week {cohort.currentWeek} of {cohort.totalWeeks}</>
+          {cohortStatus.currentWeek > 0 ? (
+            <>
+              {cohortStatus.name} is in week {cohortStatus.currentWeek} of{" "}
+              {cohortStatus.weekCount}
+            </>
           ) : (
-            <>Welcome to the {cohort.name}</>
+            <>Welcome to {cohortStatus.name}</>
           )}
           {currentModule && (
             <>

@@ -7,6 +7,7 @@ type WelcomePanelProps = {
  user: CurrentUser;
  cohortName: string;
  currentWeek: number;
+ weekCount: number;
  attentionItems: AttentionItem[];
 };
 
@@ -14,6 +15,7 @@ export default function WelcomePanel({
  user,
  cohortName,
  currentWeek,
+ weekCount,
  attentionItems,
 }: WelcomePanelProps) {
  const firstName = user.fullName.split(" ")[0];
@@ -26,7 +28,8 @@ export default function WelcomePanel({
  {greeting}, {firstName}.
  </h1>
  <p className="text-base text-gray-500">
- {cohortName} is in week {currentWeek}.
+ {cohortName} is in week {currentWeek}
+ {weekCount > 0 ? ` of ${weekCount}` : ""}.
  {urgent.length > 0 && (
  <>
  {" "}
