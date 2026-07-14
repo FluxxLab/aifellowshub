@@ -46,6 +46,12 @@ export default function LessonVideoPlayer({
   const pauseAfterSeekRef = useRef(false);
   const watchedRef = useRef(initialWatchedSeconds);
   const lastSentRef = useRef(initialWatchedSeconds);
+  // Furthest point reached via playback. A forward seek only counts as a
+  // "skip" when it jumps PAST this frontier into unwatched content — seeking
+  // back into (or around within) already-watched territory is re-watching,
+  // not skipping, so it shouldn't warn. Seeded from prior watch time so
+  // resuming a video you've already watched doesn't false-alarm.
+  const maxReachedRef = useRef(initialWatchedSeconds);
   const completedRef = useRef(false);
   const totalSecondsRef = useRef<number | null>(null);
   const [skipModalOpen, setSkipModalOpen] = useState(false);
@@ -115,6 +121,9 @@ export default function LessonVideoPlayer({
     if (playDelta > 0 && playDelta <= wallDelta * 1.5 + 0.5) {
       watchedRef.current += playDelta;
     }
+    if (v.currentTime > maxReachedRef.current) {
+      maxReachedRef.current = v.currentTime;
+    }
   }
 
   function handleEnded() {
@@ -127,7 +136,10 @@ export default function LessonVideoPlayer({
     const v = videoRef.current;
     if (!v) return;
     const now = Date.now();
-    if (v.currentTime > lastTimeRef.current + 5) {
+    // Only a skip when jumping PAST the furthest-watched point into content
+    // not yet seen. Seeking within already-watched territory (re-watching) is
+    // fine and shouldn't warn.
+    if (v.currentTime > maxReachedRef.current + 5) {
       setSkipCount((n) => n + 1);
       setShowSkipBanner(true);
       if (now - lastWarnRef.current > 30_000) {
