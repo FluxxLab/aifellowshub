@@ -73,7 +73,14 @@ export default function LessonVideoPlayer({
     if (sessionId) {
       void apiFetch(
         `/sessions/${encodeURIComponent(sessionId)}/recording-progress`,
-        { method: "POST", body: { secondsWatched: seconds } },
+        {
+          method: "POST",
+          // Send the video's real duration so the backend can compute the 90%
+          // credit threshold — the session row has no duration for uploaded
+          // lesson-video recordings, so without this, recording catch-up
+          // credit could never be earned.
+          body: { secondsWatched: seconds, totalSeconds: totalSecondsRef.current },
+        },
       ).catch(() => undefined);
     }
   }
