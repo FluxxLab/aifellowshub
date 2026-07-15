@@ -137,14 +137,22 @@ export async function getFellowHomeServer(): Promise<FellowHome> {
   const isPastSession = (s: BackendSession) =>
     isOrientationSession(s) ||
     (s.status === "ended" && new Date(s.startsAt).getTime() < now);
-  const isAttendedSession = (s: BackendSession) =>
-    isOrientationSession(s) ||
-    s.myAttendance?.status === "attended" ||
-    s.myAttendance?.status === "attended_recording" ||
-    s.myAttendance?.status === "excused";
+  //   - Recording catch-up is HALF credit (it's labelled "half-credit" on My
+  //     Sessions), so it counts 0.5 — not a full session. Live attendance and
+  //     admin excusals are full credit. Mirrors the My Sessions rate exactly.
+  const creditForSession = (s: BackendSession): number => {
+    if (isOrientationSession(s)) return 1;
+    const st = s.myAttendance?.status;
+    if (st === "attended" || st === "excused") return 1;
+    if (st === "attended_recording") return 0.5;
+    return 0;
+  };
   const pastSessions = sessionList.filter(isPastSession);
   let pastSessionCount = pastSessions.length;
-  let attendedSessionCount = pastSessions.filter(isAttendedSession).length;
+  let attendedSessionCount = pastSessions.reduce(
+    (sum, s) => sum + creditForSession(s),
+    0,
+  );
   if (modules.some(isOnboarding) && !sessionList.some(isOrientationSession)) {
     pastSessionCount += 1;
     attendedSessionCount += 1;

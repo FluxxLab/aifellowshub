@@ -52,11 +52,26 @@ export default async function FellowSessionsPage() {
     .filter((s) => isActuallyPast(s) || isOrientation(s))
     .sort((a, b) => +new Date(b.startsAt) - +new Date(a.startsAt));
 
+  // Catching up via the recording is HALF credit (the row is labelled
+  // "half-credit"), so it must not count as a full attended session — otherwise
+  // a fellow who watched every recording reads 100%, same as one who attended
+  // every session live. Live attendance / excused = full, recording = 0.5.
+  const creditFor = (s: FellowSession): number => {
+    if (isOrientation(s)) return 1;
+    if (s.attendanceState === "attended" || s.attendanceState === "excused") {
+      return 1;
+    }
+    if (s.attendanceState === "attended_recording") return 0.5;
+    return 0;
+  };
+  // Head count of sessions the fellow engaged with at all (live or recording) —
+  // shown as "Attended X / Y". The RATE below is the weighted one.
   const attendedCount = past.filter(
     (s) => s.attended === true || isOrientation(s),
   ).length;
+  const creditedCount = past.reduce((sum, s) => sum + creditFor(s), 0);
   const attendanceRate =
-    past.length > 0 ? Math.round((attendedCount / past.length) * 100) : 0;
+    past.length > 0 ? Math.round((creditedCount / past.length) * 100) : 0;
 
   return (
     <div className="flex flex-col gap-4 md:gap-6">
