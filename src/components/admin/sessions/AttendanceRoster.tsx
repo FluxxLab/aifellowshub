@@ -25,6 +25,7 @@ type FinalStatus = "attended" | "attended_recording" | "excused" | "in_session" 
 
 function finalStatusOf(r: AttendanceRecord): FinalStatus {
   if (r.override === "attended") return "attended";
+  if (r.override === "attended_recording") return "attended_recording";
   if (r.override === "excused") return "excused";
   if (r.inSession) return "in_session";
   if (r.autoCredited) return "attended";
@@ -130,6 +131,8 @@ export default function AttendanceRoster({ sessionId, session }: AttendanceRoste
  const backendStatus =
  override === "attended"
  ? "attended"
+ : override === "attended_recording"
+ ? "attended_recording"
  : override === "excused"
  ? "excused"
  : override === null
@@ -489,6 +492,14 @@ function Row({
  <ul role="menu" className="flex flex-col gap-0.5">
  <Item onClick={() => setMarkingAttended(true)}>
   Mark attended…
+ </Item>
+ <Item
+ onClick={() => {
+ onOverride("attended_recording");
+ setOpen(false);
+ }}
+ >
+ Mark attended (recording)
  </Item>
  <Item
  onClick={() => {

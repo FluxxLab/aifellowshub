@@ -44,7 +44,10 @@ export async function getSessions(): Promise<LiveSession[]> {
 
 /* ---------- Session detail (attendance roster, BRD §6.4) ---------- */
 
-export type AttendanceOverride = "attended"| "excused";
+export type AttendanceOverride =
+  | "attended"
+  | "attended_recording"
+  | "excused";
 
 export type AttendanceRecord = {
   fellowId: string;
