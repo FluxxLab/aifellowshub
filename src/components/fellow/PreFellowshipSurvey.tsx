@@ -5,7 +5,49 @@ import { apiFetch } from "@/lib/api/client";
 import { toast } from "@/lib/toast";
 import { CheckCircleIcon, CheckLineIcon, TaskIcon } from "@/icons";
 
-const STORAGE_KEY = "pic_lms_pre_fellowship_survey_v1";
+/**
+ * The same question set is asked twice: once at Week 1 (baseline) and again at
+ * Week 9 (endline), so the programme can measure change. Both variants render
+ * from the single `QUESTIONS` array below — edit it once and both stay in step.
+ * Responses are stored SEPARATELY per variant (different endpoint + table), so
+ * the Week 9 submission can never overwrite the Week 1 baseline.
+ */
+export type SurveyVariant = "pre_fellowship" | "end_of_programme";
+
+const VARIANTS: Record<
+  SurveyVariant,
+  {
+    storageKey: string;
+    /** Backend path, used for both the status GET and the submit POST. */
+    path: string;
+    domId: string;
+    title: string;
+    timing: string;
+    intro: string;
+    doneTitle: string;
+  }
+> = {
+  pre_fellowship: {
+    storageKey: "pic_lms_pre_fellowship_survey_v1",
+    path: "/me/pre-fellowship-survey",
+    domId: "pre-fellowship-survey",
+    title: "Pre-Fellowship Survey",
+    timing: "Complete before your first live session",
+    intro:
+      "This diagnostic survey helps faculty understand your background and tailor the programme. Your responses are confidential and will not affect your standing in the fellowship.",
+    doneTitle: "Pre-Fellowship Survey complete",
+  },
+  end_of_programme: {
+    storageKey: "pic_lms_end_of_programme_survey_v1",
+    path: "/me/end-of-programme-survey",
+    domId: "end-of-programme-survey",
+    title: "End-of-Programme Survey",
+    timing: "Complete as you finish the fellowship",
+    intro:
+      "The same questions you answered at the start. Comparing your answers helps us measure what changed over the fellowship. Your responses are confidential and will not affect your standing.",
+    doneTitle: "End-of-Programme Survey complete",
+  },
+};
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -278,7 +320,13 @@ const QUESTIONS: Question[] = [
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function PreFellowshipSurvey() {
+export default function PreFellowshipSurvey({
+  variant = "pre_fellowship",
+}: {
+  variant?: SurveyVariant;
+} = {}) {
+  const cfg = VARIANTS[variant];
+  const STORAGE_KEY = cfg.storageKey;
   const [mounted, setMounted] = useState(false);
   const [done, setDone] = useState(false);
   const [answers, setAnswers] = useState<Answers>({});
@@ -292,7 +340,7 @@ export default function PreFellowshipSurvey() {
     // localStorage says done — verify the backend actually has the record.
     // If the submission failed silently (e.g. backend wasn't live yet),
     // clear the flag so the fellow can resubmit.
-    fetch("/api/me/pre-fellowship-survey", { credentials: "include" })
+    fetch(`/api${cfg.path}`, { credentials: "include" })
       .then((r) => r.json())
       .then((data: { submitted?: boolean }) => {
         if (!data.submitted) {
@@ -310,7 +358,7 @@ export default function PreFellowshipSurvey() {
 
   // Avoid hydration mismatch — nothing renders until localStorage is read.
   if (!mounted) return null;
-  if (done) return <SurveyDone />;
+  if (done) return <SurveyDone cfg={cfg} />;
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
@@ -368,7 +416,7 @@ export default function PreFellowshipSurvey() {
     }
 
     try {
-      await apiFetch("/me/pre-fellowship-survey", { method: "POST", body: payload });
+      await apiFetch(cfg.path, { method: "POST", body: payload });
     } catch {
       // Backend endpoint lands in phase 2; persist locally so UX completes.
     }
@@ -387,7 +435,7 @@ export default function PreFellowshipSurvey() {
 
   return (
     <form
-      id="pre-fellowship-survey"
+      id={cfg.domId}
       onSubmit={handleSubmit}
       className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6"
     >
@@ -398,17 +446,12 @@ export default function PreFellowshipSurvey() {
         </div>
         <div className="min-w-0 flex-1">
           <h2 className="text-base font-semibold text-gray-800">
-            Pre-Fellowship Survey
+            {cfg.title}
           </h2>
           <p className="mt-0.5 text-xs text-gray-500">
-            Complete before your first live session &middot;{" "}
-            {answeredCount} of {QUESTIONS.length} answered
+            {cfg.timing} &middot; {answeredCount} of {QUESTIONS.length} answered
           </p>
-          <p className="mt-2 text-sm text-gray-600">
-            This diagnostic survey helps faculty understand your background and
-            tailor the programme. Your responses are confidential and will not
-            affect your standing in the fellowship.
-          </p>
+          <p className="mt-2 text-sm text-gray-600">{cfg.intro}</p>
         </div>
       </div>
 
@@ -465,14 +508,14 @@ export default function PreFellowshipSurvey() {
 
 // ── Done banner ───────────────────────────────────────────────────────────────
 
-function SurveyDone() {
+function SurveyDone({ cfg }: { cfg: (typeof VARIANTS)[SurveyVariant] }) {
   return (
-    <div id="pre-fellowship-survey" className="rounded-2xl border border-success-200 bg-success-50 p-5 md:p-6">
+    <div id={cfg.domId} className="rounded-2xl border border-success-200 bg-success-50 p-5 md:p-6">
       <div className="flex items-center gap-3">
         <CheckCircleIcon className="h-6 w-6 text-success-600" />
         <div>
           <h2 className="text-base font-semibold text-gray-800">
-            Pre-Fellowship Survey completed
+            {cfg.doneTitle}
           </h2>
           <p className="mt-0.5 text-sm text-gray-600">
             Your responses have been recorded. Faculty will use them to tailor

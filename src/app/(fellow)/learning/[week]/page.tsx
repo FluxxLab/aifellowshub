@@ -74,6 +74,10 @@ export default async function ModuleDetailPage({
       <ModuleHeader module={m} />
 
       {weekNumber === 1 && <PreFellowshipSurvey />}
+      {/* Same question set as Week 1, asked again at the end of the programme
+          so the two can be compared. Stored separately — it never overwrites
+          the Week 1 baseline. */}
+      {weekNumber === 9 && <PreFellowshipSurvey variant="end_of_programme" />}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 md:gap-6">
         <div className="lg:col-span-2 flex flex-col gap-4 md:gap-6">
