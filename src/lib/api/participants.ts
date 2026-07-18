@@ -60,6 +60,8 @@ export type UserProfile = {
   linkedinUrl: string | null;
   isActive: boolean;
   joinedAt: string;
+  /** Last time the user was seen active (login/refresh). Null = never seen. */
+  lastActiveAt: string | null;
   stats: UserProfileStats | null;
 };
 
@@ -103,6 +105,8 @@ export type Mentor = {
   pendingReviewsCount: number;
   isActive: boolean;
   joinedAt: string;
+  /** Last time the mentor was seen active (login/refresh). Null = never seen. */
+  lastActiveAt: string | null;
 };
 
 export type Faculty = {

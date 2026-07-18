@@ -50,6 +50,7 @@ type BackendMentor = {
   pendingReviewsCount: number;
   isActive: boolean;
   joinedAt: string;
+  lastActiveAt: string | null;
 };
 
 type BackendFaculty = {
@@ -142,6 +143,7 @@ function mapMentor(m: BackendMentor): Mentor {
     pendingReviewsCount: m.pendingReviewsCount,
     isActive: m.isActive,
     joinedAt: m.joinedAt,
+    lastActiveAt: m.lastActiveAt,
   };
 }
 

@@ -953,6 +953,7 @@ function MentorsTable({ mentors, isSuperAdmin }: { mentors: Mentor[]; isSuperAdm
  String(m.pendingReviewsCount)
  ),
  },
+ { label: "Last seen", value: m.lastActiveAt ? relativeDays(m.lastActiveAt) : "Never" },
  ]}
  actions={
  <MentorRowActions
@@ -973,6 +974,7 @@ function MentorsTable({ mentors, isSuperAdmin }: { mentors: Mentor[]; isSuperAdm
  <HeaderCell>Sector</HeaderCell>
  <HeaderCell>Fellows</HeaderCell>
  <HeaderCell>Pending reviews</HeaderCell>
+ <HeaderCell>Last seen</HeaderCell>
  <HeaderCell>Status</HeaderCell>
  <ActionsHeaderCell />
  </TableRow>
@@ -1017,6 +1019,9 @@ function MentorsTable({ mentors, isSuperAdmin }: { mentors: Mentor[]; isSuperAdm
  {m.pendingReviewsCount}
  </span>
  )}
+ </TableCell>
+ <TableCell className="px-5 py-4 text-sm text-gray-500">
+ {m.lastActiveAt ? relativeDays(m.lastActiveAt) : "Never"}
  </TableCell>
  <TableCell className="px-5 py-4">
  {m.isActive ? (
@@ -1304,10 +1309,12 @@ function participantsForExport(
  if (tab === "mentors") {
  const list = data.mentors.filter((x) => m(x.fullName) || m(x.email));
  return {
- header: ["Name", "Email", "Expertise", "Fellows", "Pending reviews", "Status"],
+ header: ["Name", "Email", "Expertise", "Fellows", "Pending reviews", "Last seen", "Status"],
  rows: list.map((x) => [
  x.fullName, x.email, x.expertise.join("; "),
- String(x.assignedFellowsCount), String(x.pendingReviewsCount), x.isActive ? "Active" : "Inactive",
+ String(x.assignedFellowsCount), String(x.pendingReviewsCount),
+ x.lastActiveAt ?? "Never",
+ x.isActive ? "Active" : "Inactive",
  ]),
  filename: "mentors",
  };

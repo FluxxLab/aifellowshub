@@ -183,6 +183,16 @@ function RoleStatsCard({ user }: { user: UserProfile }) {
           <Stat label="Assigned fellows" value={stats.assignedFellowsCount} />
           <Stat label="Pending reviews" value={stats.pendingReviewsCount} />
           <Stat label="Booking requests" value={stats.bookingsCount} />
+          <Stat
+            label="Last seen"
+            value={
+              user.lastActiveAt
+                ? new Date(user.lastActiveAt).toLocaleString(undefined, {
+                    timeZone: "Africa/Lagos",
+                  })
+                : "Never signed in"
+            }
+          />
         </ul>
       </Card>
     );
