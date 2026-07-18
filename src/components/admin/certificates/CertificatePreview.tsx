@@ -33,7 +33,7 @@ export default function CertificatePreview({
  return (
  <div className="relative aspect-[1.414/1] w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-theme-md">
  <Image
- src="/images/Certificate-lms.png"
+ src="/images/certificate-lms-v2.jpg"
  alt=""
  fill
  priority
@@ -43,41 +43,20 @@ export default function CertificatePreview({
  className="object-cover"
  />
 
- {/* Fellow name — sits above the orange rule on the template */}
+ {/* Fellow name — the only variable field. Sits on the blank line between
+     "This is to certify that" and the orange rule (~48% down, centred in
+     the content area at ~60% width). The two signatures and titles are
+     baked into the template image, so no signature/date overlays here. */}
  <div
  className="absolute flex justify-center"
- style={{ top: "48%", left: "20%", right: "8%" }}
+ style={{ top: "45.5%", left: "22%", right: "2%" }}
  >
  <p
- className="font-signature text-fellowship-navy leading-none"
- style={{ fontSize: "clamp(0.875rem, 2.2vw, 1.75rem)" }}
+ className="font-bold text-fellowship-navy leading-none"
+ style={{ fontSize: "clamp(1rem, 2.6vw, 2rem)" }}
  >
  {fellowName}
  </p>
- </div>
-
- {/* Signature — above "Authorized Signature" label on the template */}
- <div className="absolute" style={{ bottom: "13%", left: "32%" }}>
- {template.signatoryName && (
- <p
- className="font-signature text-fellowship-navy leading-none"
- style={{ fontSize: "clamp(0.6rem, 1vw, 0.85rem)" }}
- >
- {template.signatoryName}
- </p>
- )}
- </div>
-
- {/* Date — above "Date of Completion" label on the template */}
- <div className="absolute text-right" style={{ bottom: "13%", right: "10%" }}>
- {issuedDate && (
- <p
- className="text-fellowship-navy leading-none"
- style={{ fontSize: "clamp(0.75rem, 1.4vw, 1rem)" }}
- >
- {issuedDate}
- </p>
- )}
  </div>
 
  {certificateNumber && (

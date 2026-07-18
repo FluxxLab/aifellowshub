@@ -87,7 +87,7 @@ export async function generateMetadata({
       type: "article",
       images: [
         {
-          url: "/images/Certificate-lms.png",
+          url: "/images/certificate-lms-v2.jpg",
           width: 2000,
           height: 1414,
           alt: `${result.certificate.fellowName}'s Fellowship certificate`,
@@ -98,7 +98,7 @@ export async function generateMetadata({
       card: "summary_large_image",
       title,
       description,
-      images: ["/images/Certificate-lms.png"],
+      images: ["/images/certificate-lms-v2.jpg"],
     },
   };
 }

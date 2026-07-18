@@ -144,8 +144,8 @@ function IssuedView({ certificate: c }: { certificate: Certificate }) {
       const PAGE_W = 297;
       const PAGE_H = 210;
 
-      // Load the template PNG and get a data URL for jsPDF.
-      const templateUrl = "/images/Certificate-lms.png";
+      // Load the template image and get a data URL for jsPDF.
+      const templateUrl = "/images/certificate-lms-v2.jpg";
       const dataUrl = await loadImageAsDataUrl(templateUrl);
 
       const pdf = new jsPDF({
@@ -154,36 +154,18 @@ function IssuedView({ certificate: c }: { certificate: Certificate }) {
         format: "a4",
         compress: true,
       });
+      // loadImageAsDataUrl re-encodes via canvas to a PNG data URL.
       pdf.addImage(dataUrl, "PNG", 0, 0, PAGE_W, PAGE_H);
 
-      // Fellow name — navy, above the orange rule. The rule sits at
-      // roughly 60% of the page height = 126mm; baseline the text
-      // a touch above so it doesn't overlap. Size kept modest so
-      // even long names fit between the template's side flourishes.
+      // Fellow name — the ONLY variable field. Sits on the blank line between
+      // "This is to certify that" and the orange rule: ~48% down = ~105mm,
+      // centred in the content area at ~60% of the width. The two signatures,
+      // their titles, and the programme line are baked into the template image,
+      // so nothing else is drawn. Kept in lockstep with CertificateCanvas.
       pdf.setTextColor(30, 58, 138);
       pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(22);
-      pdf.text(c.fellowName, PAGE_W / 2 + 26, 122, { align: "center" });
-
-      // Signatory name — italic, above the "Authorized Signature" line.
-      if (c.signatories?.[0]?.name) {
-        pdf.setFont("helvetica", "italic");
-        pdf.setFontSize(10);
-        pdf.text(c.signatories[0].name, 95, 184, { align: "center" });
-      }
-
-      // Date — plain, above the "Date of Completion" line.
-      if (c.completedAt) {
-        const dateLabel = new Date(c.completedAt).toLocaleDateString(undefined, {
-          timeZone: "Africa/Lagos",
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        });
-        pdf.setFont("helvetica", "normal");
-        pdf.setFontSize(11);
-        pdf.text(dateLabel, 252, 184, { align: "center" });
-      }
+      pdf.setFontSize(24);
+      pdf.text(c.fellowName, PAGE_W * 0.6, 105, { align: "center" });
 
       pdf.save(`${c.fellowName.replace(/\s+/g, "_")}_Certificate_${c.id}.pdf`);
     } catch (err) {
@@ -339,80 +321,53 @@ function IssuedView({ certificate: c }: { certificate: Certificate }) {
 export function CertificateCanvas({
   fellowName,
   programmeName,
-  completedAtLabel,
-  signatories,
   isPreview,
 }: {
   fellowName: string;
   programmeName: string;
   cohortName: string;
   capstoneTitle: string;
+  // The new template bakes in the signatures, titles, programme line, and date,
+  // so only `fellowName` is overlaid. These remain in the type for callers.
   completedAtLabel: string | null;
   signatories?: { name: string; role: string }[];
   isPreview: boolean;
 }) {
-  const primarySig = signatories?.[0];
   return (
     <article
       className="relative aspect-[1.414/1] w-full overflow-hidden rounded-2xl bg-white shadow-theme-sm ring-1 ring-fellowship-navy/10"
       aria-label={`${programmeName} certificate for ${fellowName}`}
     >
       <Image
-        src="/images/Certificate-lms.png"
+        src="/images/certificate-lms-v2.jpg"
         alt=""
         fill
         priority
         // Bypass Next's WebP-resize optimisation so we serve the
-        // original PNG bytes. The certificate has fine decorative
-        // detail (rosette petals, woven floral motif) that softens
-        // badly under transcoding.
+        // original bytes. The certificate has fine decorative detail
+        // (rosette petals, woven floral motif) that softens badly under
+        // transcoding.
         unoptimized
         quality={100}
         sizes="(max-width: 1024px) 100vw, 1024px"
         className="object-cover"
       />
 
-      {/* Fellow name — sits above the orange rule on the template (~60% from top) */}
+      {/* Fellow name — the only variable field, on the blank line between
+          "This is to certify that" and the orange rule (~48% down, centred
+          in the content area at ~60% width). Signatures + date are baked
+          into the template image, so no overlays for them. Kept in lockstep
+          with the jsPDF coordinates in onDownload above. */}
       <div
         className="absolute flex justify-center"
-        style={{ top: "48%", left: "20%", right: "8%" }}
+        style={{ top: "45.5%", left: "22%", right: "2%" }}
       >
         <p
-          className="font-signature text-fellowship-navy leading-none"
-          style={{ fontSize: "clamp(0.875rem, 2.2vw, 1.75rem)" }}
+          className="font-bold text-fellowship-navy leading-none"
+          style={{ fontSize: "clamp(1rem, 2.6vw, 2rem)" }}
         >
           {fellowName}
         </p>
-      </div>
-
-      {/* Signature — above "Authorized Signature" label on the template */}
-      <div
-        className="absolute"
-        style={{ bottom: "13%", left: "32%" }}
-      >
-        {primarySig && (
-          <p
-            className="font-signature text-fellowship-navy leading-none"
-            style={{ fontSize: "clamp(0.6rem, 1vw, 0.85rem)" }}
-          >
-            {primarySig.name}
-          </p>
-        )}
-      </div>
-
-      {/* Date — above "Date of Completion" label on the template */}
-      <div
-        className="absolute text-right"
-        style={{ bottom: "13%", right: "10%" }}
-      >
-        {completedAtLabel && (
-          <p
-            className="text-fellowship-navy leading-none"
-            style={{ fontSize: "clamp(0.75rem, 1.4vw, 1rem)" }}
-          >
-            {completedAtLabel}
-          </p>
-        )}
       </div>
 
       {isPreview && (
