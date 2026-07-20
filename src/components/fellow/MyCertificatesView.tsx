@@ -9,6 +9,7 @@ import { toast } from "@/lib/toast";
 import {
   CopyIcon,
   DownloadIcon,
+  LockIcon,
   PaperPlaneIcon,
 } from "@/icons";
 import type {
@@ -90,26 +91,42 @@ function PendingView({ state }: { state: FellowCertificateState }) {
   );
 }
 
+/**
+ * Locked placeholder shown before the certificate is issued.
+ *
+ * Deliberately does NOT render the certificate artwork. The template carries
+ * the Executive Director's and Managing Partner's real signatures, so showing
+ * a filled-in "preview" to a fellow who hasn't earned it hands them a
+ * screenshot that is indistinguishable from the real thing. Nothing signed is
+ * rendered — or downloadable — until the certificate is actually issued.
+ */
 function CertificatePreview({ state }: { state: FellowCertificateState }) {
   return (
     <section className="rounded-2xl border-2 border-dashed border-gray-300 bg-white p-5 md:p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-          Preview · what your certificate will look like
+          Your certificate
         </p>
         <Badge color="light" variant="light">
-          Preview only
+          Not yet issued
         </Badge>
       </div>
-      <div className="mt-4">
-        <CertificateCanvas
-          fellowName={state.preview.fellowName}
-          programmeName={state.preview.programmeName}
-          cohortName={state.preview.cohortName}
-          capstoneTitle={state.preview.capstoneTitle}
-          completedAtLabel={null}
-          isPreview
-        />
+
+      <div className="mt-4 flex aspect-[1.414/1] w-full flex-col items-center justify-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-6 text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-200/70">
+          <LockIcon className="h-7 w-7 text-gray-500" />
+        </div>
+        <p className="text-base font-semibold text-gray-700">
+          Your certificate is locked
+        </p>
+        <p className="max-w-md text-sm text-gray-500">
+          It unlocks automatically once you finish the curriculum, your capstone
+          is approved, and you attend the closing summit. You&apos;ll be able to
+          view, download, and share it from here the moment it&apos;s issued.
+        </p>
+        <p className="text-xs text-gray-400">
+          Issued to {state.preview.fellowName} · {state.preview.programmeName}
+        </p>
       </div>
     </section>
   );
