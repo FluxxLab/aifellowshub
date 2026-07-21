@@ -39,7 +39,10 @@ function formatAnswer(
   return str;
 }
 
-function exportSurveyToCsv(rows: SurveyResponseRow[]) {
+function exportSurveyToCsv(
+  rows: SurveyResponseRow[],
+  phase: "baseline" | "endline" = "baseline",
+) {
   const QUESTION_KEYS = Object.keys(QUESTION_LABELS);
   const headers = [
     "Name",
@@ -82,30 +85,58 @@ function exportSurveyToCsv(rows: SurveyResponseRow[]) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "pre-fellowship-survey.csv";
+  a.download =
+    phase === "endline"
+      ? "end-of-programme-survey-week9.csv"
+      : "pre-fellowship-survey-week1.csv";
   a.click();
   URL.revokeObjectURL(url);
 }
 
+/** Which survey is being viewed. Same questions, separate response sets. */
+type SurveyPhase = "baseline" | "endline";
+
+const PHASES: { id: SurveyPhase; label: string; blurb: string }[] = [
+  {
+    id: "baseline",
+    label: "Week 1 · Baseline",
+    blurb:
+      "Pre-fellowship survey submissions, collected at the start of the programme.",
+  },
+  {
+    id: "endline",
+    label: "Week 9 · Endline",
+    blurb:
+      "End-of-programme submissions. Same questions as Week 1 — compare the two to see what changed.",
+  },
+];
+
 export default function SurveyResponsesView({
   responses,
+  endlineResponses = [],
 }: {
   responses: SurveyResponseRow[];
+  /** Week 9 end-of-programme responses (same questions, separate set). */
+  endlineResponses?: SurveyResponseRow[];
 }) {
   const [query, setQuery] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [phase, setPhase] = useState<SurveyPhase>("baseline");
+
+  const active = phase === "baseline" ? responses : endlineResponses;
+  const activePhase = PHASES.find((p) => p.id === phase)!;
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return responses;
-    return responses.filter(
+    if (!q) return active;
+    return active.filter(
       (r) =>
         r.fellow.fullName.toLowerCase().includes(q) ||
         r.fellow.email.toLowerCase().includes(q) ||
         (r.fellow.sector ?? "").toLowerCase().includes(q) ||
         (r.fellow.country ?? "").toLowerCase().includes(q),
     );
-  }, [responses, query]);
+  }, [active, query]);
 
   return (
     <div className="flex flex-col gap-5">
@@ -115,16 +146,15 @@ export default function SurveyResponsesView({
             Survey responses
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Pre-fellowship survey submissions from fellows. Click a row to view
-            individual answers.
+            {activePhase.blurb} Click a row to view individual answers.
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Badge color="info">{responses.length} submitted</Badge>
+          <Badge color="info">{active.length} submitted</Badge>
           <button
             type="button"
-            onClick={() => exportSurveyToCsv(responses)}
-            disabled={responses.length === 0}
+            onClick={() => exportSurveyToCsv(active, phase)}
+            disabled={active.length === 0}
             className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <DownloadIcon className="h-3.5 w-3.5" />
@@ -132,6 +162,43 @@ export default function SurveyResponsesView({
           </button>
         </div>
       </header>
+
+      {/* Week 1 (baseline) vs Week 9 (endline). Same questions, separate
+          response sets — kept apart so they're never conflated. */}
+      <div role="tablist" className="flex gap-1 overflow-x-auto border-b border-gray-200">
+        {PHASES.map((p) => {
+          const isActive = p.id === phase;
+          const count =
+            p.id === "baseline" ? responses.length : endlineResponses.length;
+          return (
+            <button
+              key={p.id}
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => {
+                setPhase(p.id);
+                setExpandedId(null);
+              }}
+              className={`relative -mb-px flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-colors ${
+                isActive
+                  ? "border-b-2 border-fellowship-navy text-fellowship-navy"
+                  : "border-b-2 border-transparent text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              <span>{p.label}</span>
+              <span
+                className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                  isActive
+                    ? "bg-fellowship-navy text-white"
+                    : "bg-gray-100 text-gray-600"
+                }`}
+              >
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
       <section className="rounded-2xl border border-gray-200 bg-white p-4 md:p-5">
         <input
@@ -145,8 +212,10 @@ export default function SurveyResponsesView({
 
       {filtered.length === 0 ? (
         <div className="rounded-2xl border border-gray-200 bg-white px-6 py-16 text-center text-gray-500">
-          {responses.length === 0
-            ? "No survey responses yet."
+          {active.length === 0
+            ? phase === "endline"
+              ? "No end-of-programme responses yet — fellows submit this in Week 9."
+              : "No survey responses yet."
             : "No fellows match the search."}
         </div>
       ) : (
