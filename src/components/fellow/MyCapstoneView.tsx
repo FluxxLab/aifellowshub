@@ -22,7 +22,7 @@ import {
 
 /**
  * Max characters for the problem statement. Must stay in step with the
- * server's `UpsertCapstoneDto` cap — if the client lets a fellow exceed it,
+ * server's `UpsertCapstoneDto` cap  if the client lets a fellow exceed it,
  * the save is rejected outright and the draft (plus any PDF attached in the
  * same request) is lost.
  */
@@ -55,6 +55,7 @@ export default function MyCapstoneView({
   const [artifactUrl, setArtifactUrl] = useState<string | null>(capstone.artifactUrl);
   const [uploadState, setUploadState] = useState<"idle" | "uploading" | "done">("idle");
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [exporting, setExporting] = useState(false);
 
   const ALLOWED_TYPES = [
     "application/pdf",
@@ -76,7 +77,7 @@ export default function MyCapstoneView({
     }
     // The attach is recorded by saving the capstone (artifactUrl travels with
     // problemStatement), so an over-length draft would upload the file to
-    // storage and then fail to record it — the file would appear to vanish.
+    // storage and then fail to record it  the file would appear to vanish.
     // Block it here with an actionable message instead.
     if (draft.problem.length > PROBLEM_MAX) {
       toast.error(
@@ -146,7 +147,7 @@ export default function MyCapstoneView({
     if (draft.problem.length > PROBLEM_MAX) {
       toast.error(
         "Problem statement is too long",
-        `It's ${draft.problem.length.toLocaleString()} characters — the limit is ${PROBLEM_MAX.toLocaleString()}. Shorten it, then save.`,
+        `It's ${draft.problem.length.toLocaleString()} characters  the limit is ${PROBLEM_MAX.toLocaleString()}. Shorten it, then save.`,
       );
       return;
     }
@@ -174,6 +175,70 @@ export default function MyCapstoneView({
     } catch (err) {
       setSavingState("idle");
       toast.errorFromException("Couldn't save", err);
+    }
+  };
+
+  /**
+   * Download the draft as a real Word (.docx) file so the fellow always has an
+   * offline copy they can keep editing or email. Deliberately independent of
+   * the LMS save: it works even if the save is failing, so a draft can never be
+   * stranded with no way to get it out.
+   */
+  const onDownloadDocx = async () => {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const { Document, Packer, Paragraph, HeadingLevel, TextRun } =
+        await import("docx");
+
+      // Split on newlines so paragraph breaks survive into Word.
+      const body = (text: string) =>
+        (text.trim() ? text.split(/\n+/) : ["—"]).map(
+          (line) => new Paragraph({ children: [new TextRun(line.trim())] }),
+        );
+      const section = (label: string, text: string) => [
+        new Paragraph({ text: label, heading: HeadingLevel.HEADING_2 }),
+        ...body(text),
+      ];
+
+      const doc = new Document({
+        sections: [
+          {
+            children: [
+              new Paragraph({
+                text: title.trim() || capstone.title,
+                heading: HeadingLevel.TITLE,
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: `${capstone.sector} · Draft exported ${new Date().toLocaleDateString(undefined, { timeZone: "Africa/Lagos" })}`,
+                    italics: true,
+                    color: "666666",
+                  }),
+                ],
+              }),
+              ...section("Problem statement", draft.problem),
+              ...section("Approach", draft.approach),
+              ...section("Deliverables", draft.deliverables),
+              ...section("Risks & limitations", draft.risks),
+            ],
+          },
+        ],
+      });
+
+      const blob = await Packer.toBlob(doc);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${(title.trim() || capstone.title).replace(/[^\w\s-]/g, "").replace(/\s+/g, "_")}_Capstone_Draft.docx`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Draft downloaded", "A Word copy has been saved to your device.");
+    } catch (err) {
+      toast.errorFromException("Couldn't download draft", err);
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -265,7 +330,7 @@ export default function MyCapstoneView({
           My capstone
         </h1>
         <p className="mt-2 max-w-3xl text-gray-600">
-          Your capstone is the artefact you ship by Week 12 — a brief, audit,
+          Your capstone is the artefact you ship by Week 12  a brief, audit,
           framework, or policy proposal someone outside the Fellowship can pick
           up and use. Mentor: <span className="font-semibold text-gray-800">{capstone.mentor.fullName}</span>.
         </p>
@@ -305,7 +370,7 @@ export default function MyCapstoneView({
 
           <DraftSection
             label="Deliverables"
-            description="Concrete artefacts — what will exist by Week 12?"
+            description="Concrete artefacts  what will exist by Week 12?"
             value={draft.deliverables}
             onChange={(v) => setDraft({ ...draft, deliverables: v })}
           />
@@ -384,10 +449,19 @@ export default function MyCapstoneView({
                 Ready to hand off to {capstone.mentor.fullName.split(" ")[0]}?
               </p>
               <p className="text-xs text-gray-500">
-                Submission opens Week 10 — you can keep saving drafts until then.
+                Submission opens Week 10  you can keep saving drafts until then.
+                Download a Word copy any time to keep your own backup.
               </p>
             </div>
             <div className="flex gap-2">
+              <Button
+                size="md"
+                variant="outline"
+                onClick={onDownloadDocx}
+                disabled={exporting}
+              >
+                {exporting ? "Preparing…" : "Download Word copy"}
+              </Button>
               <Button
                 size="md"
                 variant="outline"
@@ -559,8 +633,8 @@ function DraftSection({
         >
           {value.length.toLocaleString()} / {maxLength.toLocaleString()} characters
           {overLimit
-            ? " — too long to save. Shorten it before saving."
-            : " — approaching the limit."}
+            ? "  too long to save. Shorten it before saving."
+            : "  approaching the limit."}
         </p>
       )}
     </section>

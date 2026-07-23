@@ -36,6 +36,7 @@
     "autoprefixer": "^10.4.22",
     "class-variance-authority": "^0.7.1",
     "country-list": "^2.4.1",
+    "docx": "^9.7.1",
     "driver.js": "^1.4.0",
     "flatpickr": "^4.6.13",
     "html2canvas-pro": "^2.0.2",
