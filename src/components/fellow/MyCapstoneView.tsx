@@ -21,6 +21,14 @@ import {
 } from "@/lib/api/fellow-capstone";
 
 /**
+ * Max characters for the problem statement. Must stay in step with the
+ * server's `UpsertCapstoneDto` cap — if the client lets a fellow exceed it,
+ * the save is rejected outright and the draft (plus any PDF attached in the
+ * same request) is lost.
+ */
+const PROBLEM_MAX = 20_000;
+
+/**
  * Fellow capstone view (BRD §6.10).
  *
  * Phase 1 (UI-first): the draft form is editable client-side; "Save draft"
@@ -64,6 +72,17 @@ export default function MyCapstoneView({
     }
     if (file.size > 50 * 1024 * 1024) {
       toast.error("File too large", "Maximum size is 50 MB.");
+      return;
+    }
+    // The attach is recorded by saving the capstone (artifactUrl travels with
+    // problemStatement), so an over-length draft would upload the file to
+    // storage and then fail to record it — the file would appear to vanish.
+    // Block it here with an actionable message instead.
+    if (draft.problem.length > PROBLEM_MAX) {
+      toast.error(
+        "Shorten your problem statement first",
+        `It's ${draft.problem.length.toLocaleString()} characters (limit ${PROBLEM_MAX.toLocaleString()}). The upload can't be recorded until it fits.`,
+      );
       return;
     }
     setUploadState("uploading");
@@ -110,6 +129,27 @@ export default function MyCapstoneView({
 
   const onSaveDraft = async () => {
     if (savingState === "saving") return;
+    // Editing is blocked server-side once a capstone is under review, so
+    // saving would 403 and quietly lose whatever was typed. Say so up front.
+    if (status === "under-review" || status === "approved") {
+      toast.error(
+        "Editing is locked",
+        status === "approved"
+          ? "This capstone has been approved, so it can no longer be edited."
+          : "Your capstone is with your mentor. You can edit again once they respond.",
+      );
+      return;
+    }
+    // Catch over-length drafts before the request so the fellow gets an
+    // actionable message instead of a rejected save (which used to drop the
+    // whole draft, and any PDF attached in the same payload).
+    if (draft.problem.length > PROBLEM_MAX) {
+      toast.error(
+        "Problem statement is too long",
+        `It's ${draft.problem.length.toLocaleString()} characters — the limit is ${PROBLEM_MAX.toLocaleString()}. Shorten it, then save.`,
+      );
+      return;
+    }
     setSavingState("saving");
     try {
       const saved = await saveFellowCapstone({
@@ -253,6 +293,7 @@ export default function MyCapstoneView({
             description="What is the harm or governance gap, and why does it matter?"
             value={draft.problem}
             onChange={(v) => setDraft({ ...draft, problem: v })}
+            maxLength={PROBLEM_MAX}
           />
 
           <DraftSection
@@ -485,12 +526,19 @@ function DraftSection({
   description,
   value,
   onChange,
+  /** When set, shows a live character count and warns before the save limit. */
+  maxLength,
 }: {
   label: string;
   description: string;
   value: string;
   onChange: (v: string) => void;
+  maxLength?: number;
 }) {
+  // Warn from 90% so a fellow sees it coming rather than discovering it at
+  // save time, when a rejected request used to cost them the whole draft.
+  const nearLimit = maxLength !== undefined && value.length > maxLength * 0.9;
+  const overLimit = maxLength !== undefined && value.length > maxLength;
   return (
     <section className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
       <div className="mb-3">
@@ -503,6 +551,18 @@ function DraftSection({
         onChange={(e) => onChange(e.target.value)}
         className="w-full resize-y rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm leading-relaxed text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-fellowship-navy focus:outline-hidden focus:ring-3 focus:ring-fellowship-navy/10"
       />
+      {maxLength !== undefined && nearLimit && (
+        <p
+          className={`mt-1.5 text-xs ${
+            overLimit ? "text-error-600" : "text-warning-600"
+          }`}
+        >
+          {value.length.toLocaleString()} / {maxLength.toLocaleString()} characters
+          {overLimit
+            ? " — too long to save. Shorten it before saving."
+            : " — approaching the limit."}
+        </p>
+      )}
     </section>
   );
 }
