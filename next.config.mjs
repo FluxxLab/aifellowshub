@@ -37,6 +37,24 @@ const nextConfig = {
   },
 
   /**
+   * Legacy route aliases. Older mentorship-booking notifications (and any
+   * bookmarks) linked to `/my-bookings`, which never existed — clicking one
+   * hit the 404 page. The fellow's bookings live at `/mentorship-sessions`.
+   * Redirect so every such link resolves, without needing to rewrite the href
+   * on notification rows already sent. `permanent: false` (307) so browsers
+   * don't hard-cache it in case the path is ever repurposed.
+   */
+  async redirects() {
+    return [
+      {
+        source: "/my-bookings",
+        destination: "/mentorship-sessions",
+        permanent: false,
+      },
+    ];
+  },
+
+  /**
    * Don't gate production builds on ESLint. We rely on TypeScript +
    * runtime tests for correctness.
    */
