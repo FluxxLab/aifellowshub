@@ -179,27 +179,45 @@ export default function MyCapstoneView({
   };
 
   /**
-   * Download the draft as a real Word (.docx) file so the fellow always has an
-   * offline copy they can keep editing or email. Deliberately independent of
-   * the LMS save: it works even if the save is failing, so a draft can never be
-   * stranded with no way to get it out.
+   * Download the capstone as a real Word (.docx) file. Two modes, driven by
+   * whether the fellow has uploaded their actual capstone document yet:
+   *
+   *   - "template" (default, nothing uploaded): a scaffold — the section
+   *     headings with the same guidance prompts shown on screen — so the fellow
+   *     has a correctly-structured document to fill in offline and upload.
+   *   - "copy" (after a successful upload): framed as an offline backup they
+   *     can keep editing or email.
+   *
+   * Either way a section the fellow has already written into is exported with
+   * their text; only empty sections fall back to the italic guidance prompt.
+   * Deliberately independent of the LMS save so a draft can never be stranded
+   * with no way to get it out even if the save is failing.
    */
-  const onDownloadDocx = async () => {
+  const downloadDocx = async (mode: "template" | "copy") => {
     if (exporting) return;
     setExporting(true);
     try {
       const { Document, Packer, Paragraph, HeadingLevel, TextRun } =
         await import("docx");
 
-      // Split on newlines so paragraph breaks survive into Word.
-      const body = (text: string) =>
-        (text.trim() ? text.split(/\n+/) : ["—"]).map(
-          (line) => new Paragraph({ children: [new TextRun(line.trim())] }),
-        );
-      const section = (label: string, text: string) => [
-        new Paragraph({ text: label, heading: HeadingLevel.HEADING_2 }),
-        ...body(text),
-      ];
+      // Written sections export as-is (newline breaks preserved); empty ones
+      // fall back to the on-screen guidance prompt in grey italics so the
+      // fellow always knows what belongs there.
+      const section = (label: string, text: string, hint: string) => {
+        const filled = text.trim();
+        return [
+          new Paragraph({ text: label, heading: HeadingLevel.HEADING_2 }),
+          ...(filled
+            ? filled
+                .split(/\n+/)
+                .map((line) => new Paragraph({ children: [new TextRun(line.trim())] }))
+            : [
+                new Paragraph({
+                  children: [new TextRun({ text: hint, italics: true, color: "888888" })],
+                }),
+              ]),
+        ];
+      };
 
       const doc = new Document({
         sections: [
@@ -212,16 +230,35 @@ export default function MyCapstoneView({
               new Paragraph({
                 children: [
                   new TextRun({
-                    text: `${capstone.sector} · Draft exported ${new Date().toLocaleDateString(undefined, { timeZone: "Africa/Lagos" })}`,
+                    text:
+                      mode === "template"
+                        ? `${capstone.sector} · Capstone template`
+                        : `${capstone.sector} · Draft exported ${new Date().toLocaleDateString(undefined, { timeZone: "Africa/Lagos" })}`,
                     italics: true,
                     color: "666666",
                   }),
                 ],
               }),
-              ...section("Problem statement", draft.problem),
-              ...section("Approach", draft.approach),
-              ...section("Deliverables", draft.deliverables),
-              ...section("Risks & limitations", draft.risks),
+              ...section(
+                "Problem statement",
+                draft.problem,
+                "What is the harm or governance gap, and why does it matter?",
+              ),
+              ...section(
+                "Approach",
+                draft.approach,
+                "How will you address it? Method, framework, deliverable type.",
+              ),
+              ...section(
+                "Deliverables",
+                draft.deliverables,
+                "Concrete artefacts — what will exist by Week 12?",
+              ),
+              ...section(
+                "Risks & limitations",
+                draft.risks,
+                "What could go wrong, and what's out of scope.",
+              ),
             ],
           },
         ],
@@ -231,12 +268,23 @@ export default function MyCapstoneView({
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${(title.trim() || capstone.title).replace(/[^\w\s-]/g, "").replace(/\s+/g, "_")}_Capstone_Draft.docx`;
+      const base = (title.trim() || capstone.title)
+        .replace(/[^\w\s-]/g, "")
+        .replace(/\s+/g, "_");
+      a.download = `${base}_Capstone_${mode === "template" ? "Template" : "Draft"}.docx`;
       a.click();
       URL.revokeObjectURL(url);
-      toast.success("Draft downloaded", "A Word copy has been saved to your device.");
+      toast.success(
+        mode === "template" ? "Template downloaded" : "Draft downloaded",
+        mode === "template"
+          ? "Fill it in, then upload it above."
+          : "A Word copy has been saved to your device.",
+      );
     } catch (err) {
-      toast.errorFromException("Couldn't download draft", err);
+      toast.errorFromException(
+        mode === "template" ? "Couldn't download template" : "Couldn't download draft",
+        err,
+      );
     } finally {
       setExporting(false);
     }
@@ -450,17 +498,23 @@ export default function MyCapstoneView({
               </p>
               <p className="text-xs text-gray-500">
                 Submission opens Week 10  you can keep saving drafts until then.
-                Download a Word copy any time to keep your own backup.
+                {artifactUrl
+                  ? " Download a Word copy any time to keep your own backup."
+                  : " Download the template to structure your capstone, then upload it above."}
               </p>
             </div>
             <div className="flex gap-2">
               <Button
                 size="md"
                 variant="outline"
-                onClick={onDownloadDocx}
+                onClick={() => downloadDocx(artifactUrl ? "copy" : "template")}
                 disabled={exporting}
               >
-                {exporting ? "Preparing…" : "Download Word copy"}
+                {exporting
+                  ? "Preparing…"
+                  : artifactUrl
+                    ? "Download copy"
+                    : "Download template"}
               </Button>
               <Button
                 size="md"
