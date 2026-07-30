@@ -29,13 +29,20 @@ export function formatCohortDate(input: DateInput): string {
  });
 }
 
-/** "04:30 PM" */
+/**
+ * "04:30 PM WAT". The zone label is appended explicitly rather than via
+ * Intl's `timeZoneName` because Intl renders Africa/Lagos as "GMT+1", not
+ * the "WAT" fellows and mentors recognise. Lagos is a fixed UTC+1 offset
+ * with no DST, so the literal label is always accurate. Showing it stops
+ * users in other timezones from reading a bare clock time as their own
+ * local time and joining sessions an hour off.
+ */
 export function formatCohortTime(input: DateInput): string {
- return toDate(input).toLocaleTimeString(undefined, {
+ return `${toDate(input).toLocaleTimeString(undefined, {
  timeZone: COHORT_TZ,
  hour: "2-digit",
  minute: "2-digit",
- });
+ })} WAT`;
 }
 
 /** "Wed, May 20 · 04:30 PM" */
@@ -78,12 +85,12 @@ export function formatCohortShortDate(input: DateInput): string {
  * + time to disambiguate.
  */
 export function formatCohortFull(input: DateInput): string {
- return toDate(input).toLocaleString(undefined, {
+ return `${toDate(input).toLocaleString(undefined, {
  timeZone: COHORT_TZ,
  day: "numeric",
  month: "short",
  year: "numeric",
  hour: "2-digit",
  minute: "2-digit",
- });
+ })} WAT`;
 }
