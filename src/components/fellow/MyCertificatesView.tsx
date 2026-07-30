@@ -73,8 +73,17 @@ function PendingView({
     <>
       <CertificatePreview state={state} />
 
-      {scorecard && !scorecard.eligible && scorecard.missingRequirements.length > 0 && (
-        <RemainingRequirements scorecard={scorecard} />
+      {scorecard?.eligible ? (
+        // Requirements met, but no certificate row yet. Without this the card
+        // above simply vanished the moment a fellow qualified, leaving a bare
+        // lock and no hint that they had actually finished — the worst moment
+        // to go silent.
+        <AwaitingIssue />
+      ) : (
+        scorecard &&
+        scorecard.missingRequirements.length > 0 && (
+          <RemainingRequirements scorecard={scorecard} />
+        )
       )}
 
       <section className="rounded-2xl border border-gray-200 bg-gray-50 p-5 md:p-6">
@@ -102,6 +111,29 @@ function PendingView({
 }
 
 /**
+ * Shown when the fellow has cleared every requirement but the certificate row
+ * hasn't been created yet — the window between qualifying and the issuing
+ * sweep running (and the state a fellow lands in if issuing is misconfigured
+ * server-side). Reassures them the work is done rather than leaving the bare
+ * "locked" card as the only signal.
+ */
+function AwaitingIssue() {
+  return (
+    <section className="rounded-2xl border border-green-200 bg-green-50 p-5 md:p-6">
+      <h3 className="text-base font-semibold text-gray-800">
+        You&apos;ve met every requirement 🎉
+      </h3>
+      <p className="mt-2 text-sm text-gray-600">
+        Your certificate is being prepared and will appear here automatically —
+        usually within the hour. You&apos;ll get an email the moment it&apos;s
+        issued. If it hasn&apos;t appeared by tomorrow, contact the programme
+        team.
+      </p>
+    </section>
+  );
+}
+
+/**
  * "What's still outstanding" — the live reasons the certificate hasn't issued,
  * straight from the backend scorecard. Without this the page showed a bare
  * lock, so a fellow who had (say) covered every session but was short one quiz
@@ -124,7 +156,7 @@ function RemainingRequirements({
           <li key={i} className="flex items-start gap-2.5 text-sm text-gray-700">
             <span
               aria-hidden
-              className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500"
+              className="mt-1.75 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500"
             />
             <span>{requirement}</span>
           </li>
