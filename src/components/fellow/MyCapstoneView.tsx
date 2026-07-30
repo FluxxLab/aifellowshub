@@ -20,6 +20,7 @@ import {
   type FellowCapstone,
   type SaveCapstonePayload,
 } from "@/lib/api/fellow-capstone";
+import { parseCapstoneDocument } from "@/lib/capstone/parseCapstoneDocument";
 
 /**
  * Max characters for the problem statement. Must stay in step with the
@@ -64,6 +65,64 @@ export default function MyCapstoneView({
     "application/msword",
   ];
 
+  /**
+   * Best-effort: read the uploaded document's contents back into any EMPTY
+   * boxes so the fellow doesn't re-type what's already in the file. Only fills
+   * blanks — it never overwrites text they've already entered — and any parse
+   * failure is swallowed so it can never block the upload itself. Parsing runs
+   * entirely in the browser (see parseCapstoneDocument).
+   */
+  async function importFromDocument(file: File) {
+    try {
+      const parsed = await parseCapstoneDocument(file);
+      const next = { ...draft };
+      let filled = 0;
+      const fillIfEmpty = (
+        key: "problem" | "approach" | "deliverables" | "risks",
+        value?: string,
+      ) => {
+        if (value && !next[key].trim()) {
+          next[key] = value;
+          filled += 1;
+        }
+      };
+
+      if (parsed.source === "docx") {
+        fillIfEmpty("problem", parsed.fields.problem);
+        fillIfEmpty("approach", parsed.fields.approach);
+        fillIfEmpty("deliverables", parsed.fields.deliverables);
+        fillIfEmpty("risks", parsed.fields.risks);
+        if (parsed.fields.title && !title.trim()) setTitle(parsed.fields.title);
+      } else if (parsed.rawText) {
+        // PDF: no dependable section structure — drop the full text into the
+        // Problem statement box (if empty) for the fellow to split up.
+        fillIfEmpty("problem", parsed.rawText);
+      }
+
+      const extractedSomething =
+        parsed.matchedSections > 0 || parsed.rawText.trim().length > 0;
+
+      if (filled > 0) {
+        setDraft(next);
+        toast.success(
+          "Imported from your document",
+          parsed.source === "pdf"
+            ? "Added the text to the Problem statement box. Move it into the right sections, then Save."
+            : `Filled ${filled} section${filled === 1 ? "" : "s"} from your file. Review the text, then Save.`,
+        );
+      } else if (!extractedSomething) {
+        toast.info(
+          "Couldn't read the document automatically",
+          "Your file is attached. Type or paste your content into the boxes, then Save.",
+        );
+      }
+      // else: content was found but the boxes already had text — leave the
+      // fellow's own writing alone and stay silent.
+    } catch {
+      // Parsing is a convenience; never let it interfere with the upload.
+    }
+  }
+
   async function onUploadFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -87,6 +146,10 @@ export default function MyCapstoneView({
       );
       return;
     }
+    // Read the document into any empty boxes BEFORE uploading, so the content
+    // is recovered even if the upload itself fails. Best-effort and non-blocking.
+    await importFromDocument(file);
+
     setUploadState("uploading");
     setUploadProgress(0);
     try {
