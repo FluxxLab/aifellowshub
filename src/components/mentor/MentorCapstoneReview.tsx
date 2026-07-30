@@ -15,6 +15,10 @@ import {
   type FellowCapstone,
   type ReviewOutcome,
 } from "@/lib/api/fellow-capstone";
+import {
+  capstoneFilenameBase,
+  downloadCapstoneDocx,
+} from "@/lib/capstone/exportCapstoneDocx";
 
 /**
  * Mentor's view of a fellow's capstone (BRD §6.10).
@@ -44,6 +48,34 @@ export default function MentorCapstoneReview({
   const [reply, setReply] = useState("");
   const [outcome, setOutcome] = useState<ReviewOutcome>("comments");
   const [postingReview, setPostingReview] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  /**
+   * Download the fellow's capstone as a Word (.docx) file — the same content
+   * shown on this page (problem statement + the full draft body), so the mentor
+   * can read or annotate it offline regardless of what format the fellow
+   * originally uploaded. Shares the fellow's export builder.
+   */
+  const onDownloadWord = async () => {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      await downloadCapstoneDocx({
+        title: capstone.title,
+        subtitle: `${capstone.sector} · ${fellowName} · exported ${new Date().toLocaleDateString(undefined, { timeZone: "Africa/Lagos" })}`,
+        sections: [
+          { label: "Problem statement", text: capstone.draft.problem },
+          { label: "Draft", text: capstone.draft.approach },
+        ],
+        filename: `${capstoneFilenameBase(`${fellowName}_${capstone.title}`)}_Capstone.docx`,
+      });
+      toast.success("Downloaded", "A Word copy has been saved to your device.");
+    } catch (err) {
+      toast.errorFromException("Couldn't download", err);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const onPostReply = async () => {
     const trimmed = reply.trim();
@@ -119,6 +151,16 @@ export default function MentorCapstoneReview({
         <EmptyDraftCard />
       ) : (
         <>
+          <div className="flex justify-end">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onDownloadWord}
+              disabled={exporting}
+            >
+              {exporting ? "Preparing…" : "Download as Word"}
+            </Button>
+          </div>
           <TitleCard
             title={capstone.title}
             oneliner={capstone.oneliner}
