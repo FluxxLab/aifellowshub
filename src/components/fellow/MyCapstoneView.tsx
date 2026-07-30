@@ -18,6 +18,7 @@ import {
   type CapstoneMilestone,
   type CapstoneStatus,
   type FellowCapstone,
+  type SaveCapstonePayload,
 } from "@/lib/api/fellow-capstone";
 
 /**
@@ -106,12 +107,15 @@ export default function MyCapstoneView({
         xhr.setRequestHeader("Content-Type", file.type);
         xhr.send(file);
       });
-      // Persist the URL on the capstone row.
-      await saveFellowCapstone({
-        title: title.trim() || capstone.title,
-        problemStatement: draft.problem,
-        artifactUrl: objectUrl,
-      });
+      // Persist the URL on the capstone row. This is a partial save: it
+      // carries the uploaded document, plus the typed title/problem statement
+      // ONLY when they're valid — an empty or too-short problem statement is
+      // omitted (the fellow may have put it inside the document), so attaching
+      // never fails validation. Omitted fields keep their stored value.
+      const attach: SaveCapstonePayload = { artifactUrl: objectUrl };
+      if (title.trim().length >= 2) attach.title = title.trim();
+      if (draft.problem.trim().length >= 10) attach.problemStatement = draft.problem;
+      await saveFellowCapstone(attach);
       setArtifactUrl(objectUrl);
       setUploadState("done");
       toast.success("Document uploaded", file.name);

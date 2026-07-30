@@ -132,9 +132,15 @@ function mapMutationResult(c: BackendCapstoneShape): CapstoneMutationResult {
   };
 }
 
+// A draft save is a partial update: send only what changed. Attaching a
+// document sends just `artifactUrl`; a full form save sends everything.
+// Omitted fields keep their stored value server-side. `title` /
+// `problemStatement` are optional here (the backend only enforces them at
+// submit), so an upload never has to re-supply a problem statement the
+// fellow put inside the document.
 export type SaveCapstonePayload = {
-  title: string;
-  problemStatement: string;
+  title?: string;
+  problemStatement?: string;
   sector?: string;
   content?: string;
   draftUrl?: string;
