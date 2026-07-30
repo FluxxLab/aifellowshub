@@ -44,9 +44,8 @@ export default function MyCertificatesView({
         </h1>
         <p className="mt-2 max-w-3xl text-gray-600">
           Your Fellowship certificate is auto-issued when you finish the
-          curriculum, your capstone is approved, and you attend the closing
-          summit. Each certificate has a public verification URL anyone can
-          use — no login required.
+          curriculum and your capstone is approved. Each certificate has a
+          public verification URL anyone can use — no login required.
         </p>
       </div>
 
@@ -120,9 +119,9 @@ function CertificatePreview({ state }: { state: FellowCertificateState }) {
           Your certificate is locked
         </p>
         <p className="max-w-md text-sm text-gray-500">
-          It unlocks automatically once you finish the curriculum, your capstone
-          is approved, and you attend the closing summit. You&apos;ll be able to
-          view, download, and share it from here the moment it&apos;s issued.
+          It unlocks automatically once you finish the curriculum and your
+          capstone is approved. You&apos;ll be able to view, download, and share
+          it from here the moment it&apos;s issued.
         </p>
         <p className="text-xs text-gray-400">
           Issued to {state.preview.fellowName} · {state.preview.programmeName}
