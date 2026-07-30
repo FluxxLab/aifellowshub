@@ -131,16 +131,14 @@ function RemainingRequirements({
         ))}
       </ul>
 
-      <dl className="mt-5 grid grid-cols-2 gap-3 border-t border-gray-100 pt-4 sm:grid-cols-4">
+      {/* Post-learning quizzes are intentionally absent — they no longer
+          gate or score certification, so listing them here would read as an
+          outstanding requirement. */}
+      <dl className="mt-5 grid grid-cols-2 gap-3 border-t border-gray-100 pt-4 sm:grid-cols-3">
         <Stat
           label="Overall score"
           value={`${totalScore}%`}
           hint={`Pass mark ${criteria.passingThreshold}%`}
-        />
-        <Stat
-          label="Post-learning quizzes"
-          value={`${breakdown.postQuizzes.completed}/${breakdown.postQuizzes.required}`}
-          hint={`Avg ${breakdown.postQuizzes.averageScore}%`}
         />
         <Stat
           label="Sessions covered"
