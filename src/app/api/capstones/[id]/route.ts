@@ -8,3 +8,12 @@ export async function GET(
   const { id } = params;
   return proxy(req, `/capstones/${encodeURIComponent(id)}`);
 }
+
+// Admin permanently deletes a fellow's capstone.
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } },
+) {
+  const { id } = params;
+  return proxy(req, `/capstones/${encodeURIComponent(id)}`);
+}

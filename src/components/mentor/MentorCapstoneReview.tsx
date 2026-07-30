@@ -265,7 +265,7 @@ function TitleCard({
             Capstone title
           </p>
           <h2 className="mt-1 text-xl font-semibold text-gray-800">{title}</h2>
-          <p className="mt-2 text-sm text-gray-600">{oneliner}</p>
+          <p className="mt-2 line-clamp-2 text-sm text-gray-600">{oneliner}</p>
         </div>
         <Badge color="info" variant="light">
           {sector}

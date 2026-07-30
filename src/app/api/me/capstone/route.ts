@@ -8,3 +8,7 @@ export async function GET(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   return proxy(req, "/me/capstone");
 }
+
+export async function DELETE(req: NextRequest) {
+  return proxy(req, "/me/capstone");
+}

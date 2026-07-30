@@ -159,6 +159,15 @@ export async function saveFellowCapstone(
   return mapMutationResult(data.capstone);
 }
 
+/**
+ * DELETE /me/capstone — delete the fellow's own capstone. The server enforces
+ * the policy (drafts any time; a submission only within 48h of submitting; an
+ * approved capstone not at all) and throws with a message the caller shows.
+ */
+export async function deleteFellowCapstone(): Promise<void> {
+  await apiFetch<{ deleted: boolean }>("/me/capstone", { method: "DELETE" });
+}
+
 /** POST /me/capstone/upload-url — mint a presigned PUT URL for a document upload. */
 export async function getCapstoneUploadUrl(opts: {
   mimeType: string;

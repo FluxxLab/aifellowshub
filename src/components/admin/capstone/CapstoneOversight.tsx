@@ -307,14 +307,15 @@ function RowActions({ submission }: { submission: CapstoneSubmission }) {
  const [open, setOpen] = useState(false);
  const [assignOpen, setAssignOpen] = useState(false);
  const [retracting, setRetracting] = useState(false);
+ const [deleting, setDeleting] = useState(false);
  const router = useRouter();
  const { confirm, dialog } = useConfirm();
 
  const handleRetract = async () => {
    const ok = await confirm({
-     title: "Delete submission?",
-     message: `This will reset ${submission.fellowName}'s capstone back to draft so they can edit and re-submit. The feedback history will be kept.`,
-     confirmLabel: "Delete submission",
+     title: "Retract submission?",
+     message: `This resets ${submission.fellowName}'s capstone back to draft so they can edit and re-submit. Their work and the feedback history are kept — nothing is deleted.`,
+     confirmLabel: "Retract submission",
      tone: "danger",
    });
    if (!ok) return;
@@ -329,6 +330,28 @@ function RowActions({ submission }: { submission: CapstoneSubmission }) {
      // surface nothing — refresh will show current state
    } finally {
      setRetracting(false);
+   }
+ };
+
+ const handleDelete = async () => {
+   const ok = await confirm({
+     title: "Delete capstone permanently?",
+     message: `This permanently removes ${submission.fellowName}'s entire capstone — content, the uploaded document, and all mentor feedback. This can't be undone, and the fellow is notified.`,
+     confirmLabel: "Delete capstone",
+     tone: "danger",
+   });
+   if (!ok) return;
+   setDeleting(true);
+   try {
+     const res = await fetch(`/api/capstones/${encodeURIComponent(submission.id)}`, {
+       method: "DELETE",
+     });
+     if (!res.ok) throw new Error(await res.text());
+     router.refresh();
+   } catch {
+     // surface nothing — refresh will show current state
+   } finally {
+     setDeleting(false);
    }
  };
 
@@ -352,11 +375,17 @@ function RowActions({ submission }: { submission: CapstoneSubmission }) {
  });
  if (submission.status === "under-review" || submission.status === "submitted") {
    actions.push({
-     label: retracting ? "Deleting…" : "Delete submission",
+     label: retracting ? "Retracting…" : "Retract submission",
      onClick: handleRetract,
      destructive: true,
    });
  }
+ // Permanent deletion — available for any status (admin override).
+ actions.push({
+   label: deleting ? "Deleting…" : "Delete capstone",
+   onClick: handleDelete,
+   destructive: true,
+ });
 
  return (
  <div className="relative inline-block text-left">

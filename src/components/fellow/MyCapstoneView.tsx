@@ -10,6 +10,7 @@ import { toast } from "@/lib/toast";
 import { CheckLineIcon, PaperPlaneIcon } from "@/icons";
 import { useCurrentUser } from "@/lib/auth/useCurrentUser";
 import {
+  deleteFellowCapstone,
   getCapstoneUploadUrl,
   postFellowCapstoneComment,
   saveFellowCapstone,
@@ -62,6 +63,7 @@ export default function MyCapstoneView({
   const [uploadState, setUploadState] = useState<"idle" | "uploading" | "done">("idle");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [exporting, setExporting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // PDF only. Word (.doc/.docx) caused too much confusion — legacy .doc can't
   // be parsed at all, and fellows couldn't tell the two apart. PDF is
@@ -390,6 +392,73 @@ export default function MyCapstoneView({
     setSubmitState("idle");
   };
 
+  const onDeleteCapstone = async () => {
+    if (deleting) return;
+    const ok = await confirm({
+      title: "Delete capstone?",
+      message:
+        status === "under-review"
+          ? "This permanently removes your submission and any mentor feedback. This can't be undone."
+          : "This permanently removes your capstone draft. This can't be undone.",
+      confirmLabel: "Delete",
+      tone: "danger",
+    });
+    if (!ok) return;
+    setDeleting(true);
+    try {
+      await deleteFellowCapstone();
+      // Reset to a fresh, empty capstone locally (the next load lazily
+      // recreates one server-side anyway).
+      setTitle("Untitled capstone");
+      setDraft({
+        problem: "",
+        approach: "",
+        stakeholders: "",
+        deliverables: "",
+        risks: "",
+        lastSavedAt: new Date().toISOString(),
+      });
+      setArtifactUrl(null);
+      setStatus("draft");
+      setFeedback([]);
+      toast.success("Capstone deleted", "You can start a fresh draft any time.");
+      router.refresh();
+    } catch (err) {
+      toast.errorFromException("Couldn't delete", err);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  // Delete eligibility (UX only — the server is authoritative):
+  //   - approved        → not deletable here.
+  //   - under-review    → only within 48h of submitting (retract window). If we
+  //                       have no submit timestamp yet (just submitted this
+  //                       session) assume in-window and let the server decide.
+  //   - draft / revision → always.
+  const submittedAtMs = capstone.submittedAt
+    ? new Date(capstone.submittedAt).getTime()
+    : null;
+  const withinDeleteWindow =
+    submittedAtMs === null ||
+    Date.now() - submittedAtMs <= 48 * 60 * 60 * 1000;
+  const canDelete =
+    status === "approved"
+      ? false
+      : status === "under-review"
+        ? withinDeleteWindow
+        : true;
+  // Only worth offering once there's something saved to remove.
+  const hasSavedCapstone =
+    Boolean(artifactUrl) ||
+    status !== "draft" ||
+    Boolean(
+      draft.problem.trim() ||
+        draft.approach.trim() ||
+        draft.deliverables.trim() ||
+        draft.risks.trim(),
+    );
+
   const onPostReply = async () => {
     const trimmed = reply.trim();
     if (!trimmed) return;
@@ -604,6 +673,25 @@ export default function MyCapstoneView({
               </Button>
             </div>
           </div>
+
+          {hasSavedCapstone && status !== "approved" && (
+            <div className="flex flex-col items-end gap-1">
+              <button
+                type="button"
+                onClick={onDeleteCapstone}
+                disabled={deleting || !canDelete}
+                className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {deleting ? "Deleting…" : "Delete capstone"}
+              </button>
+              {status === "under-review" && !canDelete && (
+                <p className="text-xs text-gray-400">
+                  The 48-hour window to delete a submission has passed. Ask your
+                  mentor to return it if you need changes.
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         <aside className="flex flex-col gap-4 md:gap-6">

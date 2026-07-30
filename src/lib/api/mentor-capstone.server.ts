@@ -44,7 +44,18 @@ export async function getMentorCapstoneServer(
       status: mapBackendStatus(match.status),
       title:
         match.title === "Untitled capstone" ? "Untitled capstone" : match.title,
-      oneliner: match.problemStatement.split("\n")[0]?.trim() || "",
+      // A short teaser, not the whole statement. PDF-imported problem
+      // statements arrive as one long line with no newlines, so splitting on
+      // "\n" alone would put the entire document here — cap the length and cut
+      // at a word boundary with an ellipsis.
+      oneliner: (() => {
+        const firstLine = match.problemStatement.split("\n")[0]?.trim() || "";
+        const MAX = 160;
+        if (firstLine.length <= MAX) return firstLine;
+        const cut = firstLine.slice(0, MAX);
+        const lastSpace = cut.lastIndexOf(" ");
+        return `${(lastSpace > 80 ? cut.slice(0, lastSpace) : cut).trimEnd()}…`;
+      })(),
       // FellowCapstone requires a non-null sector — fall back to the
       // EID sentinel only on this single-capstone surface; the queue
       // tally below uses the honest nullable result.
