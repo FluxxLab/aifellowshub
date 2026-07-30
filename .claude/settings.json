@@ -38,5 +38,21 @@
     "additionalDirectories": [
       "c:\\Users\\User\\Downloads\\PIC-LMS\\PIC-LMS\\src\\app\\api\\forum\\groups"
     ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$data = $input | ConvertFrom-Json; if ($data.tool_input.command -match 'git push') { Set-Location 'C:\\Users\\User\\Downloads\\PIC-LMS\\PIC-LMS'; pnpm build; if ($LASTEXITCODE -ne 0) { Write-Output '{\"continue\":false,\"stopReason\":\"Build failed — fix type errors before pushing\"}' } }",
+            "shell": "powershell",
+            "timeout": 300,
+            "statusMessage": "Checking build before push..."
+          }
+        ]
+      }
+    ]
   }
 }
