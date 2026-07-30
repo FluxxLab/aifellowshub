@@ -45,9 +45,26 @@ export function formatCohortTime(input: DateInput): string {
  })} WAT`;
 }
 
-/** "Wed, May 20 · 04:30 PM" */
+/** "Wed, May 20 · 04:30 PM WAT" */
 export function formatCohortDateTime(input: DateInput): string {
  return `${formatCohortDate(input)} · ${formatCohortTime(input)}`;
+}
+
+/**
+ * "Fri, Jul 31, 12:00 PM WAT" — the single-string format the mentorship
+ * booking lists render a session slot in. Kept here (not inlined per view) so
+ * every surface shows the same slot with the WAT label; mentors and fellows
+ * in other timezones were misreading a bare clock time as their own.
+ */
+export function formatBookingSlot(input: DateInput): string {
+ return `${toDate(input).toLocaleString(undefined, {
+ timeZone: COHORT_TZ,
+ weekday: "short",
+ day: "numeric",
+ month: "short",
+ hour: "2-digit",
+ minute: "2-digit",
+ })} WAT`;
 }
 
 /** "20 May 2026" — long, prose use. */

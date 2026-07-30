@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import { formatBookingSlot } from "@/lib/datetime";
 import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
@@ -279,14 +280,7 @@ export default function FellowMentorshipView({
                     <div>
                       <div className="flex items-center gap-2 text-sm font-semibold text-gray-800">
                         <CalenderIcon className="h-4 w-4" />
-                        {start.toLocaleString(undefined, {
-                          timeZone: "Africa/Lagos",
-                          weekday: "short",
-                          day: "numeric",
-                          month: "short",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {formatBookingSlot(start)}
                       </div>
                       <p className="mt-1 inline-flex items-center gap-1 text-xs text-gray-500">
                         <TimeIcon className="h-3.5 w-3.5" />
