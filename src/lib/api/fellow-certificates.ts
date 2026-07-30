@@ -32,6 +32,51 @@ export type EligibilityRequirement = {
   detail: string;
 };
 
+/**
+ * The fellow's live certification scorecard (`GET /me/certification`) — the
+ * authoritative answer to "why isn't my certificate issued yet?".
+ * `missingRequirements` is a ready-to-render list of what's still outstanding;
+ * it's empty exactly when `eligible` is true. Mirrors the backend's
+ * CertificationsService.computeFellow return shape.
+ */
+export type CertificationScorecard = {
+  totalScore: number;
+  eligible: boolean;
+  tier: "certified" | "merit" | "distinction" | null;
+  missingRequirements: string[];
+  criteria: {
+    passingThreshold: number;
+    requiredPostQuizzes: number;
+    requiredSessions: number;
+  };
+  breakdown: {
+    postQuizzes: {
+      completed: number;
+      required: number;
+      averageScore: number;
+      contribution: number;
+    };
+    participation: {
+      /** Score-weighted credits: live = 1, recording = 0.5. */
+      attendedSessions: number;
+      /** What the eligibility gate counts: live and recording both = 1. */
+      sessionsCovered: number;
+      requiredSessions: number;
+      attendanceRate: number;
+      contribution: number;
+    };
+    assignments: {
+      completed: number;
+      averageScore: number;
+      contribution: number;
+    };
+    capstone: {
+      status: "approved" | "in_progress" | "not_started";
+      contribution: number;
+    };
+  };
+};
+
 export type FellowCertificateState = {
   /** Set if the certificate has been issued. */
   certificate: Certificate | null;

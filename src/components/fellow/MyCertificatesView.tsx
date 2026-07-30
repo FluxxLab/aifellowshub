@@ -14,6 +14,7 @@ import {
 } from "@/icons";
 import type {
   Certificate,
+  CertificationScorecard,
   FellowCertificateState,
 } from "@/lib/api/fellow-certificates";
 
@@ -26,8 +27,11 @@ import type {
  */
 export default function MyCertificatesView({
   state,
+  scorecard = null,
 }: {
   state: FellowCertificateState;
+  /** Live eligibility scorecard; null if it couldn't be loaded. */
+  scorecard?: CertificationScorecard | null;
 }) {
   const issued = state.certificate !== null;
   return (
@@ -52,19 +56,26 @@ export default function MyCertificatesView({
       {issued ? (
         <IssuedView certificate={state.certificate!} />
       ) : (
-        <PendingView state={state} />
+        <PendingView state={state} scorecard={scorecard} />
       )}
     </div>
   );
 }
 
-function PendingView({ state }: { state: FellowCertificateState }) {
-  // Eligibility checklist intentionally omitted — the scorecard above
-  // already lists missing requirements. Keep the preview + verification
-  // example so fellows still see what they're working toward.
+function PendingView({
+  state,
+  scorecard,
+}: {
+  state: FellowCertificateState;
+  scorecard: CertificationScorecard | null;
+}) {
   return (
     <>
       <CertificatePreview state={state} />
+
+      {scorecard && !scorecard.eligible && scorecard.missingRequirements.length > 0 && (
+        <RemainingRequirements scorecard={scorecard} />
+      )}
 
       <section className="rounded-2xl border border-gray-200 bg-gray-50 p-5 md:p-6">
         <h3 className="text-base font-semibold text-gray-800">
@@ -87,6 +98,87 @@ function PendingView({ state }: { state: FellowCertificateState }) {
         </Link>
       </section>
     </>
+  );
+}
+
+/**
+ * "What's still outstanding" — the live reasons the certificate hasn't issued,
+ * straight from the backend scorecard. Without this the page showed a bare
+ * lock, so a fellow who had (say) covered every session but was short one quiz
+ * had no way to know what to do next, and staff had to read the server log to
+ * find out. Only rendered when the fellow is genuinely ineligible.
+ */
+function RemainingRequirements({
+  scorecard,
+}: {
+  scorecard: CertificationScorecard;
+}) {
+  const { breakdown, criteria, totalScore, missingRequirements } = scorecard;
+  return (
+    <section className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
+      <h3 className="text-base font-semibold text-gray-800">
+        What&apos;s left before your certificate unlocks
+      </h3>
+      <ul className="mt-3 flex flex-col gap-2.5">
+        {missingRequirements.map((requirement, i) => (
+          <li key={i} className="flex items-start gap-2.5 text-sm text-gray-700">
+            <span
+              aria-hidden
+              className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500"
+            />
+            <span>{requirement}</span>
+          </li>
+        ))}
+      </ul>
+
+      <dl className="mt-5 grid grid-cols-2 gap-3 border-t border-gray-100 pt-4 sm:grid-cols-4">
+        <Stat
+          label="Overall score"
+          value={`${totalScore}%`}
+          hint={`Pass mark ${criteria.passingThreshold}%`}
+        />
+        <Stat
+          label="Post-learning quizzes"
+          value={`${breakdown.postQuizzes.completed}/${breakdown.postQuizzes.required}`}
+          hint={`Avg ${breakdown.postQuizzes.averageScore}%`}
+        />
+        <Stat
+          label="Sessions covered"
+          value={`${breakdown.participation.sessionsCovered ?? breakdown.participation.attendedSessions}/${breakdown.participation.requiredSessions}`}
+          hint="Live or recording"
+        />
+        <Stat
+          label="Capstone"
+          value={
+            breakdown.capstone.status === "approved"
+              ? "Approved"
+              : breakdown.capstone.status === "in_progress"
+                ? "In progress"
+                : "Not started"
+          }
+        />
+      </dl>
+    </section>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+}) {
+  return (
+    <div>
+      <dt className="text-xs font-medium uppercase tracking-wide text-gray-500">
+        {label}
+      </dt>
+      <dd className="mt-1 text-sm font-semibold text-gray-800">{value}</dd>
+      {hint && <p className="text-xs text-gray-400">{hint}</p>}
+    </div>
   );
 }
 

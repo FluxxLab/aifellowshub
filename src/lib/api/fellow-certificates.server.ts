@@ -8,6 +8,7 @@ import "server-only";
 import { backendFetch, BACKEND_URL } from "./backend";
 import type {
   Certificate,
+  CertificationScorecard,
   FellowCertificateState,
   PublicCertificate,
 } from "./fellow-certificates";
@@ -76,6 +77,23 @@ export async function getMyCertificateStateServer(): Promise<FellowCertificateSt
     };
   } catch {
     return EMPTY_STATE;
+  }
+}
+
+/**
+ * The fellow's live certification scorecard. Drives the "what's left" list on
+ * the locked certificate card — without it the page can only show a bare lock,
+ * which left fellows (and staff) guessing why a certificate hadn't issued.
+ * Returns null on any failure: the scorecard is explanatory, so a blip should
+ * degrade to the plain locked card rather than break the page.
+ */
+export async function getMyCertificationScorecardServer(): Promise<CertificationScorecard | null> {
+  try {
+    const res = await backendFetch("/me/certification", { method: "GET" });
+    if (!res.ok) return null;
+    return (await res.json()) as CertificationScorecard;
+  } catch {
+    return null;
   }
 }
 
