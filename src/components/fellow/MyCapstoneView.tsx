@@ -63,11 +63,10 @@ export default function MyCapstoneView({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [exporting, setExporting] = useState(false);
 
-  const ALLOWED_TYPES = [
-    "application/pdf",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/msword",
-  ];
+  // PDF only. Word (.doc/.docx) caused too much confusion — legacy .doc can't
+  // be parsed at all, and fellows couldn't tell the two apart. PDF is
+  // universal: every tool exports it, and it always renders the same.
+  const ALLOWED_TYPES = ["application/pdf"];
 
   /**
    * Best-effort: read the uploaded document's contents back into any EMPTY
@@ -157,7 +156,10 @@ export default function MyCapstoneView({
     e.target.value = "";
     if (!file) return;
     if (!ALLOWED_TYPES.includes(file.type)) {
-      toast.error("Unsupported format", "Please upload a Word (.docx) or PDF file.");
+      toast.error(
+        "Please upload a PDF",
+        "Only PDF files are accepted. In Word, use File → Save As → PDF, then upload that.",
+      );
       return;
     }
     if (file.size > 50 * 1024 * 1024) {
@@ -487,7 +489,8 @@ export default function MyCapstoneView({
           <div className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
             <h2 className="text-base font-semibold text-gray-800">Upload document</h2>
             <p className="mt-1 text-sm text-gray-500">
-              Attach your capstone as a Word (.docx) or PDF. 50 MB max.
+              Attach your capstone as a PDF. 50 MB max. In Word, use File → Save
+              As → PDF.
             </p>
 
             {artifactUrl && (
@@ -527,37 +530,19 @@ export default function MyCapstoneView({
                   <p className="text-xs text-gray-500">Uploading… {uploadProgress}%</p>
                 </div>
               ) : (
-                <div className="flex flex-wrap gap-2">
-                  {/* Two pickers — one per format — so it's obvious both Word
-                      and PDF are accepted. Both feed the same upload+parse
-                      handler; only the `accept` filter differs. */}
-                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                    </svg>
-                    {artifactUrl ? "Replace with Word" : "Upload Word (.docx)"}
-                    <input
-                      type="file"
-                      accept=".docx,.doc,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                      className="sr-only"
-                      onChange={onUploadFile}
-                      disabled={status === "under-review" || status === "approved"}
-                    />
-                  </label>
-                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                    </svg>
-                    {artifactUrl ? "Replace with PDF" : "Upload PDF"}
-                    <input
-                      type="file"
-                      accept=".pdf,application/pdf"
-                      className="sr-only"
-                      onChange={onUploadFile}
-                      disabled={status === "under-review" || status === "approved"}
-                    />
-                  </label>
-                </div>
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                  </svg>
+                  {artifactUrl ? "Replace PDF" : "Upload PDF"}
+                  <input
+                    type="file"
+                    accept=".pdf,application/pdf"
+                    className="sr-only"
+                    onChange={onUploadFile}
+                    disabled={status === "under-review" || status === "approved"}
+                  />
+                </label>
               )}
             </div>
           </div>
