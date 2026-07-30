@@ -28,6 +28,13 @@ export type CapstoneMentor = {
   expertiseSummary: string;
 };
 
+/**
+ * Capstone workflow stages, chosen by the fellow. Only an approval given at
+ * `final` completes the capstone — earlier approvals are milestone sign-offs,
+ * so a `status` of "approved" at an earlier stage must not read as "finished".
+ */
+export type CapstoneStage = "scoping" | "design" | "consultation" | "final";
+
 export type CapstoneDraft = {
   /** Problem statement — what is the harm or governance gap? */
   problem: string;
@@ -66,6 +73,12 @@ export type CapstoneFeedbackEntry = {
 
 export type FellowCapstone = {
   status: CapstoneStatus;
+  /**
+   * Which stage the fellow is working on. Needed alongside `status` because an
+   * approval at a non-final stage also sets `status: "approved"` — the two
+   * together are what distinguish "milestone signed off" from "capstone done".
+   */
+  stage: CapstoneStage;
   title: string;
   oneliner: string;
   sector: CapstoneSector;

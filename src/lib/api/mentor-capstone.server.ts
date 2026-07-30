@@ -42,6 +42,7 @@ export async function getMentorCapstoneServer(
     return {
       backendId: match.id,
       status: mapBackendStatus(match.status),
+      stage: match.stage,
       title:
         match.title === "Untitled capstone" ? "Untitled capstone" : match.title,
       // A short teaser, not the whole statement. PDF-imported problem

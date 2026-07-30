@@ -120,6 +120,7 @@ export async function getFellowCapstoneServer(): Promise<FellowCapstone> {
 function mapBackendCapstone(b: BackendCapstone): FellowCapstone {
   return {
     status: mapStatus(b.status),
+    stage: b.stage,
     title: b.title,
     oneliner: firstLine(b.problemStatement) || "No problem statement yet.",
     // Fellow's profile sector is the source of truth; the capstone's own
