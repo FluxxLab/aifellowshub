@@ -33,7 +33,12 @@ export type ParsedCapstone = {
   rawText: string;
   /** How many of the four body sections were recognised (0–4). */
   matchedSections: number;
-  source: "docx" | "pdf";
+  /**
+   * `docx` / `pdf` parsed normally. `unsupported` = a format we can't read in
+   * the browser (legacy binary `.doc` — mammoth only handles the zip-based
+   * `.docx`), so the caller should tell the fellow to re-save as `.docx`.
+   */
+  source: "docx" | "pdf" | "unsupported";
 };
 
 type SectionKey = "problem" | "approach" | "deliverables" | "risks";
@@ -92,8 +97,14 @@ function cleanSectionText(lines: string[]): string {
  */
 async function parseDocx(file: File): Promise<ParsedCapstone> {
   // Dynamic import keeps mammoth out of the server bundle (it must only run in
-  // the browser) and off the main page-load path.
-  const mammoth = (await import("mammoth")).default;
+  // the browser) and off the main page-load path. mammoth is CommonJS, so the
+  // interop shape differs by bundler — the callable object may be on `.default`
+  // or be the namespace itself; accept either so a browser build can't silently
+  // land on `undefined.convertToHtml`.
+  const mammothMod = await import("mammoth");
+  const mammoth =
+    (mammothMod as unknown as { default?: typeof mammothMod }).default ??
+    mammothMod;
   const arrayBuffer = await file.arrayBuffer();
   const { value: html } = await mammoth.convertToHtml(
     { arrayBuffer },
@@ -189,5 +200,7 @@ const DOCX_MIME =
 export async function parseCapstoneDocument(file: File): Promise<ParsedCapstone> {
   if (file.type === DOCX_MIME) return parseDocx(file);
   if (file.type === "application/pdf") return parsePdf(file);
-  return { fields: {}, rawText: "", matchedSections: 0, source: "docx" };
+  // Legacy binary `.doc` (application/msword) or anything else — mammoth only
+  // reads the zip-based `.docx`, so flag it so the caller can advise re-saving.
+  return { fields: {}, rawText: "", matchedSections: 0, source: "unsupported" };
 }

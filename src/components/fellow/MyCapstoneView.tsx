@@ -21,6 +21,10 @@ import {
   type SaveCapstonePayload,
 } from "@/lib/api/fellow-capstone";
 import { parseCapstoneDocument } from "@/lib/capstone/parseCapstoneDocument";
+import {
+  capstoneFilenameBase,
+  downloadCapstoneDocx,
+} from "@/lib/capstone/exportCapstoneDocx";
 
 /**
  * Max characters for the problem statement. Must stay in step with the
@@ -75,51 +79,76 @@ export default function MyCapstoneView({
   async function importFromDocument(file: File) {
     try {
       const parsed = await parseCapstoneDocument(file);
+
+      // Legacy binary .doc — can't be read in the browser. Tell the fellow how
+      // to get auto-fill instead of leaving them wondering why nothing happened.
+      if (parsed.source === "unsupported") {
+        toast.info(
+          "Can't auto-read a .doc file",
+          "Your document is attached. To auto-fill the boxes, re-save it as .docx (Word: File → Save As → Word Document) or upload a PDF.",
+        );
+        return;
+      }
+
       const next = { ...draft };
-      let filled = 0;
+      let filledSections = 0;
       const fillIfEmpty = (
         key: "problem" | "approach" | "deliverables" | "risks",
         value?: string,
-      ) => {
+      ): boolean => {
         if (value && !next[key].trim()) {
           next[key] = value;
-          filled += 1;
+          filledSections += 1;
+          return true;
         }
+        return false;
       };
 
-      if (parsed.source === "docx") {
-        fillIfEmpty("problem", parsed.fields.problem);
-        fillIfEmpty("approach", parsed.fields.approach);
-        fillIfEmpty("deliverables", parsed.fields.deliverables);
-        fillIfEmpty("risks", parsed.fields.risks);
-        if (parsed.fields.title && !title.trim()) setTitle(parsed.fields.title);
-      } else if (parsed.rawText) {
-        // PDF: no dependable section structure — drop the full text into the
-        // Problem statement box (if empty) for the fellow to split up.
-        fillIfEmpty("problem", parsed.rawText);
+      // Map the recognised sections (a .docx exported from our template).
+      fillIfEmpty("problem", parsed.fields.problem);
+      fillIfEmpty("approach", parsed.fields.approach);
+      fillIfEmpty("deliverables", parsed.fields.deliverables);
+      fillIfEmpty("risks", parsed.fields.risks);
+      if (parsed.fields.title && !title.trim()) setTitle(parsed.fields.title);
+
+      // Fallback: nothing mapped (a PDF, or a Word doc that isn't our
+      // template) but we did extract text — drop the whole thing into the
+      // Problem statement box so the fellow still gets their words back and
+      // can split them across the sections.
+      let usedFallback = false;
+      if (filledSections === 0 && parsed.rawText) {
+        usedFallback = fillIfEmpty("problem", parsed.rawText);
       }
 
-      const extractedSomething =
-        parsed.matchedSections > 0 || parsed.rawText.trim().length > 0;
-
-      if (filled > 0) {
+      if (usedFallback) {
         setDraft(next);
         toast.success(
           "Imported from your document",
-          parsed.source === "pdf"
-            ? "Added the text to the Problem statement box. Move it into the right sections, then Save."
-            : `Filled ${filled} section${filled === 1 ? "" : "s"} from your file. Review the text, then Save.`,
+          "Added the text to the Problem statement box — move it into the right sections, then Save.",
         );
-      } else if (!extractedSomething) {
+      } else if (filledSections > 0) {
+        setDraft(next);
+        toast.success(
+          "Imported from your document",
+          `Filled ${filledSections} section${filledSections === 1 ? "" : "s"} from your file. Review the text, then Save.`,
+        );
+      } else if (!parsed.rawText) {
+        // Truly nothing extractable (empty or unreadable file).
         toast.info(
-          "Couldn't read the document automatically",
+          "Couldn't read the document",
           "Your file is attached. Type or paste your content into the boxes, then Save.",
         );
       }
-      // else: content was found but the boxes already had text — leave the
-      // fellow's own writing alone and stay silent.
-    } catch {
-      // Parsing is a convenience; never let it interfere with the upload.
+      // else: text was found but every box already had content — leave the
+      // fellow's own writing untouched and stay silent.
+    } catch (err) {
+      // Parsing is a convenience and must never block the upload, but tell the
+      // fellow it didn't happen (and log it) rather than failing silently.
+      console.error("[capstone] document parse failed", err);
+      toast.info(
+        "Couldn't read the document automatically",
+        "Your file is attached. Type or paste your content into the boxes, then Save.",
+      );
     }
   }
 
@@ -264,83 +293,40 @@ export default function MyCapstoneView({
     if (exporting) return;
     setExporting(true);
     try {
-      const { Document, Packer, Paragraph, HeadingLevel, TextRun } =
-        await import("docx");
-
-      // Written sections export as-is (newline breaks preserved); empty ones
-      // fall back to the on-screen guidance prompt in grey italics so the
-      // fellow always knows what belongs there.
-      const section = (label: string, text: string, hint: string) => {
-        const filled = text.trim();
-        return [
-          new Paragraph({ text: label, heading: HeadingLevel.HEADING_2 }),
-          ...(filled
-            ? filled
-                .split(/\n+/)
-                .map((line) => new Paragraph({ children: [new TextRun(line.trim())] }))
-            : [
-                new Paragraph({
-                  children: [new TextRun({ text: hint, italics: true, color: "888888" })],
-                }),
-              ]),
-        ];
-      };
-
-      const doc = new Document({
+      const displayTitle = title.trim() || capstone.title;
+      // Written sections export as-is; empty ones fall back to the on-screen
+      // guidance prompt (`hint`) in grey italics so the fellow always knows
+      // what belongs where. Shared with the mentor export via downloadCapstoneDocx.
+      await downloadCapstoneDocx({
+        title: displayTitle,
+        subtitle:
+          mode === "template"
+            ? `${capstone.sector} · Capstone template`
+            : `${capstone.sector} · Draft exported ${new Date().toLocaleDateString(undefined, { timeZone: "Africa/Lagos" })}`,
         sections: [
           {
-            children: [
-              new Paragraph({
-                text: title.trim() || capstone.title,
-                heading: HeadingLevel.TITLE,
-              }),
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text:
-                      mode === "template"
-                        ? `${capstone.sector} · Capstone template`
-                        : `${capstone.sector} · Draft exported ${new Date().toLocaleDateString(undefined, { timeZone: "Africa/Lagos" })}`,
-                    italics: true,
-                    color: "666666",
-                  }),
-                ],
-              }),
-              ...section(
-                "Problem statement",
-                draft.problem,
-                "What is the harm or governance gap, and why does it matter?",
-              ),
-              ...section(
-                "Approach",
-                draft.approach,
-                "How will you address it? Method, framework, deliverable type.",
-              ),
-              ...section(
-                "Deliverables",
-                draft.deliverables,
-                "Concrete artefacts — what will exist by Week 12?",
-              ),
-              ...section(
-                "Risks & limitations",
-                draft.risks,
-                "What could go wrong, and what's out of scope.",
-              ),
-            ],
+            label: "Problem statement",
+            text: draft.problem,
+            hint: "What is the harm or governance gap, and why does it matter?",
+          },
+          {
+            label: "Approach",
+            text: draft.approach,
+            hint: "How will you address it? Method, framework, deliverable type.",
+          },
+          {
+            label: "Deliverables",
+            text: draft.deliverables,
+            hint: "Concrete artefacts — what will exist by Week 12?",
+          },
+          {
+            label: "Risks & limitations",
+            text: draft.risks,
+            hint: "What could go wrong, and what's out of scope.",
           },
         ],
+        filename: `${capstoneFilenameBase(displayTitle)}_Capstone_${mode === "template" ? "Template" : "Draft"}.docx`,
       });
-
-      const blob = await Packer.toBlob(doc);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      const base = (title.trim() || capstone.title)
-        .replace(/[^\w\s-]/g, "")
-        .replace(/\s+/g, "_");
-      a.download = `${base}_Capstone_${mode === "template" ? "Template" : "Draft"}.docx`;
-      a.click();
-      URL.revokeObjectURL(url);
       toast.success(
         mode === "template" ? "Template downloaded" : "Draft downloaded",
         mode === "template"
@@ -541,19 +527,37 @@ export default function MyCapstoneView({
                   <p className="text-xs text-gray-500">Uploading… {uploadProgress}%</p>
                 </div>
               ) : (
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                  </svg>
-                  {artifactUrl ? "Replace document" : "Choose file"}
-                  <input
-                    type="file"
-                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                    className="sr-only"
-                    onChange={onUploadFile}
-                    disabled={status === "under-review" || status === "approved"}
-                  />
-                </label>
+                <div className="flex flex-wrap gap-2">
+                  {/* Two pickers — one per format — so it's obvious both Word
+                      and PDF are accepted. Both feed the same upload+parse
+                      handler; only the `accept` filter differs. */}
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                    </svg>
+                    {artifactUrl ? "Replace with Word" : "Upload Word (.docx)"}
+                    <input
+                      type="file"
+                      accept=".docx,.doc,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                      className="sr-only"
+                      onChange={onUploadFile}
+                      disabled={status === "under-review" || status === "approved"}
+                    />
+                  </label>
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                    </svg>
+                    {artifactUrl ? "Replace with PDF" : "Upload PDF"}
+                    <input
+                      type="file"
+                      accept=".pdf,application/pdf"
+                      className="sr-only"
+                      onChange={onUploadFile}
+                      disabled={status === "under-review" || status === "approved"}
+                    />
+                  </label>
+                </div>
               )}
             </div>
           </div>
