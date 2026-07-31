@@ -295,15 +295,18 @@ function IssuedView({ certificate: c }: { certificate: Certificate }) {
       // loadImageAsDataUrl re-encodes via canvas to a PNG data URL.
       pdf.addImage(dataUrl, "PNG", 0, 0, PAGE_W, PAGE_H);
 
-      // Fellow name — the ONLY variable field. Sits on the blank line between
-      // "This is to certify that" and the orange rule: ~48% down = ~105mm,
-      // centred in the content area at ~60% of the width. The two signatures,
-      // their titles, and the programme line are baked into the template image,
-      // so nothing else is drawn. Kept in lockstep with CertificateCanvas.
+      // Fellow name — the ONLY variable field. Sits just above the orange rule
+      // (~114mm baseline), centred in the content area at ~60% of the width.
+      // The two signatures, their titles, and the programme line are baked into
+      // the template image, so nothing else is drawn. Kept in lockstep with
+      // CertificateCanvas, whose `top` is the text box's top edge rather than
+      // the baseline — hence the two values aren't identical.
       pdf.setTextColor(30, 58, 138);
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(24);
-      pdf.text(c.fellowName, PAGE_W * 0.6, 105, { align: "center" });
+      pdf.text(c.fellowName.toUpperCase(), PAGE_W * 0.6, 114, {
+        align: "center",
+      });
 
       pdf.save(`${c.fellowName.replace(/\s+/g, "_")}_Certificate_${c.id}.pdf`);
     } catch (err) {
@@ -491,17 +494,18 @@ export function CertificateCanvas({
         className="object-cover"
       />
 
-      {/* Fellow name — the only variable field, on the blank line between
-          "This is to certify that" and the orange rule (~48% down, centred
-          in the content area at ~60% width). Signatures + date are baked
-          into the template image, so no overlays for them. Kept in lockstep
-          with the jsPDF coordinates in onDownload above. */}
+      {/* Fellow name — the only variable field, sitting just above the orange
+          rule (centred in the content area at ~60% width). Signatures + date
+          are baked into the template image, so no overlays for them. Kept in
+          lockstep with the jsPDF coordinates in onDownload above — note that
+          `top` here is the text box's top edge while jsPDF's y is the
+          baseline, so the two numbers differ by roughly a line height. */}
       <div
         className="absolute flex justify-center"
-        style={{ top: "45.5%", left: "22%", right: "2%" }}
+        style={{ top: "50%", left: "22%", right: "2%" }}
       >
         <p
-          className="font-bold text-fellowship-navy leading-none"
+          className="text-center font-bold uppercase text-fellowship-navy leading-none"
           style={{ fontSize: "clamp(1rem, 2.6vw, 2rem)" }}
         >
           {fellowName}

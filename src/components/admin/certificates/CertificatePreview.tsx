@@ -43,16 +43,17 @@ export default function CertificatePreview({
  className="object-cover"
  />
 
- {/* Fellow name — the only variable field. Sits on the blank line between
-     "This is to certify that" and the orange rule (~48% down, centred in
-     the content area at ~60% width). The two signatures and titles are
-     baked into the template image, so no signature/date overlays here. */}
+ {/* Fellow name — the only variable field. Sits just above the orange rule,
+     centred in the content area at ~60% width. The two signatures and titles
+     are baked into the template image, so no signature/date overlays here.
+     Keep in lockstep with `CertificateCanvas` in
+     `components/fellow/MyCertificatesView.tsx`. */}
  <div
  className="absolute flex justify-center"
- style={{ top: "45.5%", left: "22%", right: "2%" }}
+ style={{ top: "50%", left: "22%", right: "2%" }}
  >
  <p
- className="font-bold text-fellowship-navy leading-none"
+ className="text-center font-bold uppercase text-fellowship-navy leading-none"
  style={{ fontSize: "clamp(1rem, 2.6vw, 2rem)" }}
  >
  {fellowName}
