@@ -30,6 +30,33 @@ const ISSUING_ORGANISATION = "Policy Innovation Centre";
 const PUBLIC_ORIGIN = "https://aiegfellowship.org";
 
 /**
+ * Font size for the name printed on the certificate, scaled to its length.
+ *
+ * The blank line on the template is a fixed width, and names vary a lot — a
+ * fellow with three or four names needs noticeably smaller type than one with
+ * two. A single fixed size can only suit one of them: tuned for "Amara Okafor"
+ * it overflowed for "Amara Okafor Musa", and tuned for the longer name it
+ * looked lost on the shorter one. Step the size down by length instead, so it
+ * fits without anyone re-tuning this per fellow.
+ *
+ * Returned as a CSS `clamp()` so it still scales with the viewport.
+ */
+export function certificateNameFontSize(name: string): string {
+  const length = name.trim().length;
+  if (length <= 16) return "clamp(0.85rem, 2vw, 1.5rem)";
+  if (length <= 24) return "clamp(0.7rem, 1.6vw, 1.15rem)";
+  return "clamp(0.6rem, 1.3vw, 0.95rem)";
+}
+
+/** jsPDF point size matching `certificateNameFontSize`'s steps. */
+export function certificateNamePdfSize(name: string): number {
+  const length = name.trim().length;
+  if (length <= 16) return 18;
+  if (length <= 24) return 14;
+  return 11;
+}
+
+/**
  * Absolute, publicly-reachable URL for a certificate page.
  *
  * Deliberately not `window.location.origin`: LinkedIn stores this on the
@@ -216,6 +243,22 @@ function RemainingRequirements({
                 : "Not started"
           }
         />
+        {/* A required gate rather than a scored component, so it earns a tile
+            of its own — a fellow who has everything else needs to see that
+            this is the one thing standing between them and the certificate. */}
+        {breakdown.endlineSurvey && (
+          <Stat
+            label="Endline survey"
+            value={breakdown.endlineSurvey.submitted ? "Submitted" : "Required"}
+          />
+        )}
+        {breakdown.moduleFeedback && (
+          <Stat
+            label="Module feedback"
+            value={`${breakdown.moduleFeedback.submitted}/${breakdown.moduleFeedback.required}`}
+            hint="For modules you attended"
+          />
+        )}
       </dl>
     </section>
   );
@@ -333,8 +376,8 @@ function IssuedView({ certificate: c }: { certificate: Certificate }) {
       // the baseline — hence the two values aren't identical.
       pdf.setTextColor(0, 0, 0);
       pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(18);
-      pdf.text(c.fellowName.toUpperCase(), PAGE_W * 0.6, 112, {
+      pdf.setFontSize(certificateNamePdfSize(c.fellowName));
+      pdf.text(c.fellowName.toUpperCase(), PAGE_W * 0.6, 118, {
         align: "center",
       });
 
@@ -540,14 +583,11 @@ export function CertificateCanvas({
           baseline, so the two numbers differ by roughly a line height. */}
       <div
         className="absolute flex justify-center"
-        style={{ top: "49%", left: "22%", right: "2%" }}
+        style={{ top: "52%", left: "22%", right: "2%" }}
       >
         <p
           className="text-center font-bold uppercase text-black leading-none"
-          // Smaller than it looks like it needs to be: the name is set in caps,
-          // which runs visually much heavier, and it has to clear the rule
-          // immediately beneath it on the template.
-          style={{ fontSize: "clamp(0.85rem, 2vw, 1.5rem)" }}
+          style={{ fontSize: certificateNameFontSize(fellowName) }}
         >
           {fellowName}
         </p>

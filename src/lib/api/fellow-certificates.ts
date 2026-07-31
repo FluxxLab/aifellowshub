@@ -74,6 +74,16 @@ export type CertificationScorecard = {
       status: "approved" | "in_progress" | "not_started";
       contribution: number;
     };
+    /** Pass/fail graduation gate — not a weighted component. */
+    endlineSurvey?: {
+      submitted: boolean;
+      submittedAt: string | null;
+    };
+    /** Also pass/fail. `required` counts only modules the fellow attended. */
+    moduleFeedback?: {
+      submitted: number;
+      required: number;
+    };
   };
 };
 

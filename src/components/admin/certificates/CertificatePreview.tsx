@@ -1,6 +1,7 @@
 import React from "react";
 import Image from "next/image";
 import type { CertificateTemplate } from "@/lib/api/certificates";
+import { certificateNameFontSize } from "@/components/fellow/MyCertificatesView";
 
 type CertificatePreviewProps = {
  template: CertificateTemplate;
@@ -50,13 +51,11 @@ export default function CertificatePreview({
      `components/fellow/MyCertificatesView.tsx`. */}
  <div
  className="absolute flex justify-center"
- style={{ top: "49%", left: "22%", right: "2%" }}
+ style={{ top: "52%", left: "22%", right: "2%" }}
  >
  <p
  className="text-center font-bold uppercase text-black leading-none"
- // Caps run visually heavier, and the name has to clear the rule
- // immediately beneath it — keep in lockstep with CertificateCanvas.
- style={{ fontSize: "clamp(0.85rem, 2vw, 1.5rem)" }}
+ style={{ fontSize: certificateNameFontSize(fellowName) }}
  >
  {fellowName}
  </p>
