@@ -19,6 +19,35 @@ import type {
 } from "@/lib/api/fellow-certificates";
 
 /**
+ * Issuer shown on the fellow's LinkedIn profile. LinkedIn matches this against
+ * its company directory by name; swapping it for a numeric `organizationId`
+ * (from the PIC LinkedIn company page URL) would bind it to the verified page
+ * and show the logo instead of plain text.
+ */
+const ISSUING_ORGANISATION = "Policy Innovation Centre";
+
+/** Canonical public origin — the domain fellows' credentials point at. */
+const PUBLIC_ORIGIN = "https://aiegfellowship.org";
+
+/**
+ * Absolute, publicly-reachable URL for a certificate page.
+ *
+ * Deliberately not `window.location.origin`: LinkedIn stores this on the
+ * fellow's profile forever and fetches it from its own servers, so a
+ * `localhost` or preview-deployment origin would bake in a dead link. Only
+ * fall back to the current origin if it is already a public host.
+ */
+function publicVerifyUrl(path: string): string {
+  if (typeof window === "undefined") return `${PUBLIC_ORIGIN}${path}`;
+  const { origin, hostname } = window.location;
+  const isLocal =
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname.endsWith(".local");
+  return `${isLocal ? PUBLIC_ORIGIN : origin}${path}`;
+}
+
+/**
  * Fellow's certificate page (BRD §6.6).
  *
  * Phase 1: state is whatever the mock returns.
@@ -257,8 +286,9 @@ function IssuedView({ certificate: c }: { certificate: Certificate }) {
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const verifyPath = `/certificates/${c.id}/verify`;
-  const verifyUrl =
-    typeof window !== "undefined" ? `${window.location.origin}${verifyPath}` : verifyPath;
+  // The URL a fellow copies into a CV or an email, so it has to be the public
+  // domain — not whatever origin they happen to be browsing from.
+  const verifyUrl = publicVerifyUrl(verifyPath);
 
   const onCopy = () => {
     if (typeof navigator !== "undefined" && navigator.clipboard) {
@@ -317,22 +347,30 @@ function IssuedView({ certificate: c }: { certificate: Certificate }) {
   };
 
   const onShareLinkedIn = () => {
-    // LinkedIn's share-offsite endpoint reads the OG meta tags off
-    // the verify page and builds the preview card itself. Open in a
-    // popup so the fellow can write a post on top of the auto-card
-    // without losing this tab.
-    const origin =
-      typeof window !== "undefined"
-        ? window.location.origin
-        : "https://aifellowshub.vercel.app";
-    const target = `${origin}${verifyPath}`;
-    const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
-      target,
-    )}`;
+    // LinkedIn's "Add to Profile" flow — the same one Coursera and Microsoft
+    // Learn use. It opens the Licenses & Certifications dialog with every
+    // field pre-filled, so the fellow just presses Save and the credential
+    // lands on their profile, linked back to our verification page.
+    //
+    // The previous `share-offsite` endpoint only composed a feed post: it
+    // added nothing to the profile, and because LinkedIn has to crawl the URL
+    // server-side it silently produced an empty card for any link it couldn't
+    // reach.
+    const issued = new Date(c.issuedAt);
+    const params = new URLSearchParams({
+      startTask: "CERTIFICATION_NAME",
+      name: c.programmeName,
+      organizationName: ISSUING_ORGANISATION,
+      issueYear: String(issued.getFullYear()),
+      // getMonth() is 0-indexed; LinkedIn expects 1-12.
+      issueMonth: String(issued.getMonth() + 1),
+      certUrl: publicVerifyUrl(verifyPath),
+      certId: c.id,
+    });
     window.open(
-      shareUrl,
-      "linkedin-share",
-      "width=720,height=640,noopener,noreferrer",
+      `https://www.linkedin.com/profile/add?${params.toString()}`,
+      "linkedin-add-to-profile",
+      "width=720,height=720,noopener,noreferrer",
     );
   };
 
@@ -422,7 +460,7 @@ function IssuedView({ certificate: c }: { certificate: Certificate }) {
               onClick={onShareLinkedIn}
             >
               <PaperPlaneIcon className="h-4 w-4" />
-              Share to LinkedIn
+              Add to LinkedIn
             </Button>
             <Button
               size="sm"
