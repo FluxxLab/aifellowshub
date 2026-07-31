@@ -50,11 +50,13 @@ export default function CertificatePreview({
      `components/fellow/MyCertificatesView.tsx`. */}
  <div
  className="absolute flex justify-center"
- style={{ top: "52.5%", left: "22%", right: "2%" }}
+ style={{ top: "49%", left: "22%", right: "2%" }}
  >
  <p
  className="text-center font-bold uppercase text-black leading-none"
- style={{ fontSize: "clamp(1rem, 2.6vw, 2rem)" }}
+ // Caps run visually heavier, and the name has to clear the rule
+ // immediately beneath it — keep in lockstep with CertificateCanvas.
+ style={{ fontSize: "clamp(0.85rem, 2vw, 1.5rem)" }}
  >
  {fellowName}
  </p>

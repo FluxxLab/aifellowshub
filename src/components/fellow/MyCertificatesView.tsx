@@ -303,8 +303,8 @@ function IssuedView({ certificate: c }: { certificate: Certificate }) {
       // the baseline — hence the two values aren't identical.
       pdf.setTextColor(0, 0, 0);
       pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(24);
-      pdf.text(c.fellowName.toUpperCase(), PAGE_W * 0.6, 119, {
+      pdf.setFontSize(18);
+      pdf.text(c.fellowName.toUpperCase(), PAGE_W * 0.6, 112, {
         align: "center",
       });
 
@@ -502,11 +502,14 @@ export function CertificateCanvas({
           baseline, so the two numbers differ by roughly a line height. */}
       <div
         className="absolute flex justify-center"
-        style={{ top: "52.5%", left: "22%", right: "2%" }}
+        style={{ top: "49%", left: "22%", right: "2%" }}
       >
         <p
           className="text-center font-bold uppercase text-black leading-none"
-          style={{ fontSize: "clamp(1rem, 2.6vw, 2rem)" }}
+          // Smaller than it looks like it needs to be: the name is set in caps,
+          // which runs visually much heavier, and it has to clear the rule
+          // immediately beneath it on the template.
+          style={{ fontSize: "clamp(0.85rem, 2vw, 1.5rem)" }}
         >
           {fellowName}
         </p>
