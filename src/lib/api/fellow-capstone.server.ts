@@ -54,6 +54,10 @@ export type BackendCapstone = {
   title: string;
   problemStatement: string;
   sector: string | null;
+  approach?: string;
+  deliverables?: string;
+  risks?: string;
+  /** DEPRECATED — superseded by the three fields above; still sent in parallel. */
   content: string;
   draftUrl: string | null;
   artifactUrl: string | null;
@@ -135,13 +139,20 @@ function mapBackendCapstone(b: BackendCapstone): FellowCapstone {
           expertiseSummary: "",
         }
       : EMPTY_MENTOR,
-    // Split the stored markdown blob back into the three sections it was
-    // written from. Previously the whole blob landed in `approach` and the
-    // other two were hardcoded empty, so Deliverables and Risks appeared to
-    // never save.
+    // Each section now has its own column. Fall back to splitting the legacy
+    // `content` blob when they're absent — an older backend, or a row not yet
+    // touched by the backfill — so nothing disappears mid-rollout.
     draft: {
       problem: b.problemStatement,
-      ...splitCapstoneContent(b.content),
+      ...(b.approach !== undefined ||
+      b.deliverables !== undefined ||
+      b.risks !== undefined
+        ? {
+            approach: b.approach ?? "",
+            deliverables: b.deliverables ?? "",
+            risks: b.risks ?? "",
+          }
+        : splitCapstoneContent(b.content)),
       stakeholders: "",
       lastSavedAt: b.updatedAt,
     },

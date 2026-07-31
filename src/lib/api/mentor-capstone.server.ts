@@ -4,6 +4,7 @@
  */
 import "server-only";
 import { backendFetch } from "./backend";
+import { splitCapstoneContent } from "./fellow-capstone";
 import type {
   CapstoneSector,
   CapstoneStatus,
@@ -76,12 +77,22 @@ export async function getMentorCapstoneServer(
             email: "",
             expertiseSummary: "",
           },
+      // Read the section columns, falling back to splitting the legacy blob for
+      // rows an older backend served. The mentor view renders these as one
+      // "Draft" block, but they must be populated for the Word export — which
+      // otherwise emitted an empty Deliverables and Risks.
       draft: {
         problem: match.problemStatement,
-        approach: match.content,
+        ...(match.approach !== undefined ||
+        match.deliverables !== undefined ||
+        match.risks !== undefined
+          ? {
+              approach: match.approach ?? "",
+              deliverables: match.deliverables ?? "",
+              risks: match.risks ?? "",
+            }
+          : splitCapstoneContent(match.content)),
         stakeholders: "",
-        deliverables: "",
-        risks: "",
         lastSavedAt: match.updatedAt,
       },
       milestones: match.milestones ?? [],

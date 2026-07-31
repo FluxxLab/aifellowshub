@@ -218,6 +218,10 @@ export type SaveCapstonePayload = {
   title?: string;
   problemStatement?: string;
   sector?: string;
+  approach?: string;
+  deliverables?: string;
+  risks?: string;
+  /** DEPRECATED — send the three sections above instead. */
   content?: string;
   draftUrl?: string;
   artifactUrl?: string;

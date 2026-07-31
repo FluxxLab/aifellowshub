@@ -12,7 +12,6 @@ import { useCurrentUser } from "@/lib/auth/useCurrentUser";
 import {
   deleteFellowCapstone,
   getCapstoneUploadUrl,
-  joinCapstoneContent,
   postFellowCapstoneComment,
   saveFellowCapstone,
   submitFellowCapstone,
@@ -258,11 +257,11 @@ export default function MyCapstoneView({
       const saved = await saveFellowCapstone({
         title: title.trim() || capstone.title,
         problemStatement: draft.problem,
-        // Backend stores everything except the problem statement as one
-        // markdown blob in `content` for now. `joinCapstoneContent` is the
-        // shared encoder — the read path splits with its counterpart, so the
-        // two can't drift out of sync.
-        content: joinCapstoneContent(draft),
+        // Each section has its own column now; the backend regenerates the
+        // legacy `content` blob from these while it's still being kept in sync.
+        approach: draft.approach,
+        deliverables: draft.deliverables,
+        risks: draft.risks,
         sector: capstone.sector,
       });
       setLastSaved(saved.updatedAt);
@@ -366,7 +365,9 @@ export default function MyCapstoneView({
       await saveFellowCapstone({
         title: title.trim() || capstone.title,
         problemStatement: draft.problem,
-        content: joinCapstoneContent(draft),
+        approach: draft.approach,
+        deliverables: draft.deliverables,
+        risks: draft.risks,
         sector: capstone.sector,
       });
       const submitted = await submitFellowCapstone();
