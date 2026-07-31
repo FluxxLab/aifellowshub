@@ -4,7 +4,7 @@
  */
 import "server-only";
 import { backendFetch } from "./backend";
-import { splitCapstoneContent } from "./fellow-capstone";
+import { capstoneSections } from "./fellow-capstone";
 import type {
   CapstoneSector,
   CapstoneStatus,
@@ -83,15 +83,7 @@ export async function getMentorCapstoneServer(
       // otherwise emitted an empty Deliverables and Risks.
       draft: {
         problem: match.problemStatement,
-        ...(match.approach !== undefined ||
-        match.deliverables !== undefined ||
-        match.risks !== undefined
-          ? {
-              approach: match.approach ?? "",
-              deliverables: match.deliverables ?? "",
-              risks: match.risks ?? "",
-            }
-          : splitCapstoneContent(match.content)),
+        ...capstoneSections(match),
         stakeholders: "",
         lastSavedAt: match.updatedAt,
       },

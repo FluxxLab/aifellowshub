@@ -98,6 +98,32 @@ export function splitCapstoneContent(content: string): CapstoneContentSections {
   };
 }
 
+/**
+ * Resolve a capstone's three sections from a backend row, preferring the
+ * dedicated columns and falling back to splitting the legacy `content` blob.
+ *
+ * The test is deliberately "do the columns hold anything", not "are they
+ * defined": once the columns exist they always come back as strings, so an
+ * `undefined` check would stop falling back the moment the schema changed and
+ * render blank boxes for every row the backfill hadn't reached — text still
+ * safe in `content`, but invisible, which reads as lost work.
+ */
+export function capstoneSections(row: {
+  approach?: string | null;
+  deliverables?: string | null;
+  risks?: string | null;
+  content?: string | null;
+}): CapstoneContentSections {
+  const sections = {
+    approach: row.approach ?? "",
+    deliverables: row.deliverables ?? "",
+    risks: row.risks ?? "",
+  };
+  const populated =
+    sections.approach || sections.deliverables || sections.risks;
+  return populated ? sections : splitCapstoneContent(row.content ?? "");
+}
+
 export type CapstoneDraft = {
   /** Problem statement — what is the harm or governance gap? */
   problem: string;

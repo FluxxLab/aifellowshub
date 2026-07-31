@@ -7,7 +7,7 @@
 import "server-only";
 import { backendFetch } from "./backend";
 import { normalizeSector } from "@/lib/sector";
-import { splitCapstoneContent } from "./fellow-capstone";
+import { capstoneSections } from "./fellow-capstone";
 import type {
   CapstoneStatus,
   CapstoneSector,
@@ -139,20 +139,15 @@ function mapBackendCapstone(b: BackendCapstone): FellowCapstone {
           expertiseSummary: "",
         }
       : EMPTY_MENTOR,
-    // Each section now has its own column. Fall back to splitting the legacy
-    // `content` blob when they're absent — an older backend, or a row not yet
-    // touched by the backfill — so nothing disappears mid-rollout.
+    // Each section now has its own column, with the legacy `content` blob as
+    // the fallback. The test has to be "do the columns actually hold
+    // anything", NOT "are they defined": once the columns exist they come back
+    // as empty strings, so a row the backfill hasn't reached yet would
+    // otherwise render three blank boxes while its text sat safely in
+    // `content`, reading to the fellow as lost work.
     draft: {
       problem: b.problemStatement,
-      ...(b.approach !== undefined ||
-      b.deliverables !== undefined ||
-      b.risks !== undefined
-        ? {
-            approach: b.approach ?? "",
-            deliverables: b.deliverables ?? "",
-            risks: b.risks ?? "",
-          }
-        : splitCapstoneContent(b.content)),
+      ...capstoneSections(b),
       stakeholders: "",
       lastSavedAt: b.updatedAt,
     },
