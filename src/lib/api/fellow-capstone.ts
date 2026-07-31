@@ -35,6 +35,69 @@ export type CapstoneMentor = {
  */
 export type CapstoneStage = "scoping" | "design" | "consultation" | "final";
 
+/**
+ * The backend stores Approach, Deliverables, and Risks as one markdown blob in
+ * `content` (only `problemStatement` has its own column). These two helpers are
+ * the single definition of that encoding — keep them as a pair. Splitting the
+ * blob used to be nobody's job on the way back, so the read dumped everything
+ * into Approach and returned Deliverables and Risks empty: the fellow typed
+ * them, saved, and watched two sections come back blank as if the save had
+ * failed.
+ */
+const CONTENT_SECTIONS = [
+  { key: "approach", heading: "Approach", match: /^approach/ },
+  { key: "deliverables", heading: "Deliverables", match: /^deliverable/ },
+  { key: "risks", heading: "Risks & limitations", match: /^risk/ },
+] as const;
+
+export type CapstoneContentSections = {
+  approach: string;
+  deliverables: string;
+  risks: string;
+};
+
+/** Sections → the single markdown blob the backend persists. */
+export function joinCapstoneContent(sections: CapstoneContentSections): string {
+  return CONTENT_SECTIONS.map(({ key, heading }) =>
+    sections[key].trim() ? `## ${heading}\n${sections[key].trim()}` : "",
+  )
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+/**
+ * The blob → sections. Text before the first recognised heading falls into
+ * Approach, so drafts saved before this encoding existed still load.
+ */
+export function splitCapstoneContent(content: string): CapstoneContentSections {
+  const buckets: Record<keyof CapstoneContentSections, string[]> = {
+    approach: [],
+    deliverables: [],
+    risks: [],
+  };
+  let current: keyof CapstoneContentSections = "approach";
+
+  for (const line of (content ?? "").split(/\r?\n/)) {
+    const heading = line.match(/^##\s+(.+?)\s*$/);
+    if (heading) {
+      const normalized = heading[1].toLowerCase();
+      const section = CONTENT_SECTIONS.find((s) => s.match.test(normalized));
+      if (section) {
+        current = section.key;
+        continue;
+      }
+      // An unrecognised heading is the fellow's own — keep it as body text.
+    }
+    buckets[current].push(line);
+  }
+
+  return {
+    approach: buckets.approach.join("\n").trim(),
+    deliverables: buckets.deliverables.join("\n").trim(),
+    risks: buckets.risks.join("\n").trim(),
+  };
+}
+
 export type CapstoneDraft = {
   /** Problem statement — what is the harm or governance gap? */
   problem: string;

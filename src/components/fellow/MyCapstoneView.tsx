@@ -12,6 +12,7 @@ import { useCurrentUser } from "@/lib/auth/useCurrentUser";
 import {
   deleteFellowCapstone,
   getCapstoneUploadUrl,
+  joinCapstoneContent,
   postFellowCapstoneComment,
   saveFellowCapstone,
   submitFellowCapstone,
@@ -258,15 +259,10 @@ export default function MyCapstoneView({
         title: title.trim() || capstone.title,
         problemStatement: draft.problem,
         // Backend stores everything except the problem statement as one
-        // markdown blob in `content` for now. Concat the structured fields
-        // so the mentor sees the full draft.
-        content: [
-          draft.approach && `## Approach\n${draft.approach}`,
-          draft.deliverables && `## Deliverables\n${draft.deliverables}`,
-          draft.risks && `## Risks & limitations\n${draft.risks}`,
-        ]
-          .filter(Boolean)
-          .join("\n\n"),
+        // markdown blob in `content` for now. `joinCapstoneContent` is the
+        // shared encoder — the read path splits with its counterpart, so the
+        // two can't drift out of sync.
+        content: joinCapstoneContent(draft),
         sector: capstone.sector,
       });
       setLastSaved(saved.updatedAt);
@@ -370,13 +366,7 @@ export default function MyCapstoneView({
       await saveFellowCapstone({
         title: title.trim() || capstone.title,
         problemStatement: draft.problem,
-        content: [
-          draft.approach && `## Approach\n${draft.approach}`,
-          draft.deliverables && `## Deliverables\n${draft.deliverables}`,
-          draft.risks && `## Risks & limitations\n${draft.risks}`,
-        ]
-          .filter(Boolean)
-          .join("\n\n"),
+        content: joinCapstoneContent(draft),
         sector: capstone.sector,
       });
       const submitted = await submitFellowCapstone();

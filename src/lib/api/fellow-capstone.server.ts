@@ -7,6 +7,7 @@
 import "server-only";
 import { backendFetch } from "./backend";
 import { normalizeSector } from "@/lib/sector";
+import { splitCapstoneContent } from "./fellow-capstone";
 import type {
   CapstoneStatus,
   CapstoneSector,
@@ -134,12 +135,14 @@ function mapBackendCapstone(b: BackendCapstone): FellowCapstone {
           expertiseSummary: "",
         }
       : EMPTY_MENTOR,
+    // Split the stored markdown blob back into the three sections it was
+    // written from. Previously the whole blob landed in `approach` and the
+    // other two were hardcoded empty, so Deliverables and Risks appeared to
+    // never save.
     draft: {
       problem: b.problemStatement,
-      approach: b.content,
+      ...splitCapstoneContent(b.content),
       stakeholders: "",
-      deliverables: "",
-      risks: "",
       lastSavedAt: b.updatedAt,
     },
     milestones: b.milestones ?? [],
