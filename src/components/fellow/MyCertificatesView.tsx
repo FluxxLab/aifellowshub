@@ -301,10 +301,10 @@ function IssuedView({ certificate: c }: { certificate: Certificate }) {
       // the template image, so nothing else is drawn. Kept in lockstep with
       // CertificateCanvas, whose `top` is the text box's top edge rather than
       // the baseline — hence the two values aren't identical.
-      pdf.setTextColor(30, 58, 138);
+      pdf.setTextColor(0, 0, 0);
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(24);
-      pdf.text(c.fellowName.toUpperCase(), PAGE_W * 0.6, 114, {
+      pdf.text(c.fellowName.toUpperCase(), PAGE_W * 0.6, 119, {
         align: "center",
       });
 
@@ -502,10 +502,10 @@ export function CertificateCanvas({
           baseline, so the two numbers differ by roughly a line height. */}
       <div
         className="absolute flex justify-center"
-        style={{ top: "50%", left: "22%", right: "2%" }}
+        style={{ top: "52.5%", left: "22%", right: "2%" }}
       >
         <p
-          className="text-center font-bold uppercase text-fellowship-navy leading-none"
+          className="text-center font-bold uppercase text-black leading-none"
           style={{ fontSize: "clamp(1rem, 2.6vw, 2rem)" }}
         >
           {fellowName}

@@ -50,10 +50,10 @@ export default function CertificatePreview({
      `components/fellow/MyCertificatesView.tsx`. */}
  <div
  className="absolute flex justify-center"
- style={{ top: "50%", left: "22%", right: "2%" }}
+ style={{ top: "52.5%", left: "22%", right: "2%" }}
  >
  <p
- className="text-center font-bold uppercase text-fellowship-navy leading-none"
+ className="text-center font-bold uppercase text-black leading-none"
  style={{ fontSize: "clamp(1rem, 2.6vw, 2rem)" }}
  >
  {fellowName}
