@@ -85,11 +85,80 @@ export default function CapstoneOversight({
  search={search}
  setSearch={setSearch}
  overdueCount={counts.overdue}
+ onExport={() => exportCapstoneStatusReport(visible)}
+ exportCount={visible.length}
  />
  <CapstoneTable submissions={visible} />
  </div>
  );
 }
+
+/**
+ * Download the capstone progress as CSV — the status report programme
+ * administration shares with partners.
+ *
+ * Exports exactly what the table is showing, filters and search included: an
+ * admin who has narrowed to "overdue" wants that list, not all of them. The
+ * row count is on the button so it's clear what's about to be downloaded.
+ */
+function exportCapstoneStatusReport(rows: CapstoneSubmission[]) {
+ // Quote every field and double any embedded quotes — capstone titles and
+ // problem statements contain commas, quotes, and newlines.
+ const escape = (v: string) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+ const date = (iso: string | null) =>
+ iso ? new Date(iso).toLocaleDateString("en-GB", { timeZone: "Africa/Lagos" }) : "";
+
+ const headers = [
+ "Fellow",
+ "Sector",
+ "Capstone title",
+ "Status",
+ "Mentor",
+ "Version",
+ "Submitted",
+ "Last activity",
+ "Days since activity",
+ "Overdue",
+ "Problem statement",
+ ];
+
+ const body = rows.map((s) =>
+ [
+ s.fellowName,
+ s.sector,
+ s.title ?? "Untitled capstone",
+ STATUS_EXPORT_LABEL[s.status] ?? s.status,
+ s.mentorName ?? "Unassigned",
+ String(s.version),
+ date(s.submittedAt),
+ date(s.lastActivityAt),
+ String(s.daysSinceActivity),
+ isOverdue(s) ? "Yes" : "No",
+ s.description,
+ ].map(escape),
+ );
+
+ const csv =
+ "﻿" + // BOM so Excel reads UTF-8 (fellow names carry accents)
+ [headers.map(escape), ...body].map((r) => r.join(",")).join("\r\n");
+
+ const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+ const url = URL.createObjectURL(blob);
+ const a = document.createElement("a");
+ a.href = url;
+ a.download = `capstone-status-${new Date().toISOString().slice(0, 10)}.csv`;
+ a.click();
+ URL.revokeObjectURL(url);
+}
+
+/** Human labels for the report — the raw ids read poorly in a shared file. */
+const STATUS_EXPORT_LABEL: Record<string, string> = {
+ draft: "Draft",
+ submitted: "Submitted",
+ "under-review": "Under review",
+ "revision-required": "Revision required",
+ approved: "Approved",
+};
 
 function Header({
  counts,
@@ -134,12 +203,16 @@ function Toolbar({
  search,
  setSearch,
  overdueCount,
+ onExport,
+ exportCount,
 }: {
  filter: (typeof FILTERS)[number]["id"];
  setFilter: (f: (typeof FILTERS)[number]["id"]) => void;
  search: string;
  setSearch: (s: string) => void;
  overdueCount: number;
+ onExport: () => void;
+ exportCount: number;
 }) {
  return (
  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -164,6 +237,19 @@ function Toolbar({
  )}
  </button>
  ))}
+ {/* Exports the filtered view, so the count makes clear what's included. */}
+ <button
+ type="button"
+ onClick={onExport}
+ disabled={exportCount === 0}
+ title="Download the capstones currently listed as a CSV status report"
+ className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+ >
+ <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+ <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+ </svg>
+ Export ({exportCount})
+ </button>
  </div>
  </div>
  );
