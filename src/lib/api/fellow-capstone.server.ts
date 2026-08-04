@@ -77,11 +77,14 @@ export type BackendCapstone = {
     country: string | null;
     sector: string | null;
   } | null;
+  /** Mentor to DISPLAY — may be resolved from an override or sector fallback. */
   mentor: {
     id: string;
     fullName: string;
     email: string;
   } | null;
+  /** Mentor actually assigned; null when `mentor` above is only an inference. */
+  assignedMentorId?: string | null;
   feedback: BackendCapstoneFeedback[];
   createdAt: string;
   updatedAt: string;

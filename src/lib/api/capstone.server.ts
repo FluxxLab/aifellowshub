@@ -39,8 +39,13 @@ function mapToSubmission(c: BackendCapstone): CapstoneSubmission {
     id: c.id,
     fellowId: c.fellow?.id ?? "",
     fellowName: c.fellow?.fullName ?? "Unknown fellow",
+    // `mentor` is the DISPLAY mentor — the backend may have resolved it from
+    // the fellow's override or the sector fallback. `assignedMentorId` is the
+    // one actually set on the capstone, and is null when the name shown is
+    // only an inference.
     mentorId: c.mentor?.id ?? null,
     mentorName: c.mentor?.fullName ?? null,
+    assignedMentorId: c.assignedMentorId ?? null,
     // Fellow's profile sector is authoritative; the capstone's own column
     // drifts, so prefer the profile and only fall back to the column. Run it
     // through mapSector so the admin table shows clean display labels

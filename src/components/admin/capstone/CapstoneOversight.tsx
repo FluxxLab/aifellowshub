@@ -330,9 +330,23 @@ function CapstoneTable({ submissions }: { submissions: CapstoneSubmission[] }) {
  <AvatarText
  name={s.mentorName}
  className="h-7 w-7 text-xs"/>
+ <div className="min-w-0">
  <span className="text-sm text-gray-700">
  {s.mentorName}
  </span>
+ {/* A name here does NOT mean a supervisor was assigned — the API
+     falls back to the fellow's mentor or the first mentor in the
+     sector. Saying so is the difference between an assignment and a
+     guess that silently moves when the mentor roster changes. */}
+ {!s.assignedMentorId && (
+ <span
+ className="block text-[11px] italic text-amber-600"
+ title="No supervisor assigned — this mentor is inferred from the fellow's mentor or their sector, and can change if the mentor roster does."
+ >
+ auto — not assigned
+ </span>
+ )}
+ </div>
  </div>
  ) : (
  <span className="text-sm italic text-gray-400">
@@ -509,7 +523,7 @@ function RowActions({ submission }: { submission: CapstoneSubmission }) {
  capstoneId={submission.id}
  fellowName={submission.fellowName}
  fellowSector={submission.sector}
- currentMentorId={submission.mentorId}
+ currentMentorId={submission.assignedMentorId}
  />
  {dialog}
  </div>

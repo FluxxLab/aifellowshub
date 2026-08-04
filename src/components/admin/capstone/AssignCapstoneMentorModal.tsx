@@ -8,6 +8,23 @@ import Badge from "@/components/ui/badge/Badge";
 import Spinner from "@/components/ui/loader/Spinner";
 import { apiFetch } from "@/lib/api/client";
 import { toast } from "@/lib/toast";
+import { normalizeSector } from "@/lib/sector";
+
+/**
+ * Do a mentor's sector and a fellow's sector refer to the same thing?
+ *
+ * The two arrive in different forms — mentors carry the raw enum token
+ * ("edtech"), fellows arrive already mapped to a display label ("Education") —
+ * so both sides go through `normalizeSector` before comparison.
+ */
+function sectorMatches(
+  mentorSector: string | null,
+  fellowSector: string | null,
+): boolean {
+  const a = normalizeSector(mentorSector);
+  const b = normalizeSector(fellowSector);
+  return a !== null && a === b;
+}
 
 type MentorCandidate = {
   id: string;
@@ -89,8 +106,15 @@ export default function AssignCapstoneMentorModal({
   const sortedMentors = mentors
     ? [...mentors].sort((a, b) => {
         // Sector matches first, then alphabetical.
-        const aMatch = a.sector === fellowSector ? 0 : 1;
-        const bMatch = b.sector === fellowSector ? 0 : 1;
+        //
+        // Compared through `normalizeSector` because the two sides arrive in
+        // different forms: mentors carry the raw token ("edtech", "healthcare")
+        // while `fellowSector` is already a display label ("Education",
+        // "Healthcare"). A direct === never matched, so the sector-first
+        // ordering silently did nothing and the dialog listed mentors purely
+        // alphabetically — while still claiming the fellow's sector came first.
+        const aMatch = sectorMatches(a.sector, fellowSector) ? 0 : 1;
+        const bMatch = sectorMatches(b.sector, fellowSector) ? 0 : 1;
         if (aMatch !== bMatch) return aMatch - bMatch;
         return a.fullName.localeCompare(b.fullName);
       })
@@ -133,7 +157,7 @@ export default function AssignCapstoneMentorModal({
         <ul className="mt-5 max-h-[60vh] divide-y divide-gray-100 overflow-y-auto">
           {sortedMentors.map((m) => {
             const isCurrent = m.id === currentMentorId;
-            const isSectorMatch = m.sector === fellowSector;
+            const isSectorMatch = sectorMatches(m.sector, fellowSector);
             return (
               <li key={m.id} className="flex items-center gap-3 py-3">
                 <AvatarText name={m.fullName} className="h-10 w-10" />

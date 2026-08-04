@@ -14,7 +14,14 @@ export type CapstoneSubmission = {
   id: string;
   fellowId: string;
   fellowName: string;
+  /** Mentor to display — may be inferred from an override or sector fallback. */
   mentorId: string | null;
+  /**
+   * Mentor genuinely assigned on the capstone. Null when `mentorName` above is
+   * only an inference — check this, not `mentorId`, before treating a capstone
+   * as having a supervisor.
+   */
+  assignedMentorId: string | null;
   mentorName: string | null;
   /** Sector or topic the capstone addresses. */
   sector: string;
