@@ -321,18 +321,25 @@ export default function MentorRequestsView({
  * Modal for the mentor to schedule a new coaching session with one
  * or more fellows. Submits to POST /me/mentor/bookings.
  */
-function ScheduleSessionModal({
+export function ScheduleSessionModal({
   isOpen,
   onClose,
   fellows,
   onScheduled,
+  initialFellowIds,
 }: {
   isOpen: boolean;
   onClose: () => void;
   fellows: { id: string; fullName: string }[];
   onScheduled: (rows: MentorBooking[]) => void;
+  /**
+   * Fellows ticked when the dialog opens. Opened from a single fellow's
+   * capstone the mentor has already chosen who the session is with, so making
+   * them pick that same fellow again is pure friction.
+   */
+  initialFellowIds?: string[];
 }) {
-  const [pickedIds, setPickedIds] = useState<string[]>([]);
+  const [pickedIds, setPickedIds] = useState<string[]>(initialFellowIds ?? []);
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [durationMinutes, setDurationMinutes] = useState(30);

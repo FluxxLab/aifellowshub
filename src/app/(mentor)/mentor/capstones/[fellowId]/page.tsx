@@ -50,6 +50,7 @@ export default async function MentorCapstoneReviewPage({
       fellowName={entry.fellowName}
       fellowEmail={entry.fellowEmail}
       fellowCountry={entry.fellowCountry}
+      fellowId={fellowId}
     />
   );
 }

@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import AvatarText from "@/components/ui/avatar/AvatarText";
 import Badge from "@/components/ui/badge/Badge";
 import Breadcrumbs from "@/components/common/Breadcrumbs";
+import { CapstoneMilestones } from "@/components/capstone/CapstoneMilestones";
+import { ScheduleSessionModal } from "@/components/mentor/MentorRequestsView";
 import Button from "@/components/ui/button/Button";
 import { PaperPlaneIcon } from "@/icons";
 import { toast } from "@/lib/toast";
@@ -49,6 +51,7 @@ export default function MentorCapstoneReview({
   fellowName,
   fellowEmail,
   fellowCountry,
+  fellowId,
 }: {
   capstone: FellowCapstone;
   /** Real backend Capstone.id when available — enables persisting reviews. */
@@ -56,6 +59,8 @@ export default function MentorCapstoneReview({
   fellowName: string;
   fellowEmail: string;
   fellowCountry: string;
+  /** Enables scheduling a session with this fellow from the review page. */
+  fellowId?: string;
 }) {
   const user = useCurrentUser();
   const router = useRouter();
@@ -65,6 +70,7 @@ export default function MentorCapstoneReview({
   const [outcome, setOutcome] = useState<ReviewOutcome>("comments");
   const [postingReview, setPostingReview] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
 
   /**
    * Download the fellow's capstone as a Word (.docx) file — the same content
@@ -167,7 +173,19 @@ export default function MentorCapstoneReview({
         <EmptyDraftCard />
       ) : (
         <>
-          <div className="flex justify-end">
+          <div className="flex flex-wrap justify-end gap-2">
+            {/* Booking a session with this fellow is a natural next step while
+                reading their capstone — previously it meant leaving for the
+                coaching-requests page and finding them in a list. */}
+            {fellowId && (
+              <Button
+                size="sm"
+                variant="fellowship"
+                onClick={() => setScheduleOpen(true)}
+              >
+                + Schedule session
+              </Button>
+            )}
             <Button
               size="sm"
               variant="outline"
@@ -190,6 +208,13 @@ export default function MentorCapstoneReview({
               markdown blob server-side and arrive on the `approach`
               field. Render once as the full draft body. */}
           <ReadOnlySection label="Draft" value={capstone.draft.approach} />
+          {/* Where the fellow is in the progression. The mentor is the gate at
+              each stage, so they need this in front of them when deciding
+              whether to approve — previously only the fellow could see it. */}
+          <CapstoneMilestones
+            milestones={capstone.milestones}
+            title="Capstone milestones"
+          />
         </>
       )}
 
@@ -205,6 +230,23 @@ export default function MentorCapstoneReview({
         posting={postingReview}
         stage={capstone.stage}
       />
+
+      {fellowId && (
+        <ScheduleSessionModal
+          isOpen={scheduleOpen}
+          onClose={() => setScheduleOpen(false)}
+          fellows={[{ id: fellowId, fullName: fellowName }]}
+          initialFellowIds={[fellowId]}
+          onScheduled={() => {
+            toast.success(
+              "Session scheduled",
+              "An admin will confirm and create the Zoom meeting shortly.",
+            );
+            setScheduleOpen(false);
+            router.refresh();
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -382,6 +424,15 @@ function FeedbackThread({
             ? `Approving moves ${fellowName.split(" ")[0]} on to ${STAGE_LABEL[nextStage]}.`
             : "Approving completes the capstone and issues the certificate."}
         </p>
+        {/* Posting is blocked without a comment, and a greyed-out button with
+            no explanation reads as a broken page — mentors were selecting
+            "Approve stage" and finding nothing happened. Say what's needed. */}
+        {!reply.trim() && (
+          <p className="mt-1 text-xs font-medium text-amber-600">
+            Add a comment before posting — the fellow sees it as your feedback,
+            and it&apos;s recorded against this stage.
+          </p>
+        )}
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
           <fieldset className="flex flex-wrap gap-2">
             {(
@@ -422,6 +473,12 @@ function FeedbackThread({
             variant="fellowship"
             onClick={onPostReply}
             disabled={!reply.trim() || posting}
+            // A disabled button with no explanation reads as broken. Say why.
+            title={
+              !reply.trim()
+                ? "Write a comment first — every review is recorded with your feedback to the fellow."
+                : undefined
+            }
           >
             <PaperPlaneIcon className="h-4 w-4" />
             {posting ? "Posting…" : "Post review"}
