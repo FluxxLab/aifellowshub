@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { formatBookingSlot } from "@/lib/datetime";
 import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
-import { CalenderIcon, TimeIcon } from "@/icons";
+import { CalenderIcon, ChevronRightIcon, TimeIcon } from "@/icons";
 import { apiFetch } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 import { toast } from "@/lib/toast";
@@ -183,9 +183,10 @@ export default function AdminBookingsView({
                           href={b.zoomJoinUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-semibold text-fellowship-navy hover:underline"
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-fellowship-navy px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-fellowship-navy-dark"
                         >
-                          Open Zoom meeting →
+                          Open Zoom meeting
+                          <ChevronRightIcon className="h-4 w-4" />
                         </a>
                         {b.approvedBy && (
                           <span className="ml-2 text-gray-500">
