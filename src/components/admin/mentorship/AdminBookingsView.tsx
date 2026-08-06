@@ -110,6 +110,61 @@ export default function AdminBookingsView({
   // Admin can't decline — that's the mentor's call. If a booking
   // shouldn't go ahead, the mentor declines or the fellow cancels.
 
+  /**
+   * Download the bookings currently listed as a CSV status report.
+   *
+   * Exports the filtered view rather than everything: an admin looking at
+   * "Awaiting admin" wants that queue. The row count sits on the button so
+   * it's clear what will download.
+   */
+  function exportBookings() {
+    // Quote every field and double embedded quotes — agendas run to several
+    // sentences and contain commas, quotes, and newlines.
+    const escape = (v: string) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const headers = [
+      "Date (WAT)",
+      "Duration (min)",
+      "Fellow",
+      "Fellow email",
+      "Mentor",
+      "Mentor email",
+      "Status",
+      "Agenda",
+      "Approved by",
+      "Mentor responded",
+      "Zoom meeting",
+    ];
+    const rows = filtered.map((b) =>
+      [
+        formatBookingSlot(new Date(b.requestedStartsAt)),
+        String(b.requestedDurationMinutes),
+        b.fellow?.fullName ?? "—",
+        b.fellow?.email ?? "",
+        b.mentor?.fullName ?? "—",
+        b.mentor?.email ?? "",
+        STATUS_COPY[b.status].label,
+        b.topic ?? "",
+        b.approvedBy?.fullName ?? "",
+        b.mentorRespondedAt
+          ? formatBookingSlot(new Date(b.mentorRespondedAt))
+          : "",
+        // The join URL carries the meeting password — deliberately export only
+        // whether a meeting exists, so a shared report can't hand out access.
+        b.zoomJoinUrl ? "Created" : "",
+      ].map(escape),
+    );
+    const csv =
+      "﻿" + // BOM so Excel reads UTF-8 (names carry accents)
+      [headers.map(escape), ...rows].map((r) => r.join(",")).join("\r\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `mentorship-bookings-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="flex flex-col gap-4">
       {dialog}
@@ -128,6 +183,18 @@ export default function AdminBookingsView({
             {f.label}
           </button>
         ))}
+        <button
+          type="button"
+          onClick={exportBookings}
+          disabled={filtered.length === 0}
+          title="Download the bookings currently listed as a CSV report"
+          className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+          </svg>
+          Export ({filtered.length})
+        </button>
       </div>
 
       {filtered.length === 0 ? (
