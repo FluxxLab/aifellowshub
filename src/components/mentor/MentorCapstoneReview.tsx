@@ -7,7 +7,7 @@ import Breadcrumbs from "@/components/common/Breadcrumbs";
 import { CapstoneMilestones } from "@/components/capstone/CapstoneMilestones";
 import { ScheduleSessionModal } from "@/components/mentor/MentorRequestsView";
 import Button from "@/components/ui/button/Button";
-import { PaperPlaneIcon } from "@/icons";
+import { DownloadIcon, PaperPlaneIcon } from "@/icons";
 import { toast } from "@/lib/toast";
 import { useCurrentUser } from "@/lib/auth/useCurrentUser";
 import {
@@ -185,6 +185,22 @@ export default function MentorCapstoneReview({
               >
                 + Schedule session
               </Button>
+            )}
+            {/* The fellow's own uploaded file. Parsing it into the boxes is
+                additive — the original is kept in storage — but the mentor had
+                no way to reach it, so they only ever saw the extracted text
+                (which loses the fellow's formatting, tables, and figures). */}
+            {capstone.artifactUrl && (
+              <a
+                href={capstone.artifactUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                download
+                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              >
+                <DownloadIcon className="h-4 w-4" />
+                Original upload
+              </a>
             )}
             <Button
               size="sm"
