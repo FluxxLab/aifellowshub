@@ -30,6 +30,22 @@ const ISSUING_ORGANISATION = "Policy Innovation Centre";
 const PUBLIC_ORIGIN = "https://aiegfellowship.org";
 
 /**
+ * Whether to show fellows the "What's left before your certificate unlocks"
+ * breakdown.
+ *
+ * Hidden in production: it exposes the raw weighted score against the pass
+ * mark, which reads as a grade the fellow is failing rather than a checklist —
+ * and while the certification weights are still being tuned, a number like
+ * "17.6% — needs 70%" alarms people who have in fact done the work.
+ *
+ * Left on outside production so the diagnostics stay available, and gated on
+ * an env var so it can be switched back on without a code change.
+ */
+const SHOW_CERT_REQUIREMENTS =
+  process.env.NEXT_PUBLIC_SHOW_CERT_REQUIREMENTS === "true" ||
+  process.env.NODE_ENV !== "production";
+
+/**
  * Font size for the name printed on the certificate, scaled to its length.
  *
  * The blank line on the template is a fixed width, and names vary a lot — a
@@ -136,6 +152,7 @@ function PendingView({
         // to go silent.
         <AwaitingIssue />
       ) : (
+        SHOW_CERT_REQUIREMENTS &&
         scorecard &&
         scorecard.missingRequirements.length > 0 && (
           <RemainingRequirements scorecard={scorecard} />
