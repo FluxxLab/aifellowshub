@@ -207,12 +207,15 @@ export default function MyCapstoneView({
       });
       // Persist the URL on the capstone row. This is a partial save: it
       // carries the uploaded document, plus the typed title/problem statement
-      // ONLY when they're valid — an empty or too-short problem statement is
-      // omitted (the fellow may have put it inside the document), so attaching
-      // never fails validation. Omitted fields keep their stored value.
+      // ONLY when they're valid and not in a read-only stage (under-review/approved)
+      // — an empty or too-short problem statement is omitted (the fellow may
+      // have put it inside the document), so attaching never fails validation.
+      // Omitted fields keep their stored value.
       const attach: SaveCapstonePayload = { artifactUrl: objectUrl };
-      if (title.trim().length >= 2) attach.title = title.trim();
-      if (draft.problem.trim().length >= 10) attach.problemStatement = draft.problem;
+      if (status !== "under-review" && status !== "approved") {
+        if (title.trim().length >= 2) attach.title = title.trim();
+        if (draft.problem.trim().length >= 10) attach.problemStatement = draft.problem;
+      }
       await saveFellowCapstone(attach);
       setArtifactUrl(objectUrl);
       setUploadState("done");
@@ -603,7 +606,6 @@ export default function MyCapstoneView({
                     accept=".pdf,application/pdf"
                     className="sr-only"
                     onChange={onUploadFile}
-                    disabled={status === "under-review" || status === "approved"}
                   />
                 </label>
               )}
