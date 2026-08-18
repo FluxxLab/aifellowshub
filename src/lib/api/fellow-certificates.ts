@@ -71,7 +71,8 @@ export type CertificationScorecard = {
       contribution: number;
     };
     capstone: {
-      status: "approved" | "in_progress" | "not_started";
+      /** `submitted` = final documentation uploaded, which is now the gate. */
+      status: "submitted" | "approved" | "in_progress" | "not_started";
       contribution: number;
     };
     /** Pass/fail graduation gate — not a weighted component. */

@@ -9,7 +9,7 @@ import {
 export const metadata: Metadata = {
   title: "My certificates · AI Fellows LMS",
   description:
-    "Your AI Fellowship completion certificate. Auto-issued when you complete the curriculum and your capstone is approved.",
+    "Your AI Fellowship completion certificate. Auto-issued when you complete the curriculum and upload your final capstone documentation.",
 };
 
 export default async function MyCertificatesPage() {
