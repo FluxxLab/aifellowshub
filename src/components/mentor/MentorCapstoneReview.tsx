@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import AvatarText from "@/components/ui/avatar/AvatarText";
 import Badge from "@/components/ui/badge/Badge";
 import Breadcrumbs from "@/components/common/Breadcrumbs";
-import { CapstoneMilestones } from "@/components/capstone/CapstoneMilestones";
 import { ScheduleSessionModal } from "@/components/mentor/MentorRequestsView";
 import Button from "@/components/ui/button/Button";
 import { DownloadIcon, PaperPlaneIcon } from "@/icons";
@@ -13,26 +12,11 @@ import { useCurrentUser } from "@/lib/auth/useCurrentUser";
 import {
   reviewCapstone,
   type CapstoneFeedbackEntry,
-  type CapstoneStage,
   type CapstoneStatus,
   type FellowCapstone,
   type ReviewOutcome,
 } from "@/lib/api/fellow-capstone";
 
-/** Progression order — must mirror the backend's STAGE_ORDER. */
-const STAGE_ORDER: readonly CapstoneStage[] = [
-  "scoping",
-  "design",
-  "consultation",
-  "final",
-];
-
-const STAGE_LABEL: Record<CapstoneStage, string> = {
-  scoping: "Scoping",
-  design: "Design",
-  consultation: "Consultation",
-  final: "Final",
-};
 import {
   capstoneFilenameBase,
   downloadCapstoneDocx,
@@ -224,13 +208,6 @@ export default function MentorCapstoneReview({
               markdown blob server-side and arrive on the `approach`
               field. Render once as the full draft body. */}
           <ReadOnlySection label="Draft" value={capstone.draft.approach} />
-          {/* Where the fellow is in the progression. The mentor is the gate at
-              each stage, so they need this in front of them when deciding
-              whether to approve — previously only the fellow could see it. */}
-          <CapstoneMilestones
-            milestones={capstone.milestones}
-            title="Capstone milestones"
-          />
         </>
       )}
 
@@ -244,7 +221,6 @@ export default function MentorCapstoneReview({
         outcome={outcome}
         onOutcomeChange={setOutcome}
         posting={postingReview}
-        stage={capstone.stage}
       />
 
       {fellowId && (
@@ -385,7 +361,6 @@ function FeedbackThread({
   outcome,
   onOutcomeChange,
   posting,
-  stage,
 }: {
   feedback: CapstoneFeedbackEntry[];
   userName: string;
@@ -396,9 +371,7 @@ function FeedbackThread({
   outcome: ReviewOutcome;
   onOutcomeChange: (next: ReviewOutcome) => void;
   posting: boolean;
-  stage: CapstoneStage;
 }) {
-  const nextStage = STAGE_ORDER[STAGE_ORDER.indexOf(stage) + 1];
   return (
     <section className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
       <div className="flex items-center justify-between">
@@ -430,16 +403,6 @@ function FeedbackThread({
           placeholder={`Reply to ${fellowName}…`}
           className="w-full resize-y rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-fellowship-navy focus:outline-hidden focus:ring-3 focus:ring-fellowship-navy/10"
         />
-        {/* Spell out what approving does — the mentor is promoting the fellow
-            to the next stage (or completing the capstone), and the button
-            alone doesn't say which stage is under review. */}
-        <p className="mt-3 text-xs text-gray-500">
-          Reviewing the <span className="font-semibold">{STAGE_LABEL[stage]}</span>{" "}
-          stage.{" "}
-          {nextStage
-            ? `Approving moves ${fellowName.split(" ")[0]} on to ${STAGE_LABEL[nextStage]}.`
-            : "Approving completes the capstone and issues the certificate."}
-        </p>
         {/* Posting is blocked without a comment, and a greyed-out button with
             no explanation reads as a broken page — mentors were selecting
             "Approve stage" and finding nothing happened. Say what's needed. */}
@@ -457,7 +420,7 @@ function FeedbackThread({
                 { value: "needs_revision", label: "Needs revision" },
                 {
                   value: "approved",
-                  label: nextStage ? "Approve stage" : "Approve & complete",
+                  label: "Approve capstone",
                 },
               ] as { value: ReviewOutcome; label: string }[]
             ).map((opt) => {

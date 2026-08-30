@@ -17,12 +17,10 @@ import {
   submitFellowCapstone,
   type CapstoneFeedbackEntry,
   type CapstoneMilestone,
-  type CapstoneStage,
   type CapstoneStatus,
   type FellowCapstone,
   type SaveCapstonePayload,
 } from "@/lib/api/fellow-capstone";
-import { CapstoneMilestones } from "@/components/capstone/CapstoneMilestones";
 import { parseCapstoneDocument } from "@/lib/capstone/parseCapstoneDocument";
 import {
   capstoneFilenameBase,
@@ -507,7 +505,6 @@ export default function MyCapstoneView({
       <div data-tour="capstone-status">
         <StatusBanner
           status={status}
-          stage={capstone.stage}
           lastSavedAt={lastSaved}
           wordCount={wordCount}
         />
@@ -698,7 +695,6 @@ export default function MyCapstoneView({
               el?.scrollIntoView({ behavior: "smooth", block: "start" });
             }}
           />
-          <CapstoneMilestones milestones={capstone.milestones} />
         </aside>
       </div>
 
@@ -717,19 +713,17 @@ export default function MyCapstoneView({
 
 function StatusBanner({
   status,
-  stage,
   lastSavedAt,
   wordCount,
 }: {
   status: CapstoneStatus;
-  stage: CapstoneStage;
   lastSavedAt: string;
   wordCount: number;
 }) {
   return (
     <section className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
       <div className="flex flex-wrap items-center gap-4">
-        <StatusBadge status={status} stage={stage} />
+        <StatusBadge status={status} />
         <span className="text-gray-300">·</span>
         <span className="text-sm text-gray-600">
           Last saved <RelativeTime iso={lastSavedAt} />
@@ -741,27 +735,7 @@ function StatusBanner({
   );
 }
 
-const STAGE_LABEL: Record<CapstoneStage, string> = {
-  scoping: "Scoping",
-  design: "Design",
-  consultation: "Consultation",
-  final: "Final",
-};
-
-/**
- * `status: "approved"` is set by ANY stage approval, not just the final one —
- * a mentor signing off the scoping stage produced a bare "Approved" badge,
- * which read as "your capstone is finished" when the fellow still had three
- * stages to go (and left them wondering why no certificate followed). Name the
- * stage unless it's the final approval, which alone completes the capstone.
- */
-function StatusBadge({
-  status,
-  stage,
-}: {
-  status: CapstoneStatus;
-  stage?: CapstoneStage;
-}) {
+function StatusBadge({ status }: { status: CapstoneStatus }) {
   const map: Record<CapstoneStatus, { color: "info" | "warning" | "success" | "error" | "light"; label: string }> = {
     "not-started": { color: "light", label: "Not started" },
     draft: { color: "warning", label: "Draft" },
@@ -771,11 +745,7 @@ function StatusBadge({
     returned: { color: "error", label: "Returned for revision" },
   };
   const { color, label } = map[status];
-  const resolved =
-    status === "approved" && stage && stage !== "final"
-      ? `${STAGE_LABEL[stage]} stage approved`
-      : label;
-  return <Badge color={color}>{resolved}</Badge>;
+  return <Badge color={color}>{label}</Badge>;
 }
 
 function TitleCard({
