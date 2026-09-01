@@ -30,6 +30,23 @@ const ISSUING_ORGANISATION = "Policy Innovation Centre";
 const PUBLIC_ORIGIN = "https://aiegfellowship.org";
 
 /**
+ * Cohort certificate release date — must match CERTIFICATE_RELEASE_AT (and its
+ * default) on the API, which is what actually holds issuance. Kept here purely
+ * so a fellow who has already qualified is told when to expect theirs instead
+ * of being promised one "within the hour" for weeks.
+ */
+const CERTIFICATE_RELEASE_AT = new Date("2026-09-15T00:00:00+01:00");
+
+function releaseDateLabel(): string {
+  return CERTIFICATE_RELEASE_AT.toLocaleDateString(undefined, {
+    timeZone: "Africa/Lagos",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+/**
  * Whether to show fellows the "What's left before your certificate unlocks"
  * breakdown.
  *
@@ -192,17 +209,32 @@ function PendingView({
  * "locked" card as the only signal.
  */
 function AwaitingIssue() {
+  const released = Date.now() >= CERTIFICATE_RELEASE_AT.getTime();
   return (
     <section className="rounded-2xl border border-green-200 bg-green-50 p-5 md:p-6">
       <h3 className="text-base font-semibold text-gray-800">
         You&apos;ve met every requirement 🎉
       </h3>
-      <p className="mt-2 text-sm text-gray-600">
-        Your certificate is being prepared and will appear here automatically —
-        usually within the hour. You&apos;ll get an email the moment it&apos;s
-        issued. If it hasn&apos;t appeared by tomorrow, contact the programme
-        team.
-      </p>
+      {released ? (
+        <p className="mt-2 text-sm text-gray-600">
+          Your certificate is being prepared and will appear here automatically
+          — usually within the hour. You&apos;ll get an email the moment
+          it&apos;s issued. If it hasn&apos;t appeared by tomorrow, contact the
+          programme team.
+        </p>
+      ) : (
+        // Certificates are released together as a cohort, so someone who
+        // finished early would otherwise be told "within the hour" for weeks.
+        <p className="mt-2 text-sm text-gray-600">
+          Nothing further is needed from you. Certificates for this cohort are
+          issued on{" "}
+          <span className="font-semibold text-gray-800">
+            {releaseDateLabel()}
+          </span>
+          , and yours will appear here automatically on the day — you&apos;ll
+          get an email as soon as it&apos;s issued.
+        </p>
+      )}
     </section>
   );
 }
