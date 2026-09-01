@@ -186,11 +186,22 @@ export default function MyCapstoneView({
     setUploadState("uploading");
     setUploadProgress(0);
     try {
-      const { uploadUrl, objectUrl } = await getCapstoneUploadUrl({
+      const { uploadUrl, publicUrl } = await getCapstoneUploadUrl({
         mimeType: file.type,
         bytes: file.size,
         filename: file.name,
       });
+      // Never proceed without somewhere to record the file. This field was
+      // previously read under the wrong name, so it was always undefined: the
+      // PUT succeeded, the save silently dropped the omitted field, and the
+      // fellow got a success toast for a document the system had not stored —
+      // which also left the capstone gate unmet, so no certificate issued.
+      if (!publicUrl) {
+        throw new Error(
+          "The server didn't return a storage URL for the upload. Nothing was saved — please try again.",
+        );
+      }
+
       // Upload directly to Spaces via the presigned PUT URL.
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
@@ -209,13 +220,13 @@ export default function MyCapstoneView({
       // — an empty or too-short problem statement is omitted (the fellow may
       // have put it inside the document), so attaching never fails validation.
       // Omitted fields keep their stored value.
-      const attach: SaveCapstonePayload = { artifactUrl: objectUrl };
+      const attach: SaveCapstonePayload = { artifactUrl: publicUrl };
       if (status !== "under-review" && status !== "approved") {
         if (title.trim().length >= 2) attach.title = title.trim();
         if (draft.problem.trim().length >= 10) attach.problemStatement = draft.problem;
       }
       await saveFellowCapstone(attach);
-      setArtifactUrl(objectUrl);
+      setArtifactUrl(publicUrl);
       setUploadState("done");
       toast.success("Document uploaded", file.name);
     } catch (err) {

@@ -279,7 +279,7 @@ export async function getCapstoneUploadUrl(opts: {
   mimeType: string;
   bytes: number;
   filename: string;
-}): Promise<{ uploadUrl: string; objectUrl: string }> {
+}): Promise<{ uploadUrl: string; publicUrl: string; objectKey: string }> {
   return apiFetch("/me/capstone/upload-url", {
     method: "POST",
     body: opts,
