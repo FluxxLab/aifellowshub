@@ -35,7 +35,7 @@ const PUBLIC_ORIGIN = "https://aiegfellowship.org";
  * so a fellow who has already qualified is told when to expect theirs instead
  * of being promised one "within the hour" for weeks.
  */
-const CERTIFICATE_RELEASE_AT = new Date("2026-09-15T00:00:00+01:00");
+const CERTIFICATE_RELEASE_AT = new Date("2026-09-25T00:00:00+01:00");
 
 function releaseDateLabel(): string {
   return CERTIFICATE_RELEASE_AT.toLocaleDateString(undefined, {

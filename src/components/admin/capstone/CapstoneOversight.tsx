@@ -19,6 +19,7 @@ import {
  type CapstoneStatus,
  type CapstoneSubmission,
 } from "@/lib/api/capstone";
+import AdminCapstoneUpload from "./AdminCapstoneUpload";
 import AssignCapstoneMentorModal from "./AssignCapstoneMentorModal";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 
@@ -322,6 +323,16 @@ function CapstoneTable({ submissions }: { submissions: CapstoneSubmission[] }) {
          </svg>
        </button>
      )}
+     {/* Upload on the fellow's behalf — certification keys on this document
+         existing, so the programme team needs a way to attach one when the
+         fellow can't upload it themselves. */}
+     <div className="shrink-0">
+       <AdminCapstoneUpload
+         capstoneId={s.id}
+         fellowName={s.fellowName}
+         hasDocument={Boolean(s.fileUrl)}
+       />
+     </div>
    </div>
  </Td>
  <Td>
