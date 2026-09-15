@@ -21,6 +21,7 @@ import {
 } from "@/lib/api/capstone";
 import AdminCapstoneUpload from "./AdminCapstoneUpload";
 import AssignCapstoneMentorModal from "./AssignCapstoneMentorModal";
+import CapstoneDecisionModal from "./CapstoneDecisionModal";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 
 const FILTERS: { id:"all"|"overdue"| CapstoneStatus; label: string }[] = [
@@ -417,6 +418,7 @@ function CapstoneStatusBadge({ status }: { status: CapstoneStatus }) {
 function RowActions({ submission }: { submission: CapstoneSubmission }) {
  const [open, setOpen] = useState(false);
  const [assignOpen, setAssignOpen] = useState(false);
+ const [decisionOpen, setDecisionOpen] = useState(false);
  const [retracting, setRetracting] = useState(false);
  const [deleting, setDeleting] = useState(false);
  const router = useRouter();
@@ -481,6 +483,10 @@ function RowActions({ submission }: { submission: CapstoneSubmission }) {
    });
  }
  actions.push({
+   label: "Approve / reject…",
+   onClick: () => setDecisionOpen(true),
+ });
+ actions.push({
    label: submission.mentorName ? "Reassign supervisor" : "Assign supervisor",
    onClick: () => setAssignOpen(true),
  });
@@ -535,6 +541,13 @@ function RowActions({ submission }: { submission: CapstoneSubmission }) {
  fellowName={submission.fellowName}
  fellowSector={submission.sector}
  currentMentorId={submission.assignedMentorId}
+ />
+ <CapstoneDecisionModal
+ isOpen={decisionOpen}
+ onClose={() => setDecisionOpen(false)}
+ capstoneId={submission.id}
+ fellowName={submission.fellowName}
+ currentStatus={submission.status}
  />
  {dialog}
  </div>
