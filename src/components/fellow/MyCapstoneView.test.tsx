@@ -84,6 +84,7 @@ import MyCapstoneView from "./MyCapstoneView";
 
 const baseCapstone: FellowCapstone = {
   status: "draft",
+  stage: "scoping",
   title: "Algorithmic accountability for credit scoring",
   oneliner: "Sub-Saharan credit scoring",
   sector: "Economic Inclusion Development",
@@ -104,9 +105,9 @@ const baseCapstone: FellowCapstone = {
   },
   milestones: [],
   feedback: [],
-  assignments: [],
   submittedAt: null,
   approvedAt: null,
+  artifactUrl: null,
 };
 
 const savedShape = {
