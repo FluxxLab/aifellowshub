@@ -4,7 +4,7 @@
  * reads `import.meta.env`, so TypeScript needs the shape declared.
  */
 interface ImportMetaEnv {
-  readonly [key: string]: string | undefined;
+  readonly [key: string]: string;
 }
 
 interface ImportMeta {
