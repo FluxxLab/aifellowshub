@@ -84,15 +84,15 @@ import MyCapstoneView from "./MyCapstoneView";
 
 const baseCapstone: FellowCapstone = {
   status: "draft",
+  stage: "scoping",
   title: "Algorithmic accountability for credit scoring",
   oneliner: "Sub-Saharan credit scoring",
-  sector: "finance",
+  sector: "Economic Inclusion Development",
   mentor: {
     id: "m-1",
     fullName: "Tunde Ogun",
-    role: "Mentor",
-    bio: null,
-    avatarUrl: null,
+    email: "tunde.ogun@example.test",
+    expertiseSummary: "Financial inclusion and algorithmic accountability",
   },
   draft: {
     problem:
@@ -104,11 +104,10 @@ const baseCapstone: FellowCapstone = {
     lastSavedAt: "2026-05-01T10:00:00Z",
   },
   milestones: [],
-  consultations: [],
   feedback: [],
-  assignments: [],
   submittedAt: null,
   approvedAt: null,
+  artifactUrl: null,
 };
 
 const savedShape = {
@@ -137,7 +136,7 @@ afterEach(() => {
 });
 
 describe("MyCapstoneView", () => {
-  it("Save draft sends the structured fields collapsed to a single content blob", async () => {
+  it("Save draft sends each structured section as its own field", async () => {
     saveFellowCapstoneMock.mockResolvedValueOnce(savedShape);
     render(<MyCapstoneView capstone={baseCapstone} />);
 
@@ -149,11 +148,11 @@ describe("MyCapstoneView", () => {
     const payload = saveFellowCapstoneMock.mock.calls[0][0];
     expect(payload.title).toBe(baseCapstone.title);
     expect(payload.problemStatement).toBe(baseCapstone.draft.problem);
-    // The four secondary fields concat into the one `content` markdown.
-    expect(payload.content).toContain("## Approach");
-    expect(payload.content).toContain("## Stakeholders");
-    expect(payload.content).toContain("## Deliverables");
-    expect(payload.content).toContain("## Risks & limitations");
+    // Each section has its own column now, so they travel as separate fields.
+    expect(payload.approach).toBe(baseCapstone.draft.approach);
+    expect(payload.deliverables).toBe(baseCapstone.draft.deliverables);
+    expect(payload.risks).toBe(baseCapstone.draft.risks);
+    expect(payload.sector).toBe(baseCapstone.sector);
   });
 
   it("Submit refuses when the problem statement is shorter than 10 chars", async () => {

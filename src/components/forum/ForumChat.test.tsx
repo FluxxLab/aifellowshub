@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ForumGroup } from "@/lib/api/fellow-forum";
 
 /**
  * ForumChat is the group-chat component fellows + admins use to talk
@@ -52,7 +53,7 @@ vi.mock("@/lib/toast", () => ({
 
 import ForumChat from "./ForumChat";
 
-const groups = [
+const groups: ForumGroup[] = [
   {
     id: "g-general",
     name: "General",
@@ -61,6 +62,9 @@ const groups = [
     isDefault: true,
     isPrivate: false,
     description: null,
+    memberCount: 0,
+    threadCount: 0,
+    myRole: null,
   },
   {
     id: "g-cohort-2026",
@@ -70,6 +74,9 @@ const groups = [
     isDefault: false,
     isPrivate: false,
     description: null,
+    memberCount: 0,
+    threadCount: 0,
+    myRole: null,
   },
   {
     id: "g-private",
@@ -79,6 +86,9 @@ const groups = [
     isDefault: false,
     isPrivate: false,
     description: null,
+    memberCount: 0,
+    threadCount: 0,
+    myRole: null,
   },
 ];
 
