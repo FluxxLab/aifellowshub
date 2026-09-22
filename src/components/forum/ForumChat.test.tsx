@@ -52,7 +52,7 @@ vi.mock("@/lib/toast", () => ({
 
 import ForumChat from "./ForumChat";
 
-const groups = [
+const groups: ForumGroup[] = [
   {
     id: "g-general",
     name: "General",
@@ -61,6 +61,9 @@ const groups = [
     isDefault: true,
     isPrivate: false,
     description: null,
+    memberCount: 0,
+    threadCount: 0,
+    myRole: null,
   },
   {
     id: "g-cohort-2026",
@@ -70,6 +73,9 @@ const groups = [
     isDefault: false,
     isPrivate: false,
     description: null,
+    memberCount: 0,
+    threadCount: 0,
+    myRole: null,
   },
   {
     id: "g-private",
@@ -79,6 +85,9 @@ const groups = [
     isDefault: false,
     isPrivate: false,
     description: null,
+    memberCount: 0,
+    threadCount: 0,
+    myRole: null,
   },
 ];
 
