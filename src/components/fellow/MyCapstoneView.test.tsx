@@ -103,7 +103,6 @@ const baseCapstone: FellowCapstone = {
     lastSavedAt: "2026-05-01T10:00:00Z",
   },
   milestones: [],
-  consultations: [],
   feedback: [],
   assignments: [],
   submittedAt: null,
