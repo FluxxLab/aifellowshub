@@ -86,13 +86,12 @@ const baseCapstone: FellowCapstone = {
   status: "draft",
   title: "Algorithmic accountability for credit scoring",
   oneliner: "Sub-Saharan credit scoring",
-  sector: "finance",
+  sector: "Economic Inclusion Development",
   mentor: {
     id: "m-1",
     fullName: "Tunde Ogun",
-    role: "Mentor",
-    bio: null,
-    avatarUrl: null,
+    email: "tunde.ogun@example.test",
+    expertiseSummary: "Financial inclusion and algorithmic accountability",
   },
   draft: {
     problem:
