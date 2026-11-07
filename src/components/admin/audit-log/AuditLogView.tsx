@@ -39,6 +39,7 @@ const ACTION_OPTIONS: { value: string; label: string }[] = [
   { value: "capstone.reviewed", label: "Capstone reviewed" },
   { value: "certificate.issued", label: "Certificate issued" },
   { value: "certificate.revoked", label: "Certificate revoked" },
+  { value: "certificate.restored", label: "Certificate restored" },
   { value: "module.published", label: "Module published" },
   { value: "module.returned", label: "Module returned" },
 ];

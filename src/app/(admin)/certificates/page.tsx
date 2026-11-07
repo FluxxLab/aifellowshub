@@ -4,6 +4,7 @@ import {
   getCertificateTemplateServer,
   getIssuedCertificatesServer,
 } from "@/lib/api/certificates.server";
+import { getParticipantsServer } from "@/lib/api/participants.server";
 
 export const metadata: Metadata = {
   title: "Certificates · AI Fellows LMS",
@@ -12,10 +13,20 @@ export const metadata: Metadata = {
 };
 
 export default async function CertificatesPage() {
-  const [template, issued] = await Promise.all([
+  const [template, issued, participants] = await Promise.all([
     getCertificateTemplateServer(),
     getIssuedCertificatesServer(),
+    getParticipantsServer(),
   ]);
 
-  return <CertificatesView template={template} issued={issued} />;
+  // Only what the "Issue manually" picker needs.
+  const fellows = participants.fellows.map((f) => ({
+    id: f.id,
+    fullName: f.fullName,
+    email: f.email,
+  }));
+
+  return (
+    <CertificatesView template={template} issued={issued} fellows={fellows} />
+  );
 }

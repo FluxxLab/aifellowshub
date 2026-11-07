@@ -18,19 +18,35 @@ import type {
  CertificateTemplate,
  IssuedCertificate,
 } from "@/lib/api/certificates";
+import { apiFetch } from "@/lib/api/client";
+import { toast } from "@/lib/toast";
+import { useRouter } from "next/navigation";
 import CertificatePreview from "./CertificatePreview";
 import EditTemplateModal from "./EditTemplateModal";
+import IssueCertificateModal, { type IssuableFellow } from "./IssueCertificateModal";
+import RevokeCertificateModal from "./RevokeCertificateModal";
 
 type CertificatesViewProps = {
  template: CertificateTemplate;
  issued: IssuedCertificate[];
+ /** Every fellow; those who already hold a certificate are filtered out of the issue picker. */
+ fellows: IssuableFellow[];
 };
 
 export default function CertificatesView({
  template,
  issued,
+ fellows,
 }: CertificatesViewProps) {
  const [editOpen, setEditOpen] = useState(false);
+ const [issueOpen, setIssueOpen] = useState(false);
+ const [revokeTarget, setRevokeTarget] = useState<IssuedCertificate | null>(null);
+
+ // One certificate per fellow (backend constraint) — revoked ones included.
+ const issuable = useMemo(() => {
+ const holders = new Set(issued.map((c) => c.fellowId));
+ return fellows.filter((f) => !holders.has(f.id));
+ }, [fellows, issued]);
 
  return (
  <>
@@ -40,12 +56,25 @@ export default function CertificatesView({
  template={template}
  onEdit={() => setEditOpen(true)}
  />
- <IssuedSection issued={issued} />
+ <IssuedSection
+ issued={issued}
+ onIssue={() => setIssueOpen(true)}
+ onRevoke={setRevokeTarget}
+ />
  </div>
  <EditTemplateModal
  isOpen={editOpen}
  onClose={() => setEditOpen(false)}
  template={template}
+ />
+ <IssueCertificateModal
+ isOpen={issueOpen}
+ onClose={() => setIssueOpen(false)}
+ fellows={issuable}
+ />
+ <RevokeCertificateModal
+ cert={revokeTarget}
+ onClose={() => setRevokeTarget(null)}
  />
  </>
  );
@@ -96,7 +125,15 @@ function TemplateSection({
  );
 }
 
-function IssuedSection({ issued }: { issued: IssuedCertificate[] }) {
+function IssuedSection({
+ issued,
+ onIssue,
+ onRevoke,
+}: {
+ issued: IssuedCertificate[];
+ onIssue: () => void;
+ onRevoke: (cert: IssuedCertificate) => void;
+}) {
  const [showRevoked, setShowRevoked] = useState(true);
  const [search, setSearch] = useState("");
 
@@ -126,7 +163,10 @@ function IssuedSection({ issued }: { issued: IssuedCertificate[] }) {
  Auto-generated when fellows complete a course. Manual issuance is for edge cases.
  </p>
  </div>
- <Button variant="fellowship" size="sm" startIcon={<PlusIcon />}>
+ <Button
+ variant="fellowship" size="sm" startIcon={<PlusIcon />}
+ onClick={onIssue}
+ >
  Issue manually
  </Button>
  </div>
@@ -214,7 +254,7 @@ function IssuedSection({ issued }: { issued: IssuedCertificate[] }) {
  )}
  </Td>
  <Td right>
- <RowActions cert={c} />
+ <RowActions cert={c} onRevoke={() => onRevoke(c)} />
  </Td>
  </TableRow>
  ))}
@@ -226,13 +266,43 @@ function IssuedSection({ issued }: { issued: IssuedCertificate[] }) {
  );
 }
 
-function RowActions({ cert }: { cert: IssuedCertificate }) {
+function RowActions({
+ cert,
+ onRevoke,
+}: {
+ cert: IssuedCertificate;
+ onRevoke: () => void;
+}) {
+ const router = useRouter();
  const [open, setOpen] = useState(false);
  const [copied, setCopied] = useState(false);
 
+ const downloadPdf = () => {
+ // The print page opens the browser's "Save as PDF" dialog itself.
+ window.open(
+ `/certificates/${encodeURIComponent(cert.certificateNumber)}/print`,
+ "_blank",
+ "noopener,noreferrer",
+ );
+ };
+
+ const restore = async () => {
+ try {
+ await apiFetch(`/certificates/${encodeURIComponent(cert.id)}/restore`, {
+ method: "POST",
+ });
+ toast.success("Certificate restored", cert.certificateNumber);
+ router.refresh();
+ } catch (err) {
+ toast.errorFromException("Couldn't restore certificate", err);
+ }
+ };
+
  const copyVerifyLink = () => {
  if (typeof navigator !=="undefined"&& navigator.clipboard) {
- navigator.clipboard.writeText(cert.verifyUrl).then(() => {
+ // verifyUrl is a site-relative path; copy the full link.
+ const link = new URL(cert.verifyUrl, window.location.origin).toString();
+ navigator.clipboard.writeText(link).then(() => {
  setCopied(true);
  setTimeout(() => setCopied(false), 1500);
  });
@@ -254,7 +324,16 @@ function RowActions({ cert }: { cert: IssuedCertificate }) {
  portal
  className="w-48 p-1">
  <ul role="menu" className="flex flex-col gap-0.5">
- <Item onClick={() => setOpen(false)}>Download PDF</Item>
+ {!cert.isRevoked && (
+ <Item
+ onClick={() => {
+ downloadPdf();
+ setOpen(false);
+ }}
+ >
+ Download PDF
+ </Item>
+ )}
  <Item
  onClick={() => {
  copyVerifyLink();
@@ -263,11 +342,23 @@ function RowActions({ cert }: { cert: IssuedCertificate }) {
  >
  {copied ?"Copied!":"Copy verify link"}
  </Item>
- {!cert.isRevoked && <Item onClick={() => setOpen(false)}>Reissue</Item>}
  {cert.isRevoked ? (
- <Item onClick={() => setOpen(false)}>Restore</Item>
+ <Item
+ onClick={() => {
+ setOpen(false);
+ void restore();
+ }}
+ >
+ Restore
+ </Item>
  ) : (
- <Item destructive onClick={() => setOpen(false)}>
+ <Item
+ destructive
+ onClick={() => {
+ setOpen(false);
+ onRevoke();
+ }}
+ >
  Revoke
  </Item>
  )}

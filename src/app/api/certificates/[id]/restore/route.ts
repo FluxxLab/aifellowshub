@@ -1,0 +1,11 @@
+import { NextRequest } from "next/server";
+import { proxy } from "@/lib/api/proxy";
+
+/** Admin: undo a certificate revocation. */
+export async function POST(
+  req: NextRequest,
+  { params }: { params: { id: string } },
+) {
+  const { id } = params;
+  return proxy(req, `/certificates/${encodeURIComponent(id)}/restore`);
+}
