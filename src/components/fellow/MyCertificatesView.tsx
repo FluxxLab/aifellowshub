@@ -218,7 +218,7 @@ function AwaitingIssue() {
       {released ? (
         <p className="mt-2 text-sm text-gray-600">
           Your certificate is being prepared and will appear here automatically
-          — usually within the hour. You&apos;ll get an email the moment
+          — usually within a few minutes. You&apos;ll get an email the moment
           it&apos;s issued. If it hasn&apos;t appeared by tomorrow, contact the
           programme team.
         </p>

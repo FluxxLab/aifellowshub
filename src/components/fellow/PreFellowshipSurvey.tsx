@@ -415,8 +415,16 @@ export default function PreFellowshipSurvey({
       if (val.trim()) payload[key] = val.trim();
     }
 
+    // The endline survey is often a fellow's last certificate requirement;
+    // the API issues the certificate in the same request and returns its
+    // number, so we can take them straight to it.
+    let certificateNumber: string | null = null;
     try {
-      await apiFetch(cfg.path, { method: "POST", body: payload });
+      const res = await apiFetch<{ certificateNumber?: string | null } | null>(
+        cfg.path,
+        { method: "POST", body: payload },
+      );
+      certificateNumber = res?.certificateNumber ?? null;
     } catch {
       // Backend endpoint lands in phase 2; persist locally so UX completes.
     }
@@ -424,6 +432,16 @@ export default function PreFellowshipSurvey({
     localStorage.setItem(STORAGE_KEY, "true");
     window.dispatchEvent(new CustomEvent("pic:survey-done"));
     setDone(true);
+
+    if (certificateNumber) {
+      toast.success(
+        "Your certificate is ready 🎓",
+        "Thank you for completing the survey — opening your certificate now.",
+      );
+      window.location.assign("/my-certificates");
+      return;
+    }
+
     toast.success(
       "Survey submitted",
       "Thank you — your responses have been recorded.",
