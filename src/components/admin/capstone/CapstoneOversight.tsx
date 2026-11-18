@@ -21,6 +21,7 @@ import {
 } from "@/lib/api/capstone";
 import AdminCapstoneUpload from "./AdminCapstoneUpload";
 import AssignCapstoneMentorModal from "./AssignCapstoneMentorModal";
+import EditCapstoneTitleModal from "./EditCapstoneTitleModal";
 import CapstoneDecisionModal from "./CapstoneDecisionModal";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 
@@ -419,6 +420,7 @@ function RowActions({ submission }: { submission: CapstoneSubmission }) {
  const [open, setOpen] = useState(false);
  const [assignOpen, setAssignOpen] = useState(false);
  const [decisionOpen, setDecisionOpen] = useState(false);
+ const [titleOpen, setTitleOpen] = useState(false);
  const [retracting, setRetracting] = useState(false);
  const [deleting, setDeleting] = useState(false);
  const router = useRouter();
@@ -483,6 +485,10 @@ function RowActions({ submission }: { submission: CapstoneSubmission }) {
    });
  }
  actions.push({
+   label: "Edit title",
+   onClick: () => setTitleOpen(true),
+ });
+ actions.push({
    label: "Approve / reject…",
    onClick: () => setDecisionOpen(true),
  });
@@ -541,6 +547,13 @@ function RowActions({ submission }: { submission: CapstoneSubmission }) {
  fellowName={submission.fellowName}
  fellowSector={submission.sector}
  currentMentorId={submission.assignedMentorId}
+ />
+ <EditCapstoneTitleModal
+ isOpen={titleOpen}
+ onClose={() => setTitleOpen(false)}
+ capstoneId={submission.id}
+ fellowName={submission.fellowName}
+ currentTitle={submission.title}
  />
  <CapstoneDecisionModal
  isOpen={decisionOpen}
