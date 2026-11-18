@@ -20,6 +20,7 @@ import {
  type CapstoneSubmission,
 } from "@/lib/api/capstone";
 import AdminCapstoneUpload from "./AdminCapstoneUpload";
+import { openCapstoneDocument } from "@/lib/api/capstone-document";
 import AssignCapstoneMentorModal from "./AssignCapstoneMentorModal";
 import EditCapstoneTitleModal from "./EditCapstoneTitleModal";
 import CapstoneDecisionModal from "./CapstoneDecisionModal";
@@ -585,9 +586,12 @@ function hasDownloadable(s: CapstoneSubmission): boolean {
  * admin always gets a downloadable submission instead of nothing.
  */
 function downloadCapstoneSubmission(s: CapstoneSubmission): void {
-  const fileUrl = s.fileUrl ?? s.submissionUrl;
-  if (fileUrl) {
-    window.open(fileUrl, "_blank", "noopener,noreferrer");
+  if (s.fileUrl) {
+    void openCapstoneDocument(s.id);
+    return;
+  }
+  if (s.submissionUrl) {
+    window.open(s.submissionUrl, "_blank", "noopener,noreferrer");
     return;
   }
 
