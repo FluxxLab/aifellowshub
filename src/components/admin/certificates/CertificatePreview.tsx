@@ -34,7 +34,7 @@ export default function CertificatePreview({
  return (
  <div className="relative aspect-[1.414/1] w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-theme-md">
  <Image
- src="/images/certificate-lms-v2.jpg"
+ src="/images/certificate-lms-v3.png"
  alt=""
  fill
  priority

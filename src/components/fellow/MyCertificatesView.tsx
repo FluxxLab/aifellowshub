@@ -408,7 +408,7 @@ function IssuedView({ certificate: c }: { certificate: Certificate }) {
       const PAGE_H = 210;
 
       // Load the template image and get a data URL for jsPDF.
-      const templateUrl = "/images/certificate-lms-v2.jpg";
+      const templateUrl = "/images/certificate-lms-v3.png";
       const dataUrl = await loadImageAsDataUrl(templateUrl);
 
       const pdf = new jsPDF({
@@ -613,7 +613,7 @@ export function CertificateCanvas({
       aria-label={`${programmeName} certificate for ${fellowName}`}
     >
       <Image
-        src="/images/certificate-lms-v2.jpg"
+        src="/images/certificate-lms-v3.png"
         alt=""
         fill
         priority
